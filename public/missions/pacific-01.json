@@ -19,6 +19,10 @@
     }
   ],
   "aiDifficulty": 1,
+  "carrier": {
+    "position": { "x": 0, "y": 0, "z": -200 },
+    "heading": 0
+  },
   "objectives": [
     {
       "type": "destroy_all",

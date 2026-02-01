@@ -19,6 +19,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Terrain at 4000x4000 units is large enough for extended flight without reaching edges
 - FlightInput interface now includes `fire: boolean` — all mock inputs must include it
 - Projectile direction uses same math as FlightSystem: `sin(rotY)` for X, `cos(rotY)` for Z
+- AIInput implements FlightInput with mutable fields — AISystem writes, Aircraft reads
+- Aircraft constructor accepts optional name and color options for distinguishing enemy meshes
+- `Math.atan2(dx, dz)` gives desired yaw toward a target in Babylon's coordinate system
+- Normalize angle diff to [-PI, PI] with while loops for correct shortest-path turning
 
 ---
 
@@ -92,4 +96,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Projectile uses same direction math as FlightSystem for consistency
   - WeaponSystem cooldown of 0.15s gives a good rate of fire (~6.7 rounds/sec)
   - `as never` cast works for passing partial mock objects to typed system methods in tests
+---
+
+## 2026-02-01 - US-007
+- What was implemented: AIInput (mutable FlightInput for AI), AISystem (pursuit/firing/evasion), enemy Aircraft with red color, enemy WeaponSystem, Game integration
+- Files changed: src/AIInput.ts, src/AIInput.test.ts, src/AISystem.ts, src/AISystem.test.ts, src/Aircraft.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 12 new tests (8 AISystem + 2 AIInput + 2 Game), total now 77
+- **Learnings for future iterations:**
+  - Aircraft constructor now takes optional name and AircraftOptions (color) — backward compatible
+  - AISystem.update takes `underFire` boolean — collision system will provide this in US-008
+  - `Math.atan2(dx, dz)` gives desired yaw in Babylon's coordinate system (Z-forward)
+  - Angle normalization to [-PI, PI] is critical for correct shortest-path steering
+  - Enemy fires based on dot product angle check + distance — simple but effective
 ---

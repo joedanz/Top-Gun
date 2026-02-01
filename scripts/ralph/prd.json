@@ -183,7 +183,7 @@
       ],
       "epic": "Phase 3: HUD & Targeting",
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

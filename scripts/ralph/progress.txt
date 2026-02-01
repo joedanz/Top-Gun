@@ -17,7 +17,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Use `vi.hoisted()` for mock functions referenced inside `vi.mock()` factories (hoisting issue)
 - Skybox uses `infiniteDistance = true` so it always renders behind everything
 - Terrain at 4000x4000 units is large enough for extended flight without reaching edges
-- FlightInput interface now includes `fire: boolean` — all mock inputs must include it
+- FlightInput interface now includes `fire: boolean` and `cycleTarget: boolean` — all mock inputs must include both
+- ScreenShake tests need deterministic `Math.random` mock to avoid flaky magnitude comparisons
+- `Ellipse` from `@babylonjs/gui` needs class-style mock (used by TargetingSystem reticle/lead marker)
 - Projectile direction uses same math as FlightSystem: `sin(rotY)` for X, `cos(rotY)` for Z
 - AIInput implements FlightInput with mutable fields — AISystem writes, Aircraft reads
 - Aircraft constructor accepts optional name and color options for distinguishing enemy meshes
@@ -151,4 +153,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Heading normalization: convert radians to degrees, mod 360, add 360 if negative
   - WeaponSystem ammo field is public for HUD to read — pass ammo count to `hud.update()`
   - Multiple AdvancedDynamicTexture fullscreen UIs can coexist (DebugPanel, HitFlash, HUD)
+---
+
+## 2026-02-01 - US-011
+- What was implemented: TargetingSystem with target reticle (Ellipse overlay), lead indicator for deflection shooting, Tab key cycle-target, distance readout; InputManager cycleTarget via Tab; AIInput cycleTarget field; fixed flaky ScreenShake tests with deterministic Math.random mock
+- Files changed: src/TargetingSystem.ts, src/TargetingSystem.test.ts, src/InputManager.ts, src/InputManager.test.ts, src/AIInput.ts, src/Game.ts, src/Game.test.ts, src/ScreenShake.test.ts, src/Aircraft.test.ts, src/CameraSystem.test.ts, src/CollisionSystem.test.ts, src/FlightSystem.test.ts, src/WeaponSystem.test.ts
+- **Tests added:** 10 new tests (8 TargetingSystem + 1 InputManager + 1 Game), total now 126
+- **Learnings for future iterations:**
+  - Adding a field to FlightInput requires updating ALL mock input objects across ALL test files
+  - Lead indicator uses frame-to-frame position delta to estimate target velocity, then projects forward by distance/bulletSpeed
+  - `Ellipse` from `@babylonjs/gui` is a good shape for reticle/lead marker overlays
+  - `WeakMap` works well for per-entity state that auto-cleans when entities are garbage collected
+  - ScreenShake tests were flaky due to Math.random — fixed by mocking with deterministic sequence
+  - Screen-space projection: project world pos to camera plane using dot products with camera right/up/forward vectors
 ---

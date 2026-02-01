@@ -1,0 +1,57 @@
+{
+  "id": "arctic-05",
+  "title": "Final Countdown",
+  "description": "The rogue AI 'Nemesis' controls a fleet of advanced drones from a polar command center. Destroy the drone swarms and eliminate Nemesis to end the threat once and for all.",
+  "theater": "arctic",
+  "playerStart": {
+    "position": { "x": 0, "y": 100, "z": -700 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 0, "y": 120, "z": 600 }, "color": { "r": 0, "g": 1, "b": 1 } },
+    { "position": { "x": 200, "y": 100, "z": 500 } },
+    { "position": { "x": -200, "y": 100, "z": 500 } },
+    { "position": { "x": 100, "y": 95, "z": 400 } },
+    { "position": { "x": -100, "y": 95, "z": 400 } },
+    { "position": { "x": 300, "y": 90, "z": 800 } },
+    { "position": { "x": -300, "y": 90, "z": 800 } },
+    { "position": { "x": 150, "y": 85, "z": 1000 } },
+    { "position": { "x": -150, "y": 85, "z": 1000 } }
+  ],
+  "formations": [
+    {
+      "type": "diamond",
+      "members": [0, 1, 2]
+    },
+    {
+      "type": "diamond",
+      "members": [3, 4, 5, 6]
+    },
+    {
+      "type": "wing",
+      "members": [7, 8]
+    }
+  ],
+  "groundTargets": [
+    { "type": "sam", "position": { "x": 150, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": -150, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": 0, "y": 0, "z": 500 } },
+    { "type": "radar", "position": { "x": 100, "y": 0, "z": 400 } },
+    { "type": "radar", "position": { "x": -100, "y": 0, "z": 400 } },
+    { "type": "bunker", "position": { "x": 0, "y": 0, "z": 600 } }
+  ],
+  "aiDifficulty": 3,
+  "bossIndex": 0,
+  "bossName": "Nemesis",
+  "bossHealth": 500,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy Nemesis and the drone fleet"
+    },
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy the polar command center defenses"
+    }
+  ]
+}

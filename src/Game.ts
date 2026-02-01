@@ -28,6 +28,8 @@ import { CountermeasureSystem } from "./CountermeasureSystem";
 import { GroundTarget } from "./GroundTarget";
 import type { Missile } from "./Missile";
 import { calculateScore, getMedal } from "./Scoring";
+import { BossSystem } from "./BossSystem";
+import { BossHealthBar } from "./BossHealthBar";
 
 export class Game {
   engine: Engine;
@@ -53,6 +55,8 @@ export class Game {
   formationSystem: FormationSystem;
   countermeasureSystem: CountermeasureSystem;
   groundTargets: GroundTarget[];
+  bossSystem: BossSystem | null = null;
+  bossHealthBar: BossHealthBar;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
@@ -103,6 +107,19 @@ export class Game {
     this.radar = new Radar();
     this.formationSystem = new FormationSystem();
     this.countermeasureSystem = new CountermeasureSystem(this.scene);
+    this.bossHealthBar = new BossHealthBar();
+
+    // Initialize boss system if this is a boss mission
+    if (mission.bossIndex !== undefined && mission.bossIndex === 0) {
+      if (mission.bossHealth) {
+        this.enemy.health = mission.bossHealth;
+      }
+      this.bossSystem = new BossSystem();
+      this.bossSystem.init(this.enemy);
+      if (mission.bossName) {
+        this.bossHealthBar.show(mission.bossName);
+      }
+    }
 
     // Spawn ground targets from mission data
     this.groundTargets = [];
@@ -245,6 +262,12 @@ export class Game {
       camera.position.x += shakeOffset.x;
       camera.position.y += shakeOffset.y;
       camera.position.z += shakeOffset.z;
+
+      // Update boss system and health bar
+      if (this.bossSystem) {
+        this.bossSystem.update(this.enemy, this.aircraft, dt);
+        this.bossHealthBar.update(this.bossSystem.getHealthRatio());
+      }
 
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
       this.hud.update(this.aircraft, this.weaponManager, this.countermeasureSystem);

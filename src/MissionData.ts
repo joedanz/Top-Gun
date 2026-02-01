@@ -47,4 +47,10 @@ export interface MissionData {
   objectives: ObjectiveData[];
   /** AI difficulty level (1=easy, 2=medium, 3=hard). Defaults to 1. */
   aiDifficulty?: number;
+  /** Index into enemies array identifying the boss. Absent for non-boss missions. */
+  bossIndex?: number;
+  /** Display name for the boss (shown on health bar). */
+  bossName?: string;
+  /** Boss health override (higher than standard enemies). */
+  bossHealth?: number;
 }

@@ -1,15 +1,19 @@
 // ABOUTME: Core game class that initializes the Babylon.js engine, scene, and game objects.
-// ABOUTME: Sets up camera, lighting, ground plane, and an Aircraft entity driven by InputManager.
+// ABOUTME: Sets up camera, lighting, ground plane, Aircraft, and FlightSystem.
 
 import { Engine, Scene, FreeCamera, HemisphericLight, Vector3, MeshBuilder, Color4 } from "@babylonjs/core";
 import { InputManager } from "./InputManager";
 import { Aircraft } from "./Aircraft";
+import { FlightSystem } from "./FlightSystem";
+import { DebugPanel } from "./DebugPanel";
 
 export class Game {
   engine: Engine;
   scene: Scene;
   aircraft: Aircraft;
   input: InputManager;
+  flightSystem: FlightSystem;
+  debugPanel: DebugPanel;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -27,10 +31,12 @@ export class Game {
 
     this.input = new InputManager();
     this.aircraft = new Aircraft(this.scene, this.input);
+    this.flightSystem = new FlightSystem();
+    this.debugPanel = new DebugPanel(this.flightSystem);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
-      this.aircraft.update(dt);
+      this.flightSystem.update(this.aircraft, dt);
       this.scene.render();
     });
 

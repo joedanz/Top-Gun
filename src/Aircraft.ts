@@ -1,18 +1,16 @@
 // ABOUTME: Aircraft entity that owns a Babylon mesh and reads from a FlightInput source.
-// ABOUTME: Placeholder cone/cylinder shape; applies basic movement from input axes.
+// ABOUTME: Carries flight state (speed) and exposes input for systems to read.
 
 import { MeshBuilder, type Scene, type Mesh } from "@babylonjs/core";
 import type { FlightInput } from "./InputManager";
 
-const MOVE_SPEED = 20;
-const TURN_SPEED = 2;
-
 export class Aircraft {
   mesh: Mesh;
+  speed = 0;
 
   constructor(
     scene: Scene,
-    private input: FlightInput,
+    readonly input: FlightInput,
   ) {
     this.mesh = MeshBuilder.CreateCylinder(
       "aircraft",
@@ -21,13 +19,5 @@ export class Aircraft {
     ) as Mesh;
     this.mesh.rotation.x = Math.PI / 2;
     this.mesh.position.y = 10;
-  }
-
-  update(dt: number): void {
-    const { pitch, roll, yaw } = this.input;
-
-    this.mesh.position.z += pitch * MOVE_SPEED * dt;
-    this.mesh.position.x += roll * MOVE_SPEED * dt;
-    this.mesh.rotation.y += yaw * TURN_SPEED * dt;
   }
 }

@@ -11,6 +11,20 @@ const createMockMesh = (name: string) => ({
   receiveShadows: false,
 });
 
+vi.mock("@babylonjs/gui", () => {
+  class MockStackPanel { width = ""; horizontalAlignment = 0; verticalAlignment = 0; paddingTop = ""; paddingLeft = ""; addControl = vi.fn(); }
+  class MockSlider { minimum = 0; maximum = 100; value = 0; height = ""; width = ""; color = ""; background = ""; onValueChangedObservable = { add: vi.fn() }; }
+  class MockTextBlock { text = ""; height = ""; color = ""; fontSize = 0; textHorizontalAlignment = 0; }
+  class MockControl { static HORIZONTAL_ALIGNMENT_LEFT = 0; static VERTICAL_ALIGNMENT_TOP = 0; }
+  return {
+    AdvancedDynamicTexture: { CreateFullscreenUI: vi.fn(() => ({ addControl: vi.fn(), dispose: vi.fn() })) },
+    StackPanel: MockStackPanel,
+    Slider: MockSlider,
+    TextBlock: MockTextBlock,
+    Control: MockControl,
+  };
+});
+
 // Mock Babylon.js modules since jsdom doesn't support WebGL
 vi.mock("@babylonjs/core", () => {
   class MockEngine {
@@ -108,8 +122,13 @@ describe("Game", () => {
   it("aircraft reads from InputManager (not directly from keyboard)", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
-    // Aircraft should respond to input via the InputManager, not its own key listeners
     expect(game.aircraft).toBeDefined();
     expect(game.input).toBeDefined();
+  });
+
+  it("creates a FlightSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.flightSystem).toBeDefined();
   });
 });

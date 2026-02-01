@@ -39,6 +39,7 @@ import { ProjectilePool } from "./ProjectilePool";
 import { applyPerformanceConfig } from "./PerformanceConfig";
 import { Carrier } from "./Carrier";
 import { CarrierOps } from "./CarrierOps";
+import { TutorialSystem } from "./TutorialSystem";
 
 export class Game {
   engine: Engine;
@@ -72,6 +73,9 @@ export class Game {
   musicManager: MusicManager;
   vfxSystem: VfxSystem;
   projectilePool: ProjectilePool;
+  tutorialSystem: TutorialSystem | null = null;
+  private enemiesActive = true;
+  private onEscapeKey: ((e: KeyboardEvent) => void) | null = null;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
@@ -198,9 +202,32 @@ export class Game {
       }, this.projectilePool);
     }
 
+    // Tutorial mode: hide enemies until tutorial reaches combat step
+    if (mission.tutorial) {
+      this.enemiesActive = false;
+      this.enemy.mesh.setEnabled(false);
+      this.tutorialSystem = new TutorialSystem(
+        canvas.parentElement ?? document.body,
+        () => { /* tutorial complete — enemies already spawned */ },
+        () => {
+          this.enemiesActive = true;
+          this.enemy.mesh.setEnabled(true);
+        },
+      );
+      this.onEscapeKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") this.tutorialSystem?.skip();
+      };
+      window.addEventListener("keydown", this.onEscapeKey);
+    }
+
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
+
+      // Tutorial step progression
+      if (this.tutorialSystem) {
+        this.tutorialSystem.update(this.aircraft, dt);
+      }
 
       // Carrier operations
       if (this.carrierOps) {
@@ -244,9 +271,11 @@ export class Game {
       // Update formations (steers wingmen when disengaged)
       this.formationSystem.updateAll(this.aircraft, dt);
 
-      this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, enemyUnderFire);
-      this.flightSystem.update(this.enemy, dt);
-      this.enemyWeaponSystem.update(this.enemy, dt);
+      if (this.enemiesActive) {
+        this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, enemyUnderFire);
+        this.flightSystem.update(this.enemy, dt);
+        this.enemyWeaponSystem.update(this.enemy, dt);
+      }
 
       // Collision detection — guns (player + enemy)
       this.collisionSystem.update(
@@ -438,6 +467,10 @@ export class Game {
 
   dispose(): void {
     this.engine.stopRenderLoop();
+    this.tutorialSystem?.dispose();
+    if (this.onEscapeKey) {
+      window.removeEventListener("keydown", this.onEscapeKey);
+    }
     this.audioManager.dispose();
     this.musicManager.dispose();
     this.projectilePool.dispose();

@@ -78,4 +78,9 @@ describe("Pacific Theater Missions", () => {
     const hasSurvive = missions.some((m) => m.objectives.some((o) => o.type === "survive_time"));
     expect(hasSurvive).toBe(true);
   });
+
+  it("first mission is a tutorial", () => {
+    expect(missions[0].tutorial).toBe(true);
+    expect(missions[0].title).toBe("Flight School");
+  });
 });

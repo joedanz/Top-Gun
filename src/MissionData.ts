@@ -57,6 +57,8 @@ export interface MissionData {
   carrier?: CarrierSpawn;
   /** When true, player starts on carrier deck (catapult takeoff). */
   startOnDeck?: boolean;
+  /** When true, mission runs the tutorial system with step-by-step prompts. */
+  tutorial?: boolean;
 }
 
 export interface CarrierSpawn {

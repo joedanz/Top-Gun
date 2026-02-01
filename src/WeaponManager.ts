@@ -8,6 +8,7 @@ import { MissileLockSystem } from "./MissileLockSystem";
 import { Rocket } from "./Rocket";
 import { Bomb } from "./Bomb";
 import { Missile } from "./Missile";
+import type { ProjectilePool } from "./ProjectilePool";
 
 export enum WeaponType {
   Guns = "guns",
@@ -53,9 +54,9 @@ export class WeaponManager {
   private radarPrevFire = false;
   private prevCycleWeapon = false;
 
-  constructor(scene: Scene, ammo: WeaponAmmoConfig = {}) {
+  constructor(scene: Scene, ammo: WeaponAmmoConfig = {}, pool?: ProjectilePool) {
     this.scene = scene;
-    this.gunSystem = new WeaponSystem(scene, ammo.gunAmmo ?? 200);
+    this.gunSystem = new WeaponSystem(scene, ammo.gunAmmo ?? 200, pool);
     this.missileLockSystem = new MissileLockSystem(scene, ammo.heatSeeking ?? 4);
     this.rocketAmmo = ammo.rockets ?? 0;
     this.bombAmmo = ammo.bombs ?? 0;

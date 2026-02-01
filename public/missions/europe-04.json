@@ -1,0 +1,44 @@
+{
+  "id": "europe-04",
+  "title": "Air Superiority",
+  "description": "A large enemy formation has been spotted over the Alps. Establish air superiority by destroying their squadron and neutralizing ground radar installations.",
+  "theater": "europe",
+  "playerStart": {
+    "position": { "x": 0, "y": 90, "z": -500 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 0, "y": 100, "z": 400 } },
+    { "position": { "x": 150, "y": 90, "z": 350 } },
+    { "position": { "x": -150, "y": 90, "z": 350 } },
+    { "position": { "x": 300, "y": 80, "z": 600 } },
+    { "position": { "x": -300, "y": 80, "z": 600 } },
+    { "position": { "x": 0, "y": 75, "z": 900 } }
+  ],
+  "formations": [
+    {
+      "type": "diamond",
+      "members": [0, 1, 2]
+    },
+    {
+      "type": "wing",
+      "members": [3, 4]
+    }
+  ],
+  "groundTargets": [
+    { "type": "radar", "position": { "x": 200, "y": 0, "z": 300 } },
+    { "type": "radar", "position": { "x": -200, "y": 0, "z": 500 } },
+    { "type": "sam", "position": { "x": 0, "y": 0, "z": 400 } }
+  ],
+  "aiDifficulty": 3,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy the enemy squadron"
+    },
+    {
+      "type": "destroy_ground_targets",
+      "description": "Neutralize enemy radar installations"
+    }
+  ]
+}

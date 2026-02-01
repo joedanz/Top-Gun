@@ -3,6 +3,7 @@
 
 import { Game } from "./Game";
 import { BriefingScene } from "./BriefingScene";
+import { CreditsScene } from "./CreditsScene";
 import { DebriefScene } from "./DebriefScene";
 import { HangarScene } from "./HangarScene";
 import { MenuScene } from "./MenuScene";
@@ -135,20 +136,35 @@ async function startMission(mission: MissionData, aircraftId: string): Promise<v
   await game.loadModels(aircraftId);
 }
 
+const FINAL_MISSION_ID = "arctic-05";
+
 function showDebrief(result: MissionResult, mission: MissionData): void {
+  const isCampaignComplete = mission.id === FINAL_MISSION_ID && result.outcome === "success";
   let debrief: DebriefScene | null = null;
   debrief = new DebriefScene(
     result,
     document.body,
     () => {
       debrief?.dispose();
-      showTheaterSelect();
+      if (isCampaignComplete) {
+        showCredits();
+      } else {
+        showTheaterSelect();
+      }
     },
     () => {
       debrief?.dispose();
       showMenu();
     },
   );
+}
+
+function showCredits(): void {
+  let credits: CreditsScene | null = null;
+  credits = new CreditsScene(document.body, () => {
+    credits?.dispose();
+    showMenu();
+  });
 }
 
 async function start(): Promise<void> {

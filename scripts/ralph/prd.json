@@ -65,7 +65,7 @@
       ],
       "epic": "Phase 1: Core Flight",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -50,4 +50,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Stall recovery: nose drops (rotation.x increases) and speed recovers automatically
   - DebugPanel uses AdvancedDynamicTexture.CreateFullscreenUI for screen-space GUI overlay
   - Babylon GUI Slider.onValueChangedObservable.add() for reactive parameter binding
+  - CameraSystem uses lerp interpolation with configurable smoothing factor
+  - Remove `camera.attachControl()` when using a custom CameraSystem to avoid input conflicts
+---
+
+## 2026-02-01 - US-004
+- What was implemented: CameraSystem with smooth third-person chase camera, speed-dependent distance, and lerp interpolation
+- Files changed: src/CameraSystem.ts, src/CameraSystem.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 6 new tests (5 CameraSystem + 1 Game), total now 44
+- **Learnings for future iterations:**
+  - FreeCamera.attachControl must be removed when CameraSystem manages positioning — otherwise built-in controls fight with custom logic
+  - Lerp smoothing factor of 0.05 gives a nice smooth follow without feeling laggy
+  - Speed-dependent distance formula: `baseDistance + (speed/maxSpeed) * speedDistanceScale`
+  - Mock FreeCamera needs position as MockVector3 (with x/y/z), not a plain object
 ---

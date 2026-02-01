@@ -117,6 +117,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - ProjectilePool: `acquire()` returns enabled mesh, `release()` disables and returns to pool — WeaponSystem manages lifecycle
 - Pooled Projectile: pass `existingMesh` to constructor, skip `mesh.dispose()` on death (pool handles it)
 - `applyPerformanceConfig(scene)` sets scene-level optimizations — call after Scene creation in Game constructor
+- Carrier entity: hull + deck meshes, `isOnDeck(pos)` for landing detection, `getDeckY()` for surface height
+- `MissionData.carrier?: CarrierSpawn` — optional carrier placement per mission (position + heading)
 
 ---
 
@@ -568,4 +570,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `scene.blockMaterialDirtyMechanism = true` skips material change tracking — safe for static materials
   - `scene.skipPointerMovePicking = true` avoids per-frame raycasting for pointer hover (not needed in flight game)
   - `createMockMesh` in Game.test.ts needed `setEnabled` and `dispose` methods for ProjectilePool integration
+---
+
+## 2026-02-01 - US-038
+- What was implemented: Carrier entity with hull and deck meshes, flat deck collision surface, isOnDeck detection, MissionData carrier schema, MissionLoader/Game carrier spawning, carrier added to pacific-01 mission
+- Files changed: src/Carrier.ts, src/Carrier.test.ts, src/MissionData.ts, src/MissionLoader.ts, src/MissionLoader.test.ts, src/Game.ts, src/Game.test.ts, public/missions/pacific-01.json
+- **Tests added:** 13 new tests (9 Carrier + 2 MissionLoader + 2 Game), total now 530
+- **Learnings for future iterations:**
+  - Carrier uses two CreateBox meshes: hull (20x8x120) and deck (24x0.5x130) — deck slightly wider/longer than hull
+  - `isOnDeck()` uses simple AABB check against deck half-extents — sufficient for landing detection
+  - `getDeckY()` returns hull top + deck half-height for precise landing surface
+  - `MissionData.carrier` is optional `CarrierSpawn` — backward compatible with all existing missions
+  - Carrier at y=0 places hull at water level; deck surface at y≈4.25
 ---

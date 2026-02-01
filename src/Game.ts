@@ -15,6 +15,7 @@ import { AISystem } from "./AISystem";
 import { CollisionSystem } from "./CollisionSystem";
 import { ScreenShake } from "./ScreenShake";
 import { HitFlash } from "./HitFlash";
+import { Hud } from "./Hud";
 
 export class Game {
   engine: Engine;
@@ -33,6 +34,7 @@ export class Game {
   collisionSystem: CollisionSystem;
   screenShake: ScreenShake;
   hitFlash: HitFlash;
+  hud: Hud;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -67,6 +69,7 @@ export class Game {
     this.collisionSystem.setPlayer(this.aircraft);
     this.screenShake = new ScreenShake();
     this.hitFlash = new HitFlash(this.scene);
+    this.hud = new Hud();
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
@@ -113,6 +116,8 @@ export class Game {
       camera.position.x += shakeOffset.x;
       camera.position.y += shakeOffset.y;
       camera.position.z += shakeOffset.z;
+
+      this.hud.update(this.aircraft, this.weaponSystem.ammo);
 
       this.scene.render();
     });

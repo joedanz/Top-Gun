@@ -1,0 +1,24 @@
+{
+  "id": "pacific-02",
+  "title": "Patrol Route",
+  "description": "Patrol the sector and eliminate any hostile aircraft you encounter. Intel reports scattered enemy patrols in the area.",
+  "theater": "pacific",
+  "playerStart": {
+    "position": { "x": 0, "y": 60, "z": 0 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 300, "y": 55, "z": 500 } },
+    { "position": { "x": -200, "y": 65, "z": 700 } },
+    { "position": { "x": 400, "y": 50, "z": 900 } },
+    { "position": { "x": -100, "y": 70, "z": 1100 } }
+  ],
+  "aiDifficulty": 1,
+  "objectives": [
+    {
+      "type": "destroy_enemies",
+      "description": "Destroy 3 enemy aircraft",
+      "count": 3
+    }
+  ]
+}

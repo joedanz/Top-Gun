@@ -1,0 +1,39 @@
+{
+  "id": "pacific-04",
+  "title": "Fleet Escort",
+  "description": "Escort the carrier group through hostile waters. A coordinated enemy strike force is approaching in formation. Destroy all hostiles before they reach the fleet.",
+  "theater": "pacific",
+  "playerStart": {
+    "position": { "x": 0, "y": 60, "z": -100 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 200, "y": 65, "z": 400 } },
+    { "position": { "x": 250, "y": 60, "z": 450 } },
+    { "position": { "x": -200, "y": 55, "z": 600 } },
+    { "position": { "x": -250, "y": 60, "z": 650 } },
+    { "position": { "x": 0, "y": 70, "z": 800 } },
+    { "position": { "x": 100, "y": 75, "z": 850 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    },
+    {
+      "type": "wing",
+      "members": [2, 3]
+    },
+    {
+      "type": "wing",
+      "members": [4, 5]
+    }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy all enemy aircraft"
+    }
+  ]
+}

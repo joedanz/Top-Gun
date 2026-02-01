@@ -192,6 +192,30 @@ describe("CollisionSystem", () => {
     expect(projectile.alive).toBe(true);
   });
 
+  it("sets playerHitThisFrame when player takes damage", () => {
+    const player = makeAircraft(10, 10, 10);
+    const projectile = makeProjectile(10, 10, 10);
+    const ws = makeWeaponSystem([projectile]);
+
+    system.setPlayer(player);
+    system.update([player], [ws], []);
+
+    expect(system.playerHitThisFrame).toBe(true);
+  });
+
+  it("resets playerHitThisFrame each update", () => {
+    const player = makeAircraft(10, 10, 10);
+    const projectile = makeProjectile(10, 10, 10);
+    const ws = makeWeaponSystem([projectile]);
+
+    system.setPlayer(player);
+    system.update([player], [ws], []);
+    expect(system.playerHitThisFrame).toBe(true);
+
+    system.update([player], [makeWeaponSystem([])], []);
+    expect(system.playerHitThisFrame).toBe(false);
+  });
+
   it("skips dead projectiles during collision checks", () => {
     const aircraft = makeAircraft(10, 10, 10);
     const projectile = makeProjectile(10, 10, 10);

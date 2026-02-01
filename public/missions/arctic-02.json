@@ -1,0 +1,43 @@
+{
+  "id": "arctic-02",
+  "title": "Ice Station",
+  "description": "A remote ice station is being used as a drone relay hub. Destroy the ground installations while fending off defending drone swarms.",
+  "theater": "arctic",
+  "playerStart": {
+    "position": { "x": 0, "y": 80, "z": -600 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 100, "y": 65, "z": 200 } },
+    { "position": { "x": -100, "y": 65, "z": 200 } },
+    { "position": { "x": 200, "y": 60, "z": 400 } },
+    { "position": { "x": -200, "y": 60, "z": 400 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    },
+    {
+      "type": "wing",
+      "members": [2, 3]
+    }
+  ],
+  "groundTargets": [
+    { "type": "radar", "position": { "x": 0, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": 80, "y": 0, "z": 350 } },
+    { "type": "sam", "position": { "x": -80, "y": 0, "z": 350 } },
+    { "type": "bunker", "position": { "x": 0, "y": 0, "z": 400 } }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy the relay station installations"
+    },
+    {
+      "type": "destroy_all",
+      "description": "Eliminate defending drones"
+    }
+  ]
+}

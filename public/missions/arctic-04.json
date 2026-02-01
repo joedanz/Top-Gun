@@ -1,0 +1,55 @@
+{
+  "id": "arctic-04",
+  "title": "Frozen Airfield",
+  "description": "The rogue AI has established an airfield on a frozen lake. Destroy the ground defenses and neutralize the drone garrison. Expect heavy resistance — SAM coverage is dense.",
+  "theater": "arctic",
+  "playerStart": {
+    "position": { "x": 0, "y": 95, "z": -800 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 50, "y": 85, "z": 200 } },
+    { "position": { "x": -50, "y": 85, "z": 200 } },
+    { "position": { "x": 150, "y": 80, "z": 400 } },
+    { "position": { "x": -150, "y": 80, "z": 400 } },
+    { "position": { "x": 0, "y": 90, "z": 600 } },
+    { "position": { "x": 100, "y": 75, "z": 700 } },
+    { "position": { "x": -100, "y": 75, "z": 700 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    },
+    {
+      "type": "wing",
+      "members": [2, 3]
+    },
+    {
+      "type": "diamond",
+      "members": [4, 5, 6]
+    }
+  ],
+  "groundTargets": [
+    { "type": "sam", "position": { "x": 120, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": -120, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": 0, "y": 0, "z": 450 } },
+    { "type": "radar", "position": { "x": 60, "y": 0, "z": 350 } },
+    { "type": "radar", "position": { "x": -60, "y": 0, "z": 350 } },
+    { "type": "bunker", "position": { "x": 0, "y": 0, "z": 500 } },
+    { "type": "vehicle", "position": { "x": 80, "y": 0, "z": 500 } },
+    { "type": "vehicle", "position": { "x": -80, "y": 0, "z": 500 } }
+  ],
+  "aiDifficulty": 3,
+  "objectives": [
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy the frozen airfield"
+    },
+    {
+      "type": "destroy_enemies",
+      "count": 5,
+      "description": "Neutralize the drone garrison"
+    }
+  ]
+}

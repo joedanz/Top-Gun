@@ -40,6 +40,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - ObjectiveManager tracks kills via `recordKill()` and time via `update(dt)`, reports `outcome` as getter
 - Mission JSON files live in `public/missions/` — fetched at runtime, not bundled as imports
 - Mock `CreateCylinder` must return a NEW object per call (not spread of shared template) to avoid shared position refs
+- HTML/CSS overlays (BriefingScene pattern): create div with `position:absolute;inset:0;z-index:100`, dispose removes from DOM
+- Scene transition flow: main.ts fetches mission JSON → BriefingScene overlay → onLaunch callback disposes overlay and creates Game
 
 ---
 
@@ -212,4 +214,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - ObjectiveManager uses a getter `outcome` that derives state from kills/time/failed — no manual state transitions
   - Mock objects with shared nested references (e.g., position) cause tests to interfere — always create fresh objects per mock call
   - Mission JSON in public/ directory means it's served as static assets by Vite, fetchable at runtime
+---
+
+## 2026-02-01 - US-015
+- What was implemented: BriefingScene (HTML/CSS overlay showing mission title, description, theater, objectives, and Launch button), main.ts updated to fetch mission JSON and show briefing before starting Game
+- Files changed: src/BriefingScene.ts, src/BriefingScene.test.ts, src/main.ts
+- **Tests added:** 8 new tests in src/BriefingScene.test.ts, total now 178
+- **Learnings for future iterations:**
+  - HTML/CSS overlay approach is simpler than Babylon GUI for text-heavy UI screens (briefing, menus)
+  - BriefingScene takes a container element + onLaunch callback — clean separation from game lifecycle
+  - `dispose()` pattern with `this.overlay.remove()` ensures clean DOM teardown on scene transition
+  - Many Vite dev servers may be running; check output for actual port assignment (can go up to 5189+)
 ---

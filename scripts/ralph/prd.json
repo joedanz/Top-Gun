@@ -249,7 +249,7 @@
       ],
       "epic": "Phase 4: Mission System",
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

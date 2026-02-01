@@ -94,6 +94,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `MissionResult` has score, medal, shotsFired, shotsHit, damageTaken — all test MissionResult objects must include these fields
 - `WeaponSystem.shotsFired` tracks gun rounds fired; `CollisionSystem.playerHitsDealt` tracks hits on enemies
 - `MissionInfo.medal` field required in TheaterSelectScene — pass via `progression.getMissionMedal(id)` in buildTheaterInfos()
+- Boss missions use `bossIndex`, `bossName`, `bossHealth` in MissionData — all optional for backward compat
+- BossSystem phases: Normal (>50% HP), Enraged (≤50%), Desperate (≤25%) — `aggressionModifier` scales per phase
+- BossHealthBar is a separate AdvancedDynamicTexture — call `show(name)` to activate, `update(ratio)` each frame
+- Game.bossSystem is null for non-boss missions — check `mission.bossIndex !== undefined` before initializing
 
 ---
 
@@ -470,4 +474,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Medal is derived from score at query time via `getMedal(score)` — no need to store medals separately
   - `MissionInfo.medal` field added to TheaterSelectScene — medals shown as symbols (★ gold, ☆ silver, ● bronze)
   - `makeResult()` test helper in ProgressionManager.test.ts auto-computes score/medal from parameters — reduces boilerplate
+---
+
+## 2026-02-01 - US-032
+- What was implemented: BossSystem (phase transitions: Normal → Enraged → Desperate based on health), BossHealthBar (HUD element with name and colored health bar), MissionData boss fields (bossIndex, bossName, bossHealth), Game integration initializing boss on boss missions, arctic-05 boss mission JSON, updated pacific-05/middleeast-05/europe-05 with boss data
+- Files changed: src/BossSystem.ts, src/BossSystem.test.ts, src/BossHealthBar.ts, src/BossHealthBar.test.ts, src/BossMissions.test.ts, src/Game.ts, src/Game.test.ts, src/MissionData.ts, public/missions/pacific-05.json, public/missions/middleeast-05.json, public/missions/europe-05.json, public/missions/arctic-05.json
+- **Tests added:** 50 new tests (11 BossSystem + 7 BossHealthBar + 29 BossMissions + 3 Game), total now 459
+- **Learnings for future iterations:**
+  - BossSystem uses phase enum with threshold checks — cleaner than nested if/else for multi-phase state
+  - `bossIndex` in MissionData identifies which enemy is the boss — keeps schema backward-compatible with optional field
+  - BossHealthBar uses separate AdvancedDynamicTexture — multiple fullscreen UIs can coexist (HUD, Debug, HitFlash, BossHealth)
+  - Boss health override applied in Game constructor before BossSystem.init() captures maxHealth
+  - Arctic boss "Nemesis" has 500 HP (highest) — progressive difficulty across theaters: 300/350/400/500
 ---

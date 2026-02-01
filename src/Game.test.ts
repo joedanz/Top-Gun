@@ -248,6 +248,11 @@ describe("Game", () => {
     expect(game.objectiveManager).toBeDefined();
   });
 
+  it("creates a FormationSystem", () => {
+    const game = createGame();
+    expect(game.formationSystem).toBeDefined();
+  });
+
   it("has a dispose method that stops the engine", () => {
     const game = createGame();
     expect(typeof game.dispose).toBe("function");

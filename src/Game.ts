@@ -19,7 +19,8 @@ import { Hud } from "./Hud";
 import { TargetingSystem } from "./TargetingSystem";
 import { Radar } from "./Radar";
 import { MissileLockSystem } from "./MissileLockSystem";
-import type { MissionData } from "./MissionData";
+import type { MissionData, FormationSpawn } from "./MissionData";
+import { FormationSystem } from "./FormationSystem";
 import type { MissionResult } from "./DebriefScene";
 import { ObjectiveManager } from "./ObjectiveManager";
 import { getAircraftStats } from "./AircraftData";
@@ -46,6 +47,7 @@ export class Game {
   radar: Radar;
   missileLockSystem: MissileLockSystem;
   objectiveManager: ObjectiveManager;
+  formationSystem: FormationSystem;
   private missionEnded = false;
   private kills = 0;
   private elapsedTime = 0;
@@ -93,6 +95,23 @@ export class Game {
     this.radar = new Radar();
     this.missileLockSystem = new MissileLockSystem(this.scene);
     this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
+    this.formationSystem = new FormationSystem();
+
+    // Create formations from mission data
+    if (mission.formations) {
+      for (const formationDef of mission.formations) {
+        const leaderIndex = formationDef.members[0];
+        const wingmenIndices = formationDef.members.slice(1);
+        // Only create formation if leader is our single enemy (index 0)
+        if (leaderIndex === 0) {
+          this.formationSystem.createFormation(
+            formationDef.type,
+            this.enemy as Aircraft & { input: AIInput },
+            [], // No additional wingmen in current single-enemy Game setup
+          );
+        }
+      }
+    }
 
     if (aircraftId) {
       const stats = getAircraftStats(aircraftId);
@@ -114,6 +133,9 @@ export class Game {
         const dz = p.mesh.position.z - this.enemy.mesh.position.z;
         return Math.sqrt(dx * dx + dy * dy + dz * dz) < 100;
       });
+
+      // Update formations (steers wingmen when disengaged)
+      this.formationSystem.updateAll(this.aircraft, dt);
 
       this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, enemyUnderFire);
       this.flightSystem.update(this.enemy, dt);

@@ -17,6 +17,12 @@ export interface EnemySpawn {
   color?: { r: number; g: number; b: number };
 }
 
+export interface FormationSpawn {
+  type: "wing" | "diamond";
+  /** Indices into the enemies array: first is leader, rest are wingmen. */
+  members: number[];
+}
+
 export interface PlayerStart {
   position: { x: number; y: number; z: number };
   heading: number;
@@ -29,5 +35,6 @@ export interface MissionData {
   theater: Theater;
   playerStart: PlayerStart;
   enemies: EnemySpawn[];
+  formations?: FormationSpawn[];
   objectives: ObjectiveData[];
 }

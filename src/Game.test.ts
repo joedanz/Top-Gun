@@ -163,4 +163,10 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.cameraSystem).toBeDefined();
   });
+
+  it("creates a WeaponSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.weaponSystem).toBeDefined();
+  });
 });

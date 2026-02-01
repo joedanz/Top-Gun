@@ -9,6 +9,7 @@ import { CameraSystem } from "./CameraSystem";
 import { DebugPanel } from "./DebugPanel";
 import { Terrain } from "./Terrain";
 import { Skybox } from "./Skybox";
+import { WeaponSystem } from "./WeaponSystem";
 
 export class Game {
   engine: Engine;
@@ -20,6 +21,7 @@ export class Game {
   debugPanel: DebugPanel;
   terrain: Terrain;
   skybox: Skybox;
+  weaponSystem: WeaponSystem;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -39,11 +41,13 @@ export class Game {
     this.aircraft = new Aircraft(this.scene, this.input);
     this.flightSystem = new FlightSystem();
     this.cameraSystem = new CameraSystem(camera);
+    this.weaponSystem = new WeaponSystem(this.scene);
     this.debugPanel = new DebugPanel(this.flightSystem);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
+      this.weaponSystem.update(this.aircraft, dt);
       this.cameraSystem.update(this.aircraft, dt);
       this.scene.render();
     });

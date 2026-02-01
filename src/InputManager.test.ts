@@ -20,6 +20,7 @@ describe("InputManager", () => {
     expect(input.roll).toBe(0);
     expect(input.yaw).toBe(0);
     expect(input.throttle).toBe(0);
+    expect(input.fire).toBe(false);
   });
 
   it("reports positive pitch when W is pressed", () => {
@@ -73,6 +74,14 @@ describe("InputManager", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "s" }));
     expect(input.pitch).toBe(0);
+  });
+
+  it("reports fire when Space is pressed", () => {
+    expect(input.fire).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: " " }));
+    expect(input.fire).toBe(true);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: " " }));
+    expect(input.fire).toBe(false);
   });
 
   it("stops listening after dispose", () => {

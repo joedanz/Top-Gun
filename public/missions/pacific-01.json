@@ -12,6 +12,12 @@
     { "position": { "x": -150, "y": 55, "z": 500 } },
     { "position": { "x": 100, "y": 70, "z": 600 } }
   ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    }
+  ],
   "objectives": [
     {
       "type": "destroy_all",

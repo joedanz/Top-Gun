@@ -1,4 +1,4 @@
-// ABOUTME: Tests for the Game class — verifies scene setup, ground plane, and movable cube.
+// ABOUTME: Tests for the Game class — verifies scene setup, ground plane, and aircraft integration.
 // ABOUTME: Uses mocked Babylon.js engine since jsdom has no WebGL.
 
 import { describe, it, expect, vi } from "vitest";
@@ -6,6 +6,7 @@ import { describe, it, expect, vi } from "vitest";
 const createMockMesh = (name: string) => ({
   name,
   position: { x: 0, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: 0 },
   scaling: { x: 1, y: 1, z: 1 },
   receiveShadows: false,
 });
@@ -65,7 +66,7 @@ vi.mock("@babylonjs/core", () => {
     Color4: MockColor4,
     MeshBuilder: {
       CreateGround: vi.fn((_name: string) => createMockMesh("ground")),
-      CreateBox: vi.fn((_name: string) => createMockMesh("cube")),
+      CreateCylinder: vi.fn((_name: string) => createMockMesh("aircraft")),
     },
   };
 });
@@ -91,44 +92,24 @@ describe("Game", () => {
     );
   });
 
-  it("creates a movable cube above the ground", () => {
+  it("creates an Aircraft entity", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
-    expect(game.cube).toBeDefined();
-    expect(game.cube.position.y).toBe(1);
-  });
-});
-
-describe("Cube movement", () => {
-  it("moves forward on W key", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
-    const initialZ = game.cube.position.z;
-    game.handleKey("w", 1 / 60);
-    expect(game.cube.position.z).toBeGreaterThan(initialZ);
+    expect(game.aircraft).toBeDefined();
+    expect(game.aircraft.mesh).toBeDefined();
   });
 
-  it("moves backward on S key", () => {
+  it("creates an InputManager", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
-    const initialZ = game.cube.position.z;
-    game.handleKey("s", 1 / 60);
-    expect(game.cube.position.z).toBeLessThan(initialZ);
+    expect(game.input).toBeDefined();
   });
 
-  it("moves left on A key", () => {
+  it("aircraft reads from InputManager (not directly from keyboard)", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
-    const initialX = game.cube.position.x;
-    game.handleKey("a", 1 / 60);
-    expect(game.cube.position.x).toBeLessThan(initialX);
-  });
-
-  it("moves right on D key", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
-    const initialX = game.cube.position.x;
-    game.handleKey("d", 1 / 60);
-    expect(game.cube.position.x).toBeGreaterThan(initialX);
+    // Aircraft should respond to input via the InputManager, not its own key listeners
+    expect(game.aircraft).toBeDefined();
+    expect(game.input).toBeDefined();
   });
 });

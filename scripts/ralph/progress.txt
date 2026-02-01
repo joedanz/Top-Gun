@@ -62,6 +62,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Wingman offsets are rotated by leader heading for world-space positioning
 - AISystem constructor takes optional `difficulty` (1-3); maneuver repertoire scales with difficulty
 - `MissionData.aiDifficulty` configures AI difficulty per mission (defaults to 1)
+- WeaponManager orchestrates all weapon types — wraps WeaponSystem (guns) and MissileLockSystem (heat-seeking)
+- `cycleWeapon` (X key) cycles through weapon types: Guns → HeatSeeking → RadarGuided → Rockets → Bombs
+- Adding a field to FlightInput requires updating type annotations AND mock objects in ALL test files
+- Rocket entity: unguided, 350 speed, 3s lifetime, 35 damage — good for burst fire at ground targets
+- Bomb entity: gravity-affected (30 units/s²), inherits aircraft forward velocity, 80 damage, detonates at ground level
+- Missile `mode` param ("heat" | "radar"): heat=8s lifetime, radar=12s lifetime (fire-and-forget, longer range)
+- `Hittable` interface in CollisionSystem: any entity with `mesh.position`, `alive`, `damage` can collide with aircraft
+- `CollisionSystem.checkHittables()` handles rockets/bombs/missiles — separate from gun projectile checking
+- WeaponLoadout extended: `radarMissiles?`, `rockets?`, `bombs?` (optional for backward compat)
+- Game.ts uses `weaponManager` instead of separate `weaponSystem` + `missileLockSystem`
+- HUD shows `WPN: <label>` and `AMMO: <count>` for the active weapon type
 
 ---
 
@@ -316,4 +327,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - MANEUVERS_BY_DIFFICULTY lookup table cleanly maps difficulty levels to available maneuver repertoires
   - `maneuverDirection` (+1/-1) randomized at maneuver start gives variety without frame-to-frame randomness
   - Break turn uses yaw (not roll) for a hard heading change — distinct from barrel roll which uses roll
+---
+
+## 2026-02-01 - US-022
+- What was implemented: Weapon variety — Rocket entity (unguided, burst fire), Bomb entity (gravity-affected), radar-guided missile mode on Missile, WeaponManager orchestrator with weapon cycling (X key), updated HUD with active weapon display, CollisionSystem.checkHittables() for new projectile types, WeaponLoadout extended with rockets/bombs/radarMissiles, aircraft.json updated with distinct loadouts per aircraft
+- Files changed: src/Rocket.ts, src/Rocket.test.ts, src/Bomb.ts, src/Bomb.test.ts, src/WeaponManager.ts, src/WeaponManager.test.ts, src/Missile.ts, src/Missile.test.ts, src/Projectile.ts, src/CollisionSystem.ts, src/CollisionSystem.test.ts, src/InputManager.ts, src/InputManager.test.ts, src/AIInput.ts, src/AircraftData.ts, src/Hud.ts, src/Hud.test.ts, src/Game.ts, src/Game.test.ts, public/data/aircraft.json, + 5 test files updated for cycleWeapon field
+- **Tests added:** 32 new tests (7 Rocket + 8 Bomb + 4 Missile radar + 9 WeaponManager + 3 HUD weapon + 1 InputManager), total now 276
+- **Learnings for future iterations:**
+  - WeaponManager wraps existing systems rather than replacing them — minimizes refactoring risk
+  - Hittable interface allows CollisionSystem to handle any entity with mesh.position/alive/damage
+  - Adding FlightInput fields is tedious — every mock input in every test file needs updating (consider a shared test helper)
+  - Bomb inherits aircraft forward velocity at release for realistic parabolic trajectory
+  - Radar missile is fire-and-forget — no continuous lock needed after launch (unlike heat-seeking)
+  - HUD update signature changed from positional args to WeaponManager object — cleaner as weapon count grows
 ---

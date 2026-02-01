@@ -98,6 +98,11 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - BossSystem phases: Normal (>50% HP), Enraged (≤50%), Desperate (≤25%) — `aggressionModifier` scales per phase
 - BossHealthBar is a separate AdvancedDynamicTexture — call `show(name)` to activate, `update(ratio)` each frame
 - Game.bossSystem is null for non-boss missions — check `mission.bossIndex !== undefined` before initializing
+- `@babylonjs/loaders` must be installed and imported (`import "@babylonjs/loaders/glTF"`) for GLTF/GLB loading
+- AssetLoader caches loaded meshes by path — load once, apply to multiple aircraft if needed
+- GLTF meshes are scene-bound — AssetLoader must use the Game's scene, not a temporary one
+- `AircraftStats.modelPath` is optional — aircraft without models gracefully use placeholder cone mesh
+- `vi.hoisted()` required for mock functions referenced inside `vi.mock()` factory (used in AssetLoader.test.ts)
 
 ---
 
@@ -486,4 +491,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - BossHealthBar uses separate AdvancedDynamicTexture — multiple fullscreen UIs can coexist (HUD, Debug, HitFlash, BossHealth)
   - Boss health override applied in Game constructor before BossSystem.init() captures maxHealth
   - Arctic boss "Nemesis" has 500 HP (highest) — progressive difficulty across theaters: 300/350/400/500
+---
+
+## 2026-02-01 - US-033
+- What was implemented: AssetLoader module for GLTF model loading with caching and fallback, modelPath field in AircraftStats/aircraft.json, 3 low-poly GLB placeholder models (F-14, P-51, F/A-18), Game.loadModels() for transparent mesh replacement, @babylonjs/loaders dependency
+- Files changed: src/AssetLoader.ts, src/AssetLoader.test.ts, src/AircraftData.ts, src/Game.ts, src/main.ts, public/data/aircraft.json, public/models/f-14.glb, public/models/p-51.glb, public/models/fa-18.glb, package.json
+- **Tests added:** 7 new tests in src/AssetLoader.test.ts (load, cache, catalog preload, mesh replacement, fallback), total now 466
+- **Learnings for future iterations:**
+  - GLTF meshes are bound to the Scene they're loaded into — must use Game's scene, not a temporary one
+  - SceneLoader.ImportMeshAsync returns meshes[0] as root mesh — use it for position/rotation
+  - applyModel pattern: save old position, dispose old mesh, assign new, restore position
+  - Generated GLB files with raw binary approach (no extra dependencies) for placeholder geometry
+  - `vi.hoisted()` is essential for mock functions used inside `vi.mock()` factory callbacks
 ---

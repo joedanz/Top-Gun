@@ -107,9 +107,30 @@ vi.mock("@babylonjs/core", () => {
     start = vi.fn(); createSphereEmitter = vi.fn();
   }
 
+  class MockSound {
+    play = vi.fn(() => { this.isPlaying = true; });
+    stop = vi.fn(() => { this.isPlaying = false; });
+    dispose = vi.fn();
+    setVolume = vi.fn();
+    attachToMesh = vi.fn();
+    setPlaybackRate = vi.fn();
+    isPlaying = false;
+    loop = false;
+    spatialSound = false;
+    maxDistance = 500;
+    rolloffFactor = 1;
+    name: string;
+    constructor(name: string, _url: string, _scene: unknown, _readyCallback?: unknown, options?: { loop?: boolean; spatialSound?: boolean; maxDistance?: number; rolloffFactor?: number }) {
+      this.name = name;
+      if (options?.loop) this.loop = true;
+      if (options?.spatialSound) this.spatialSound = true;
+    }
+  }
+
   return {
     Engine: MockEngine,
     Scene: MockScene,
+    Sound: MockSound,
     FreeCamera: MockFreeCamera,
     HemisphericLight: MockHemisphericLight,
     Vector3: MockVector3,
@@ -300,5 +321,18 @@ describe("Game", () => {
   it("does not create BossSystem for non-boss missions", () => {
     const game = createGame();
     expect(game.bossSystem).toBeNull();
+  });
+
+  it("creates an AudioManager with engine sound", () => {
+    const game = createGame();
+    expect(game.audioManager).toBeDefined();
+    expect(game.audioManager.engineSound).toBeDefined();
+  });
+
+  it("disposes AudioManager on game dispose", () => {
+    const game = createGame();
+    const disposeSpy = vi.spyOn(game.audioManager, "dispose");
+    game.dispose();
+    expect(disposeSpy).toHaveBeenCalled();
   });
 });

@@ -31,6 +31,7 @@ import { calculateScore, getMedal } from "./Scoring";
 import { BossSystem } from "./BossSystem";
 import { BossHealthBar } from "./BossHealthBar";
 import { AssetLoader } from "./AssetLoader";
+import { AudioManager } from "./AudioManager";
 
 export class Game {
   engine: Engine;
@@ -58,10 +59,14 @@ export class Game {
   groundTargets: GroundTarget[];
   bossSystem: BossSystem | null = null;
   bossHealthBar: BossHealthBar;
+  audioManager: AudioManager;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
   private elapsedTime = 0;
+  private prevShotsFired = 0;
+  private prevMissileCount = 0;
+  private prevEnemyAlive = true;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -109,6 +114,9 @@ export class Game {
     this.formationSystem = new FormationSystem();
     this.countermeasureSystem = new CountermeasureSystem(this.scene);
     this.bossHealthBar = new BossHealthBar();
+    this.audioManager = new AudioManager(this.scene);
+    this.audioManager.startEngine();
+    this.audioManager.addEnemyEngine(this.enemy.mesh);
 
     // Initialize boss system if this is a boss mission
     if (mission.bossIndex !== undefined && mission.bossIndex === 0) {
@@ -310,6 +318,32 @@ export class Game {
         }
       }
 
+      // Audio: engine pitch based on speed
+      const maxSpeed = this.aircraft.flightParams?.maxSpeed ?? this.flightSystem.params.maxSpeed;
+      const throttle = this.aircraft.speed / maxSpeed;
+      this.audioManager.updateEngine(throttle);
+
+      // Audio: gun fire SFX
+      const currentShots = this.weaponManager.gunSystem.shotsFired;
+      if (currentShots > this.prevShotsFired) {
+        this.audioManager.playGunFire();
+      }
+      this.prevShotsFired = currentShots;
+
+      // Audio: missile launch SFX
+      const currentMissiles = this.weaponManager.missileLockSystem.missiles.length
+        + this.weaponManager.radarMissiles.length;
+      if (currentMissiles > this.prevMissileCount) {
+        this.audioManager.playMissileLaunch();
+      }
+      this.prevMissileCount = currentMissiles;
+
+      // Audio: explosion on enemy destruction
+      if (this.prevEnemyAlive && !this.enemy.alive) {
+        this.audioManager.playExplosion();
+      }
+      this.prevEnemyAlive = this.enemy.alive;
+
       this.scene.render();
     });
 
@@ -328,6 +362,7 @@ export class Game {
 
   dispose(): void {
     this.engine.stopRenderLoop();
+    this.audioManager.dispose();
     this.engine.dispose();
     this.input.dispose();
   }

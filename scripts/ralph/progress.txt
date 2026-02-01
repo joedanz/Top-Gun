@@ -73,6 +73,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - WeaponLoadout extended: `radarMissiles?`, `rockets?`, `bombs?` (optional for backward compat)
 - Game.ts uses `weaponManager` instead of separate `weaponSystem` + `missileLockSystem`
 - HUD shows `WPN: <label>` and `AMMO: <count>` for the active weapon type
+- `Missile.divertToFlare(pos)` redirects a missile toward a flare position — nulls the target reference
+- CountermeasureSystem alternates flare/chaff on each F key press; falls back if one type is depleted
+- Flare decoy uses probabilistic check (`Math.random() < threshold`) — mock Math.random for deterministic tests
+- `deployCountermeasure` field added to FlightInput — F key in InputManager
 
 ---
 
@@ -340,4 +344,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Bomb inherits aircraft forward velocity at release for realistic parabolic trajectory
   - Radar missile is fire-and-forget — no continuous lock needed after launch (unlike heat-seeking)
   - HUD update signature changed from positional args to WeaponManager object — cleaner as weapon count grows
+---
+
+## 2026-02-01 - US-023
+- What was implemented: Flare entity (mesh + particle effect, backward drift, lifetime expiry), CountermeasureSystem (alternating flare/chaff deployment, edge-triggered F key, cooldown, probabilistic missile decoying), Missile.divertToFlare() for redirecting missiles toward countermeasures, HUD shows FLR/CHF ammo counts, Game integration
+- Files changed: src/Flare.ts, src/Flare.test.ts, src/CountermeasureSystem.ts, src/CountermeasureSystem.test.ts, src/Missile.ts, src/Missile.test.ts, src/InputManager.ts, src/InputManager.test.ts, src/AIInput.ts, src/Hud.ts, src/Game.ts, + 7 test files updated for deployCountermeasure field
+- **Tests added:** 18 new tests (5 Flare + 10 CountermeasureSystem + 1 InputManager + 2 Missile divert), total now 294
+- **Learnings for future iterations:**
+  - Missile.divertToFlare() nulls the target and sets a divertPosition — tracking code checks divertPosition first, then target
+  - CountermeasureSystem alternates flare/chaff on each press — fallback to the other type if one is depleted
+  - Flare decoy is probabilistic (70% for heat-seekers, 60% for radar) — use `vi.spyOn(Math, 'random')` for deterministic tests
+  - Edge-triggered deploy + cooldown (0.3s) prevents spamming countermeasures
+  - HUD.update() takes optional CountermeasureSystem param — backward compatible with existing callers
 ---

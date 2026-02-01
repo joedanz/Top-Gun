@@ -10,6 +10,8 @@ const createMockMesh = (name: string) => ({
   scaling: { x: 1, y: 1, z: 1 },
   receiveShadows: false,
   material: null as unknown,
+  setEnabled: vi.fn(),
+  dispose: vi.fn(),
 });
 
 vi.mock("@babylonjs/gui", () => {

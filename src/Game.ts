@@ -34,6 +34,8 @@ import { AssetLoader } from "./AssetLoader";
 import { AudioManager } from "./AudioManager";
 import { MusicManager } from "./MusicManager";
 import { VfxSystem } from "./VfxSystem";
+import { ProjectilePool } from "./ProjectilePool";
+import { applyPerformanceConfig } from "./PerformanceConfig";
 
 export class Game {
   engine: Engine;
@@ -64,6 +66,7 @@ export class Game {
   audioManager: AudioManager;
   musicManager: MusicManager;
   vfxSystem: VfxSystem;
+  projectilePool: ProjectilePool;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
@@ -88,6 +91,9 @@ export class Game {
     const light = new HemisphericLight("light", new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.7;
 
+    applyPerformanceConfig(this.scene);
+    this.projectilePool = new ProjectilePool(this.scene, 50);
+
     this.terrain = new Terrain(this.scene);
     this.skybox = new Skybox(this.scene);
 
@@ -98,7 +104,7 @@ export class Game {
     this.debugPanel = new DebugPanel(this.flightSystem);
 
     // Weapon manager (defaults, overridden below if aircraftId provided)
-    this.weaponManager = new WeaponManager(this.scene);
+    this.weaponManager = new WeaponManager(this.scene, undefined, this.projectilePool);
 
     // Enemy aircraft with AI
     const aiInput = new AIInput();
@@ -106,7 +112,7 @@ export class Game {
     this.enemy.mesh.position.x = 100;
     this.enemy.mesh.position.z = 200;
     this.enemy.mesh.position.y = 50;
-    this.enemyWeaponSystem = new WeaponSystem(this.scene);
+    this.enemyWeaponSystem = new WeaponSystem(this.scene, undefined, this.projectilePool);
     this.aiSystem = new AISystem(mission.aiDifficulty);
     this.collisionSystem = new CollisionSystem(this.scene);
     this.collisionSystem.setPlayer(this.aircraft);
@@ -175,7 +181,7 @@ export class Game {
         radarGuided: loadout.radarMissiles ?? 0,
         rockets: loadout.rockets ?? 0,
         bombs: loadout.bombs ?? 0,
-      });
+      }, this.projectilePool);
     }
 
     this.engine.runRenderLoop(() => {
@@ -404,6 +410,7 @@ export class Game {
     this.engine.stopRenderLoop();
     this.audioManager.dispose();
     this.musicManager.dispose();
+    this.projectilePool.dispose();
     this.engine.dispose();
     this.input.dispose();
   }

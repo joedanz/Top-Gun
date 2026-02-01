@@ -13,17 +13,25 @@ export class Projectile {
   private age = 0;
   private dirY: number;
   private dirX: number;
+  private pooledMesh: boolean;
 
   constructor(
     scene: Scene,
     position: { x: number; y: number; z: number },
     rotation: { x: number; y: number; z: number },
+    existingMesh?: Mesh,
   ) {
-    this.mesh = MeshBuilder.CreateCylinder(
-      "projectile",
-      { height: 1.5, diameterTop: 0.05, diameterBottom: 0.05, tessellation: 4 },
-      scene,
-    ) as Mesh;
+    if (existingMesh) {
+      this.mesh = existingMesh;
+      this.pooledMesh = true;
+    } else {
+      this.mesh = MeshBuilder.CreateCylinder(
+        "projectile",
+        { height: 1.5, diameterTop: 0.05, diameterBottom: 0.05, tessellation: 4 },
+        scene,
+      ) as Mesh;
+      this.pooledMesh = false;
+    }
     this.mesh.position.x = position.x;
     this.mesh.position.y = position.y;
     this.mesh.position.z = position.z;
@@ -41,7 +49,9 @@ export class Projectile {
     this.age += dt;
     if (this.age >= PROJECTILE_LIFETIME) {
       this.alive = false;
-      this.mesh.dispose();
+      if (!this.pooledMesh) {
+        this.mesh.dispose();
+      }
       return;
     }
 

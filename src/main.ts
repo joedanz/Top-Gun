@@ -1,10 +1,12 @@
-// ABOUTME: Entry point orchestrating the mission loop: briefing → hangar → fly → debrief.
+// ABOUTME: Entry point orchestrating the game flow: menu → briefing → hangar → fly → debrief.
 // ABOUTME: Fetches mission JSON, loads aircraft catalog, and manages scene transitions.
 
 import { Game } from "./Game";
 import { BriefingScene } from "./BriefingScene";
 import { DebriefScene } from "./DebriefScene";
 import { HangarScene } from "./HangarScene";
+import { MenuScene } from "./MenuScene";
+import { SettingsScene, loadSettings, saveSettings } from "./SettingsScene";
 import { ProgressionManager } from "./ProgressionManager";
 import { loadAircraftCatalog, getAircraftCatalog } from "./AircraftData";
 import type { MissionData } from "./MissionData";
@@ -12,6 +14,42 @@ import type { MissionResult } from "./DebriefScene";
 
 const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
 const progression = new ProgressionManager();
+
+function showMenu(): void {
+  let menu: MenuScene | null = null;
+  menu = new MenuScene(document.body, {
+    onNewGame: () => {
+      menu?.dispose();
+      loadMissionAndBrief("/missions/pacific-01.json");
+    },
+    onContinue: () => {
+      menu?.dispose();
+      loadMissionAndBrief("/missions/pacific-01.json");
+    },
+    onSettings: () => {
+      menu?.dispose();
+      showSettings();
+    },
+  });
+}
+
+function showSettings(): void {
+  const settings = loadSettings();
+  let scene: SettingsScene | null = null;
+  scene = new SettingsScene(document.body, () => {
+    if (scene) {
+      saveSettings(scene.getSettings());
+    }
+    scene?.dispose();
+    showMenu();
+  }, settings);
+}
+
+async function loadMissionAndBrief(missionUrl: string): Promise<void> {
+  const response = await fetch(missionUrl);
+  const mission: MissionData = await response.json();
+  showBriefing(mission);
+}
 
 function showBriefing(mission: MissionData): void {
   let briefing: BriefingScene | null = null;
@@ -53,16 +91,14 @@ function showDebrief(result: MissionResult, mission: MissionData): void {
     },
     () => {
       debrief?.dispose();
-      showBriefing(mission);
+      showMenu();
     },
   );
 }
 
 async function start(): Promise<void> {
   await loadAircraftCatalog("/data/aircraft.json");
-  const response = await fetch("/missions/pacific-01.json");
-  const mission: MissionData = await response.json();
-  showBriefing(mission);
+  showMenu();
 }
 
 start();

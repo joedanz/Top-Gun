@@ -23,6 +23,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Aircraft constructor accepts optional name and color options for distinguishing enemy meshes
 - `Math.atan2(dx, dz)` gives desired yaw toward a target in Babylon's coordinate system
 - Normalize angle diff to [-PI, PI] with while loops for correct shortest-path turning
+- Aircraft has `health` (number) and `alive` (boolean) — systems should check `alive` before operating
+- CollisionSystem uses owner-pair pattern to prevent self-hits from own weapon system
+- ParticleSystem mock needs class syntax with all fields (emitter, sizes, colors, etc.)
 
 ---
 
@@ -108,4 +111,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `Math.atan2(dx, dz)` gives desired yaw in Babylon's coordinate system (Z-forward)
   - Angle normalization to [-PI, PI] is critical for correct shortest-path steering
   - Enemy fires based on dot product angle check + distance — simple but effective
+---
+
+## 2026-02-01 - US-008
+- What was implemented: CollisionSystem (bounding sphere projectile-aircraft collisions, damage, explosion VFX via ParticleSystem, ground collision detection, mission-failed state), Aircraft health/alive properties, FlightSystem skips dead aircraft, Game integration with owner-tracking to prevent self-hits, enemy underFire detection from nearby projectiles
+- Files changed: src/CollisionSystem.ts, src/CollisionSystem.test.ts, src/Aircraft.ts, src/Aircraft.test.ts, src/FlightSystem.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 14 new tests (11 CollisionSystem + 2 Aircraft + 1 Game), total now 91
+- **Learnings for future iterations:**
+  - Owner-pair pattern: pass `{ aircraft, weaponSystem }` pairs to CollisionSystem to prevent self-hits
+  - Babylon.js ParticleSystem with `targetStopDuration` + `disposeOnStop` creates self-cleaning burst effects
+  - FlightSystem should check `aircraft.alive` before updating — dead aircraft shouldn't fly
+  - Ground collision at altitude floor (y=2) means aircraft at terrain level are destroyed
+  - `underFire` detection: check if any enemy projectile is within 100 units of the aircraft
 ---

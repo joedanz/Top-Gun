@@ -119,6 +119,12 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `applyPerformanceConfig(scene)` sets scene-level optimizations — call after Scene creation in Game constructor
 - Carrier entity: hull + deck meshes, `isOnDeck(pos)` for landing detection, `getDeckY()` for surface height
 - `MissionData.carrier?: CarrierSpawn` — optional carrier placement per mission (position + heading)
+- CarrierOps state machine: OnDeck → Launching → Airborne → Approaching → Trapped/Bolter
+- `MissionData.startOnDeck?: boolean` — when true, player starts on carrier deck
+- `carrier_landing` objective type in ObjectiveManager — records via `recordCarrierLanding()`
+- Glideslope guidance: ideal altitude = deckY + tan(3.5°) * distance; error shows on HUD as ◆/▲/▼
+- Approach detection: altitude < 40, speed < 80, distance < 250 from carrier
+- Trap tolerance: speed ≤ 80, pitch deviation ≤ 0.35 rad — otherwise bolter or crash
 
 ---
 
@@ -582,4 +588,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `getDeckY()` returns hull top + deck half-height for precise landing surface
   - `MissionData.carrier` is optional `CarrierSpawn` — backward compatible with all existing missions
   - Carrier at y=0 places hull at water level; deck surface at y≈4.25
+---
+
+## 2026-02-01 - US-039
+- What was implemented: CarrierOps state machine (OnDeck → Launching → Airborne → Approaching → Trapped/Bolter), catapult takeoff with acceleration, glideslope/lineup HUD indicators, arresting wire deceleration, bolter detection, crash on bad approach, carrier_landing objective type, pacific-02 converted to Carrier Quals mission with startOnDeck, Game integration
+- Files changed: src/CarrierOps.ts, src/CarrierOps.test.ts, src/Game.ts, src/Game.test.ts, src/Hud.ts, src/Hud.test.ts, src/MissionData.ts, src/MissionManifest.ts, src/ObjectiveManager.ts, src/ObjectiveManager.test.ts, public/missions/pacific-02.json
+- **Tests added:** 27 new tests (18 CarrierOps + 5 Hud landing + 2 ObjectiveManager carrier_landing + 2 Game carrier ops), total now 557
+- **Learnings for future iterations:**
+  - CarrierOps approach detection needs all conditions met (altitude, speed, distance) — tests must set up valid approach state before testing approach-dependent behaviors
+  - Glideslope angle of 3.5° with tan() gives good descent path — error = actual_alt - ideal_alt
+  - HUD guidance symbols: ◆ (on glideslope/lineup, within 2 units), ▲/▼ for glideslope, ◄/► for lineup
+  - Crash detection: must be in Approaching state AND touching deck — speed > 100 + pitch > 0.3 rad from level
+  - Bolter: aircraft passes z > carrier.z + 70 while in Approaching state without trapping
+  - `startOnDeck` field in MissionData positions player on carrier deck and sets speed to 0
 ---

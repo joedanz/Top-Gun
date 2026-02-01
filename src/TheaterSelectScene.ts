@@ -1,11 +1,14 @@
 // ABOUTME: Campaign theater and mission selection overlay.
 // ABOUTME: Shows 4 theaters with unlock states, completion progress, and expandable mission lists.
 
+import type { Medal } from "./Scoring";
+
 export interface MissionInfo {
   id: string;
   title: string;
   completed: boolean;
   unlocked: boolean;
+  medal: Medal;
 }
 
 export interface TheaterInfo {
@@ -108,10 +111,13 @@ export class TheaterSelectScene {
       row.appendChild(titleSpan);
 
       if (mission.completed) {
-        const check = document.createElement("span");
-        check.textContent = "✓";
-        check.style.cssText = "color:#0a0;";
-        row.appendChild(check);
+        const medalSymbols: Record<string, string> = { gold: "★", silver: "☆", bronze: "●", none: "✓" };
+        const medalColors: Record<string, string> = { gold: "#ffd700", silver: "#c0c0c0", bronze: "#cd7f32", none: "#0a0" };
+        const badge = document.createElement("span");
+        badge.textContent = medalSymbols[mission.medal] ?? "✓";
+        badge.setAttribute("data-medal", mission.medal);
+        badge.style.cssText = `color:${medalColors[mission.medal] ?? "#0a0"};`;
+        row.appendChild(badge);
       }
 
       row.addEventListener("click", () => {

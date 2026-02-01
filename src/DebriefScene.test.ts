@@ -1,5 +1,5 @@
 // ABOUTME: Tests for DebriefScene — the post-mission results overlay.
-// ABOUTME: Validates display of mission results and navigation callbacks.
+// ABOUTME: Validates display of mission results, score, medals, and navigation callbacks.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DebriefScene } from "./DebriefScene";
@@ -10,6 +10,11 @@ const successResult: MissionResult = {
   outcome: "success",
   kills: 3,
   timeSeconds: 45.7,
+  score: 2100,
+  medal: "silver",
+  shotsFired: 30,
+  shotsHit: 15,
+  damageTaken: 20,
 };
 
 const failureResult: MissionResult = {
@@ -17,6 +22,23 @@ const failureResult: MissionResult = {
   outcome: "failure",
   kills: 1,
   timeSeconds: 22.3,
+  score: 0,
+  medal: "none",
+  shotsFired: 10,
+  shotsHit: 2,
+  damageTaken: 100,
+};
+
+const goldResult: MissionResult = {
+  missionTitle: "Ace Mission",
+  outcome: "success",
+  kills: 5,
+  timeSeconds: 20,
+  score: 3500,
+  medal: "gold",
+  shotsFired: 10,
+  shotsHit: 10,
+  damageTaken: 0,
 };
 
 describe("DebriefScene", () => {
@@ -58,6 +80,32 @@ describe("DebriefScene", () => {
   it("shows mission time", () => {
     const debrief = new DebriefScene(successResult, container, vi.fn(), vi.fn());
     expect(container.textContent).toContain("45.7");
+    debrief.dispose();
+  });
+
+  it("shows score", () => {
+    const debrief = new DebriefScene(successResult, container, vi.fn(), vi.fn());
+    expect(container.textContent).toContain("2100");
+    debrief.dispose();
+  });
+
+  it("shows medal for successful mission", () => {
+    const debrief = new DebriefScene(successResult, container, vi.fn(), vi.fn());
+    expect(container.textContent).toContain("SILVER MEDAL");
+    debrief.dispose();
+  });
+
+  it("shows gold medal with correct styling", () => {
+    const debrief = new DebriefScene(goldResult, container, vi.fn(), vi.fn());
+    const medalEl = container.querySelector("[data-medal='gold']");
+    expect(medalEl).toBeTruthy();
+    expect(medalEl!.textContent).toContain("GOLD MEDAL");
+    debrief.dispose();
+  });
+
+  it("does not show medal for no-medal result", () => {
+    const debrief = new DebriefScene(failureResult, container, vi.fn(), vi.fn());
+    expect(container.textContent).not.toContain("MEDAL");
     debrief.dispose();
   });
 

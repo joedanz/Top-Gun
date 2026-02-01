@@ -1,11 +1,12 @@
 // ABOUTME: Tests for ProgressionManager — scoring, aircraft unlocks, mission sequencing.
-// ABOUTME: Validates milestone-based progression and score calculation from mission results.
+// ABOUTME: Validates milestone-based progression, score calculation, and medal derivation.
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { ProgressionManager } from "./ProgressionManager";
 import { SaveManager } from "./SaveManager";
 import type { Storage } from "./SaveManager";
 import type { MissionResult } from "./DebriefScene";
+import { calculateScore, getMedal } from "./Scoring";
 
 function createMockStorage(): Storage {
   const data: Record<string, string> = {};
@@ -22,6 +23,27 @@ function createMockStorage(): Storage {
   };
 }
 
+function makeResult(overrides: Partial<MissionResult> = {}): MissionResult {
+  const base = {
+    missionTitle: "Test",
+    outcome: "success" as const,
+    kills: 3,
+    timeSeconds: 45,
+    shotsFired: 20,
+    shotsHit: 10,
+    damageTaken: 20,
+  };
+  const merged = { ...base, ...overrides };
+  const breakdown = merged.outcome === "success"
+    ? calculateScore(merged.kills, merged.timeSeconds, merged.shotsFired, merged.shotsHit, merged.damageTaken)
+    : { total: 0 };
+  return {
+    ...merged,
+    score: merged.score ?? breakdown.total,
+    medal: merged.medal ?? getMedal(merged.score ?? breakdown.total),
+  } as MissionResult;
+}
+
 describe("ProgressionManager", () => {
   let pm: ProgressionManager;
 
@@ -31,90 +53,50 @@ describe("ProgressionManager", () => {
   });
 
   describe("score calculation", () => {
-    it("calculates score from kills and time", () => {
-      const result: MissionResult = {
-        missionTitle: "First Sortie",
-        outcome: "success",
-        kills: 3,
-        timeSeconds: 45,
-      };
+    it("calculates score from result", () => {
+      const result = makeResult({ kills: 3, timeSeconds: 45 });
       const score = pm.calculateScore(result);
       expect(score).toBeGreaterThan(0);
     });
 
     it("awards higher score for more kills", () => {
-      const base: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 1,
-        timeSeconds: 60,
-      };
-      const moreKills: MissionResult = { ...base, kills: 5 };
+      const base = makeResult({ kills: 1, timeSeconds: 60 });
+      const moreKills = makeResult({ kills: 5, timeSeconds: 60 });
       expect(pm.calculateScore(moreKills)).toBeGreaterThan(
         pm.calculateScore(base),
       );
     });
 
     it("awards higher score for faster completion", () => {
-      const slow: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 3,
-        timeSeconds: 120,
-      };
-      const fast: MissionResult = { ...slow, timeSeconds: 30 };
+      const slow = makeResult({ kills: 3, timeSeconds: 120 });
+      const fast = makeResult({ kills: 3, timeSeconds: 30 });
       expect(pm.calculateScore(fast)).toBeGreaterThan(
         pm.calculateScore(slow),
       );
     });
 
     it("returns zero score for failed missions", () => {
-      const result: MissionResult = {
-        missionTitle: "Test",
-        outcome: "failure",
-        kills: 2,
-        timeSeconds: 30,
-      };
+      const result = makeResult({ outcome: "failure", kills: 2, timeSeconds: 30 });
       expect(pm.calculateScore(result)).toBe(0);
     });
   });
 
   describe("mission completion", () => {
     it("records a completed mission", () => {
-      const result: MissionResult = {
-        missionTitle: "First Sortie",
-        outcome: "success",
-        kills: 3,
-        timeSeconds: 45,
-      };
+      const result = makeResult({ missionTitle: "First Sortie" });
       pm.completeMission("pacific-01", result);
       expect(pm.isMissionCompleted("pacific-01")).toBe(true);
     });
 
     it("does not record failed missions as completed", () => {
-      const result: MissionResult = {
-        missionTitle: "First Sortie",
-        outcome: "failure",
-        kills: 0,
-        timeSeconds: 10,
-      };
+      const result = makeResult({ outcome: "failure", kills: 0, timeSeconds: 10 });
       pm.completeMission("pacific-01", result);
       expect(pm.isMissionCompleted("pacific-01")).toBe(false);
     });
 
     it("keeps the best score for a mission", () => {
-      const low: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 1,
-        timeSeconds: 120,
-      };
-      const high: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 5,
-        timeSeconds: 30,
-      };
+      const low = makeResult({ kills: 1, timeSeconds: 120 });
+      const high = makeResult({ kills: 5, timeSeconds: 30 });
       pm.completeMission("pacific-01", low);
       const lowScore = pm.getMissionScore("pacific-01");
       pm.completeMission("pacific-01", high);
@@ -123,22 +105,38 @@ describe("ProgressionManager", () => {
     });
 
     it("does not overwrite a higher score with a lower one", () => {
-      const high: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 5,
-        timeSeconds: 30,
-      };
-      const low: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 1,
-        timeSeconds: 120,
-      };
+      const high = makeResult({ kills: 5, timeSeconds: 30 });
+      const low = makeResult({ kills: 1, timeSeconds: 120 });
       pm.completeMission("pacific-01", high);
       const first = pm.getMissionScore("pacific-01");
       pm.completeMission("pacific-01", low);
       expect(pm.getMissionScore("pacific-01")).toBe(first);
+    });
+  });
+
+  describe("medals", () => {
+    it("returns none medal for missions with no score", () => {
+      expect(pm.getMissionMedal("pacific-01")).toBe("none");
+    });
+
+    it("returns appropriate medal based on stored best score", () => {
+      const result = makeResult({ kills: 5, timeSeconds: 20, shotsFired: 10, shotsHit: 10, damageTaken: 0 });
+      pm.completeMission("pacific-01", result);
+      const medal = pm.getMissionMedal("pacific-01");
+      expect(["bronze", "silver", "gold"]).toContain(medal);
+    });
+
+    it("medal improves when best score increases", () => {
+      const low = makeResult({ kills: 1, timeSeconds: 90, shotsFired: 50, shotsHit: 1, damageTaken: 80 });
+      pm.completeMission("pacific-01", low);
+      const lowMedal = pm.getMissionMedal("pacific-01");
+
+      const high = makeResult({ kills: 5, timeSeconds: 20, shotsFired: 10, shotsHit: 10, damageTaken: 0 });
+      pm.completeMission("pacific-01", high);
+      const highMedal = pm.getMissionMedal("pacific-01");
+
+      const medalOrder = ["none", "bronze", "silver", "gold"];
+      expect(medalOrder.indexOf(highMedal)).toBeGreaterThanOrEqual(medalOrder.indexOf(lowMedal));
     });
   });
 
@@ -149,13 +147,7 @@ describe("ProgressionManager", () => {
 
     it("subsequent missions unlock after completing previous mission", () => {
       expect(pm.isMissionUnlocked("pacific-02")).toBe(false);
-      const result: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 3,
-        timeSeconds: 45,
-      };
-      pm.completeMission("pacific-01", result);
+      pm.completeMission("pacific-01", makeResult());
       expect(pm.isMissionUnlocked("pacific-02")).toBe(true);
     });
   });
@@ -169,7 +161,6 @@ describe("ProgressionManager", () => {
     });
 
     it("completing pacific theater unlocks fa-18", () => {
-      // Complete all pacific missions (simulate completing theater)
       pm.completeTheater("pacific");
       const locked = pm.getLockedAircraftIds(["f-14", "p-51", "fa-18"]);
       expect(locked).not.toContain("fa-18");
@@ -190,20 +181,17 @@ describe("ProgressionManager", () => {
 
     it("europe is locked until pacific or middleeast is complete", () => {
       expect(pm.isTheaterUnlocked("europe")).toBe(false);
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
-      // Complete all pacific missions
       for (let i = 1; i <= 5; i++) {
         const id = `pacific-${String(i).padStart(2, "0")}`;
-        pm.completeMission(id, result);
+        pm.completeMission(id, makeResult());
       }
       expect(pm.isTheaterUnlocked("europe")).toBe(true);
     });
 
     it("arctic is locked until europe is complete", () => {
       expect(pm.isTheaterUnlocked("arctic")).toBe(false);
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
       for (let i = 1; i <= 5; i++) {
-        pm.completeMission(`europe-${String(i).padStart(2, "0")}`, result);
+        pm.completeMission(`europe-${String(i).padStart(2, "0")}`, makeResult());
       }
       expect(pm.isTheaterUnlocked("arctic")).toBe(true);
     });
@@ -217,9 +205,8 @@ describe("ProgressionManager", () => {
     });
 
     it("tracks completed missions within a theater", () => {
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
-      pm.completeMission("pacific-01", result);
-      pm.completeMission("pacific-02", result);
+      pm.completeMission("pacific-01", makeResult());
+      pm.completeMission("pacific-02", makeResult());
       const progress = pm.getTheaterProgress("pacific");
       expect(progress.completed).toBe(2);
     });
@@ -227,13 +214,7 @@ describe("ProgressionManager", () => {
 
   describe("persistence", () => {
     it("saves and restores state across instances", () => {
-      const result: MissionResult = {
-        missionTitle: "Test",
-        outcome: "success",
-        kills: 3,
-        timeSeconds: 45,
-      };
-      pm.completeMission("pacific-01", result);
+      pm.completeMission("pacific-01", makeResult());
       pm.completeTheater("pacific");
 
       const pm2 = new ProgressionManager();
@@ -244,39 +225,40 @@ describe("ProgressionManager", () => {
     });
 
     it("loads automatically on construction without manual load call", () => {
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 2, timeSeconds: 30 };
-      pm.completeMission("pacific-01", result);
+      pm.completeMission("pacific-01", makeResult({ kills: 2, timeSeconds: 30 }));
 
-      // New instance should auto-load — no explicit load() call needed
       const pm2 = new ProgressionManager();
       expect(pm2.isMissionCompleted("pacific-01")).toBe(true);
       expect(pm2.getMissionScore("pacific-01")).toBeGreaterThan(0);
     });
 
     it("persists theater unlock state across sessions via completed missions", () => {
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
-      // Complete all pacific missions
       for (let i = 1; i <= 5; i++) {
-        pm.completeMission(`pacific-${String(i).padStart(2, "0")}`, result);
+        pm.completeMission(`pacific-${String(i).padStart(2, "0")}`, makeResult());
       }
       expect(pm.isTheaterUnlocked("europe")).toBe(true);
 
-      // New instance should still show europe as unlocked
       const pm2 = new ProgressionManager();
       expect(pm2.isTheaterUnlocked("europe")).toBe(true);
     });
 
     it("persists scores across sessions", () => {
-      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 5, timeSeconds: 20 };
-      pm.completeMission("pacific-01", result);
+      pm.completeMission("pacific-01", makeResult({ kills: 5, timeSeconds: 20 }));
       const score = pm.getMissionScore("pacific-01");
 
       const pm2 = new ProgressionManager();
       expect(pm2.getMissionScore("pacific-01")).toBe(score);
     });
 
+    it("persists medals across sessions", () => {
+      pm.completeMission("pacific-01", makeResult({ kills: 5, timeSeconds: 20, shotsFired: 10, shotsHit: 10, damageTaken: 0 }));
+      const medal = pm.getMissionMedal("pacific-01");
+
+      const pm2 = new ProgressionManager();
+      expect(pm2.getMissionMedal("pacific-01")).toBe(medal);
+    });
+
     it("handles corrupt save data by starting fresh", () => {
-      // Manually corrupt the storage
       const storage = createMockStorage();
       storage.setItem("topgun_save_v1", "corrupted{{{");
       SaveManager.setStorage(storage);

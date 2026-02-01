@@ -62,6 +62,7 @@ function buildTheaterInfos(): TheaterInfo[] {
             title: m.title,
             completed: progression.isMissionCompleted(m.id),
             unlocked: progression.isMissionUnlocked(m.id),
+            medal: progression.getMissionMedal(m.id),
           }))
         : [],
       completedCount: progress.completed,

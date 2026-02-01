@@ -27,6 +27,7 @@ import { getAircraftStats } from "./AircraftData";
 import { CountermeasureSystem } from "./CountermeasureSystem";
 import { GroundTarget } from "./GroundTarget";
 import type { Missile } from "./Missile";
+import { calculateScore, getMedal } from "./Scoring";
 
 export class Game {
   engine: Engine;
@@ -262,11 +263,24 @@ export class Game {
         const outcome = this.objectiveManager.outcome;
         if (outcome === "success" || this.collisionSystem.missionFailed) {
           this.missionEnded = true;
+          const missionOutcome = this.collisionSystem.missionFailed ? "failure" : "success";
+          const timeSeconds = Math.round(this.elapsedTime * 10) / 10;
+          const shotsFired = this.weaponManager.gunSystem.shotsFired;
+          const shotsHit = this.collisionSystem.playerHitsDealt;
+          const damageTaken = 100 - Math.max(0, this.aircraft.health);
+          const breakdown = missionOutcome === "success"
+            ? calculateScore(this.kills, timeSeconds, shotsFired, shotsHit, damageTaken)
+            : { kills: 0, timeBonus: 0, accuracyBonus: 0, damagePenalty: 0, total: 0 };
           const result: MissionResult = {
             missionTitle: mission.title,
-            outcome: this.collisionSystem.missionFailed ? "failure" : "success",
+            outcome: missionOutcome,
             kills: this.kills,
-            timeSeconds: Math.round(this.elapsedTime * 10) / 10,
+            timeSeconds,
+            score: breakdown.total,
+            medal: getMedal(breakdown.total),
+            shotsFired,
+            shotsHit,
+            damageTaken,
           };
           this.onMissionEnd(result);
         }

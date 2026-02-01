@@ -15,7 +15,10 @@
       },
       "weaponLoadout": {
         "gunAmmo": 200,
-        "missiles": 6
+        "missiles": 6,
+        "radarMissiles": 4,
+        "rockets": 0,
+        "bombs": 0
       }
     },
     {
@@ -33,7 +36,10 @@
       },
       "weaponLoadout": {
         "gunAmmo": 300,
-        "missiles": 0
+        "missiles": 0,
+        "radarMissiles": 0,
+        "rockets": 8,
+        "bombs": 2
       }
     },
     {
@@ -51,7 +57,10 @@
       },
       "weaponLoadout": {
         "gunAmmo": 250,
-        "missiles": 4
+        "missiles": 4,
+        "radarMissiles": 2,
+        "rockets": 6,
+        "bombs": 4
       }
     }
   ]

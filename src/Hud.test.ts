@@ -1,7 +1,8 @@
 // ABOUTME: Tests for the HUD system that displays flight instruments and combat info.
-// ABOUTME: Verifies speed, altitude, heading, ammo, and health indicators update correctly.
+// ABOUTME: Verifies speed, altitude, heading, weapon, ammo, and health indicators update correctly.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { WeaponType } from "./WeaponManager";
 
 vi.mock("@babylonjs/gui", () => {
   class MockTextBlock {
@@ -59,6 +60,13 @@ function makeAircraft(overrides: Partial<{ speed: number; health: number; mesh: 
   };
 }
 
+function makeWeapons(activeWeapon = WeaponType.Guns, ammo = 200) {
+  return {
+    activeWeapon,
+    getAmmo: vi.fn(() => ammo),
+  };
+}
+
 describe("Hud", () => {
   let hud: Hud;
 
@@ -73,48 +81,65 @@ describe("Hud", () => {
 
   it("updates speed display", () => {
     const aircraft = makeAircraft({ speed: 150 });
-    hud.update(aircraft as never, 30);
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.speedText.text).toContain("150");
   });
 
   it("updates altitude display", () => {
     const aircraft = makeAircraft();
     aircraft.mesh.position.y = 250;
-    hud.update(aircraft as never, 30);
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.altitudeText.text).toContain("250");
   });
 
   it("updates heading display", () => {
     const aircraft = makeAircraft();
     aircraft.mesh.rotation.y = Math.PI / 2; // 90 degrees
-    hud.update(aircraft as never, 30);
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.headingText.text).toContain("90");
   });
 
-  it("updates ammo display", () => {
+  it("updates ammo display from weapon manager", () => {
     const aircraft = makeAircraft();
-    hud.update(aircraft as never, 15);
+    hud.update(aircraft as never, makeWeapons(WeaponType.Guns, 15) as never);
     expect(hud.ammoText.text).toContain("15");
   });
 
   it("updates health display", () => {
     const aircraft = makeAircraft({ health: 75 });
-    hud.update(aircraft as never, 30);
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.healthText.text).toContain("75");
   });
 
   it("shows heading 0 as N (north)", () => {
     const aircraft = makeAircraft();
     aircraft.mesh.rotation.y = 0;
-    hud.update(aircraft as never, 30);
-    // Heading 0 degrees = North
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.headingText.text).toMatch(/0/);
   });
 
   it("normalizes heading to 0-360 range", () => {
     const aircraft = makeAircraft();
     aircraft.mesh.rotation.y = -Math.PI / 2; // -90 degrees → should show as 270
-    hud.update(aircraft as never, 30);
+    hud.update(aircraft as never, makeWeapons() as never);
     expect(hud.headingText.text).toContain("270");
+  });
+
+  it("shows active weapon type", () => {
+    const aircraft = makeAircraft();
+    hud.update(aircraft as never, makeWeapons(WeaponType.Rockets, 8) as never);
+    expect(hud.weaponText.text).toContain("RKT");
+  });
+
+  it("shows AIM-9 label for heat-seeking", () => {
+    const aircraft = makeAircraft();
+    hud.update(aircraft as never, makeWeapons(WeaponType.HeatSeeking, 4) as never);
+    expect(hud.weaponText.text).toContain("AIM-9");
+  });
+
+  it("shows AIM-120 label for radar-guided", () => {
+    const aircraft = makeAircraft();
+    hud.update(aircraft as never, makeWeapons(WeaponType.RadarGuided, 2) as never);
+    expect(hud.weaponText.text).toContain("AIM-120");
   });
 });

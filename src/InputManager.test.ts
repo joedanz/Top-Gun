@@ -100,6 +100,14 @@ describe("InputManager", () => {
     expect(input.lockOn).toBe(false);
   });
 
+  it("reports cycleWeapon when X is pressed", () => {
+    expect(input.cycleWeapon).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "x" }));
+    expect(input.cycleWeapon).toBe(true);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "x" }));
+    expect(input.cycleWeapon).toBe(false);
+  });
+
   it("stops listening after dispose", () => {
     input.dispose();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));

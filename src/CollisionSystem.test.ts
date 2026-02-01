@@ -55,7 +55,7 @@ function makeAircraft(x: number, y: number, z: number, health = 100): Aircraft {
       isDisposed: vi.fn(() => false),
     },
     speed: 50,
-    input: { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false },
+    input: { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false },
     health,
     alive: true,
   } as unknown as Aircraft;

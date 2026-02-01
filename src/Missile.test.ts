@@ -89,4 +89,35 @@ describe("Missile", () => {
     expect(m.mesh.position.z).toBeGreaterThan(z1);
     expect(m.alive).toBe(true);
   });
+
+  it("defaults to heat-seeking mode", () => {
+    const m = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never);
+    expect(m.mode).toBe("heat");
+  });
+
+  describe("radar-guided mode", () => {
+    it("accepts radar mode parameter", () => {
+      const m = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never, "radar");
+      expect(m.mode).toBe("radar");
+    });
+
+    it("has longer lifetime than heat-seeking", () => {
+      const heat = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never, "heat");
+      const radar = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never, "radar");
+
+      heat.update(9);
+      radar.update(9);
+      expect(heat.alive).toBe(false);
+      expect(radar.alive).toBe(true);
+    });
+
+    it("tracks target (fire-and-forget)", () => {
+      const m = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never, "radar");
+      m.update(0.5);
+      // Should move toward target
+      const dx = m.mesh.position.x;
+      const dz = m.mesh.position.z;
+      expect(dx > 0 || dz > 0).toBe(true);
+    });
+  });
 });

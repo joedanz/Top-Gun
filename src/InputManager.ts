@@ -9,6 +9,7 @@ export interface FlightInput {
   readonly fire: boolean;
   readonly cycleTarget: boolean;
   readonly lockOn: boolean;
+  readonly cycleWeapon: boolean;
 }
 
 export class InputManager implements FlightInput {
@@ -50,6 +51,10 @@ export class InputManager implements FlightInput {
 
   get lockOn(): boolean {
     return this.keys.has("r");
+  }
+
+  get cycleWeapon(): boolean {
+    return this.keys.has("x");
   }
 
   dispose(): void {

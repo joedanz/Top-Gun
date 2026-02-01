@@ -1,16 +1,22 @@
 // ABOUTME: Homing missile entity that tracks a locked target with limited turning ability.
-// ABOUTME: Created by MissileLockSystem, self-manages lifetime and disposal.
+// ABOUTME: Supports heat-seeking (short range) and radar-guided (long range, fire-and-forget) modes.
 
 import { MeshBuilder, type Scene, type Mesh } from "@babylonjs/core";
 import type { Aircraft } from "./Aircraft";
 
+export type MissileMode = "heat" | "radar";
+
 const MISSILE_SPEED = 300;
-const MISSILE_LIFETIME = 8; // seconds
+const HEAT_LIFETIME = 8;
+const RADAR_LIFETIME = 12;
 const TURN_RATE = 2.0; // radians per second — limited tracking ability
 
 export class Missile {
   mesh: Mesh;
   alive = true;
+  readonly mode: MissileMode;
+  readonly damage = 50;
+  private lifetime: number;
   private age = 0;
   private yaw: number;
   private pitchAngle: number;
@@ -20,7 +26,11 @@ export class Missile {
     position: { x: number; y: number; z: number },
     rotation: { x: number; y: number; z: number },
     private target: Aircraft | null,
+    mode: MissileMode = "heat",
   ) {
+    this.mode = mode;
+    this.lifetime = mode === "radar" ? RADAR_LIFETIME : HEAT_LIFETIME;
+
     this.mesh = MeshBuilder.CreateCylinder(
       "missile",
       { height: 2, diameterTop: 0.1, diameterBottom: 0.3, tessellation: 6 },
@@ -41,7 +51,7 @@ export class Missile {
     if (!this.alive) return;
 
     this.age += dt;
-    if (this.age >= MISSILE_LIFETIME) {
+    if (this.age >= this.lifetime) {
       this.alive = false;
       this.mesh.dispose();
       return;

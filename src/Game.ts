@@ -18,8 +18,8 @@ import { HitFlash } from "./HitFlash";
 import { Hud } from "./Hud";
 import { TargetingSystem } from "./TargetingSystem";
 import { Radar } from "./Radar";
-import { MissileLockSystem } from "./MissileLockSystem";
-import type { MissionData, FormationSpawn } from "./MissionData";
+import { WeaponManager } from "./WeaponManager";
+import type { MissionData } from "./MissionData";
 import { FormationSystem } from "./FormationSystem";
 import type { MissionResult } from "./DebriefScene";
 import { ObjectiveManager } from "./ObjectiveManager";
@@ -35,7 +35,7 @@ export class Game {
   debugPanel: DebugPanel;
   terrain: Terrain;
   skybox: Skybox;
-  weaponSystem: WeaponSystem;
+  weaponManager: WeaponManager;
   enemy: Aircraft;
   enemyWeaponSystem: WeaponSystem;
   aiSystem: AISystem;
@@ -45,7 +45,6 @@ export class Game {
   hud: Hud;
   targetingSystem: TargetingSystem;
   radar: Radar;
-  missileLockSystem: MissileLockSystem;
   objectiveManager: ObjectiveManager;
   formationSystem: FormationSystem;
   private missionEnded = false;
@@ -75,8 +74,10 @@ export class Game {
     this.aircraft = new Aircraft(this.scene, this.input);
     this.flightSystem = new FlightSystem();
     this.cameraSystem = new CameraSystem(camera);
-    this.weaponSystem = new WeaponSystem(this.scene);
     this.debugPanel = new DebugPanel(this.flightSystem);
+
+    // Weapon manager (defaults, overridden below if aircraftId provided)
+    this.weaponManager = new WeaponManager(this.scene);
 
     // Enemy aircraft with AI
     const aiInput = new AIInput();
@@ -93,7 +94,6 @@ export class Game {
     this.hud = new Hud();
     this.targetingSystem = new TargetingSystem();
     this.radar = new Radar();
-    this.missileLockSystem = new MissileLockSystem(this.scene);
     this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
     this.formationSystem = new FormationSystem();
 
@@ -101,13 +101,11 @@ export class Game {
     if (mission.formations) {
       for (const formationDef of mission.formations) {
         const leaderIndex = formationDef.members[0];
-        const wingmenIndices = formationDef.members.slice(1);
-        // Only create formation if leader is our single enemy (index 0)
         if (leaderIndex === 0) {
           this.formationSystem.createFormation(
             formationDef.type,
             this.enemy as Aircraft & { input: AIInput },
-            [], // No additional wingmen in current single-enemy Game setup
+            [],
           );
         }
       }
@@ -116,17 +114,25 @@ export class Game {
     if (aircraftId) {
       const stats = getAircraftStats(aircraftId);
       this.aircraft.flightParams = stats.flightParams;
-      this.weaponSystem.ammo = stats.weaponLoadout.gunAmmo;
-      this.missileLockSystem.ammo = stats.weaponLoadout.missiles;
+      const loadout = stats.weaponLoadout;
+      this.weaponManager = new WeaponManager(this.scene, {
+        gunAmmo: loadout.gunAmmo,
+        heatSeeking: loadout.missiles,
+        radarGuided: loadout.radarMissiles ?? 0,
+        rockets: loadout.rockets ?? 0,
+        bombs: loadout.bombs ?? 0,
+      });
     }
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
-      this.weaponSystem.update(this.aircraft, dt);
+
+      // Update all player weapons
+      this.weaponManager.update(this.aircraft, this.targetingSystem.currentTarget, dt);
 
       // Check if enemy is under fire from player projectiles
-      const enemyUnderFire = this.weaponSystem.projectiles.some((p) => {
+      const enemyUnderFire = this.weaponManager.gunSystem.projectiles.some((p) => {
         if (!p.alive) return false;
         const dx = p.mesh.position.x - this.enemy.mesh.position.x;
         const dy = p.mesh.position.y - this.enemy.mesh.position.y;
@@ -141,15 +147,28 @@ export class Game {
       this.flightSystem.update(this.enemy, dt);
       this.enemyWeaponSystem.update(this.enemy, dt);
 
-      // Collision detection
+      // Collision detection — guns (player + enemy)
       this.collisionSystem.update(
         [this.aircraft, this.enemy],
-        [this.weaponSystem, this.enemyWeaponSystem],
+        [this.weaponManager.gunSystem, this.enemyWeaponSystem],
         [
-          { aircraft: this.aircraft, weaponSystem: this.weaponSystem },
+          { aircraft: this.aircraft, weaponSystem: this.weaponManager.gunSystem },
           { aircraft: this.enemy, weaponSystem: this.enemyWeaponSystem },
         ],
       );
+
+      // Collision detection — player rockets, bombs, missiles against all aircraft
+      this.collisionSystem.checkHittables(
+        [
+          ...this.weaponManager.rockets,
+          ...this.weaponManager.bombs,
+          ...this.weaponManager.radarMissiles,
+          ...this.weaponManager.missileLockSystem.missiles,
+        ],
+        [this.aircraft, this.enemy],
+        this.aircraft,
+      );
+
       this.collisionSystem.checkGroundCollision(this.aircraft);
       this.collisionSystem.checkGroundCollision(this.enemy);
 
@@ -170,8 +189,7 @@ export class Game {
       camera.position.z += shakeOffset.z;
 
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
-      this.missileLockSystem.update(this.aircraft, this.targetingSystem.currentTarget, dt);
-      this.hud.update(this.aircraft, this.weaponSystem.ammo, this.missileLockSystem.ammo);
+      this.hud.update(this.aircraft, this.weaponManager);
       this.radar.update(this.aircraft, [this.enemy], []);
 
       // Track kills and mission time

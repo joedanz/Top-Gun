@@ -36,7 +36,7 @@ export class FlightSystem {
     if (!aircraft.alive) return;
 
     const { input } = aircraft;
-    const p = this.params;
+    const p = aircraft.flightParams ?? this.params;
 
     // Throttle → speed
     if (input.throttle > 0) {

@@ -3,6 +3,7 @@
 
 import { MeshBuilder, StandardMaterial, Color3, type Scene, type Mesh } from "@babylonjs/core";
 import type { FlightInput } from "./InputManager";
+import type { FlightParams } from "./FlightSystem";
 
 export interface AircraftOptions {
   color?: { r: number; g: number; b: number };
@@ -13,6 +14,7 @@ export class Aircraft {
   speed = 0;
   health = 100;
   alive = true;
+  flightParams?: FlightParams;
 
   constructor(
     scene: Scene,

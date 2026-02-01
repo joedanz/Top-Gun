@@ -1,3 +1,23 @@
 # Ralph Progress Log
 Started: Sun Feb  1 00:05:22 EST 2026
 ---
+
+## Codebase Patterns
+- Use `npm run check` to run typecheck + tests together
+- Babylon.js mocks in tests need `class` syntax (not arrow functions) for Vitest 4 constructors
+- Use `await import("@babylonjs/core")` (not `require`) to access mocked modules in test assertions
+- Port 5173+ may be occupied by other Vite apps; check output for actual port assigned
+- Game class pattern: constructor takes canvas, initializes Engine → Scene → Camera → Light → meshes
+
+---
+
+## 2026-02-01 - US-001
+- What was implemented: Vite + TypeScript + Babylon.js project bootstrap with WASD-movable cube
+- Files changed: package.json, tsconfig.json, vite.config.ts, index.html, .gitignore, src/main.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 7 new tests in src/Game.test.ts (3 scene setup + 4 movement)
+- **Learnings for future iterations:**
+  - Babylon.js uses `@babylonjs/core` modular imports (not monolithic `babylonjs`)
+  - Vitest 4 requires class-based mocks for anything used with `new`
+  - `Vector3.Zero()` is a static method — mocks need `Object.assign` or class statics
+  - jsdom environment works for unit testing game logic but can't test WebGL rendering
+---

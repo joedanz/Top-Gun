@@ -335,4 +335,16 @@ describe("Game", () => {
     game.dispose();
     expect(disposeSpy).toHaveBeenCalled();
   });
+
+  it("creates a MusicManager and starts theater music", () => {
+    const game = createGame();
+    expect(game.musicManager).toBeDefined();
+  });
+
+  it("disposes MusicManager on game dispose", () => {
+    const game = createGame();
+    const disposeSpy = vi.spyOn(game.musicManager, "dispose");
+    game.dispose();
+    expect(disposeSpy).toHaveBeenCalled();
+  });
 });

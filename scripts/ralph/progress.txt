@@ -30,6 +30,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - ParticleSystem mock needs class syntax with all fields (emitter, sizes, colors, etc.)
 - `Rectangle` from `@babylonjs/gui` needs class-style mock (used by HitFlash in Game.test.ts)
 - Camera shake: apply additive offset AFTER CameraSystem.update() positions the camera
+- `Rectangle` with `cornerRadius` makes circular radar background; use `addControl` to nest blips inside
+- Heading-up radar: rotate relative positions by `cos(heading)/sin(heading)` (positive heading, not negated)
 
 ---
 
@@ -166,4 +168,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `WeakMap` works well for per-entity state that auto-cleans when entities are garbage collected
   - ScreenShake tests were flaky due to Math.random — fixed by mocking with deterministic sequence
   - Screen-space projection: project world pos to camera plane using dot products with camera right/up/forward vectors
+---
+
+## 2026-02-01 - US-012
+- What was implemented: Radar class — 2D top-down minimap in bottom-right corner showing enemy (red) and friendly (green) blips relative to centered player dot (white), with heading-up rotation and range scaling
+- Files changed: src/Radar.ts, src/Radar.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 10 new tests (9 Radar + 1 Game), total now 136
+- **Learnings for future iterations:**
+  - `Rectangle` with `cornerRadius = size/2` creates a circular container for radar background
+  - Heading-up rotation uses positive heading angle (not negated) with standard cos/sin rotation matrix
+  - Blip pool pattern: grow pool lazily, hide excess blips — avoids creating/destroying GUI elements each frame
+  - `rgba(0, 0, 0, 0.5)` background on Rectangle gives a nice semi-transparent radar overlay
+  - Game.test.ts MockRectangle needed `cornerRadius`, `paddingRight`, `paddingTop`, `addControl` for Radar
 ---

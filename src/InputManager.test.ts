@@ -92,6 +92,14 @@ describe("InputManager", () => {
     expect(input.cycleTarget).toBe(false);
   });
 
+  it("reports lockOn when R is pressed", () => {
+    expect(input.lockOn).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "r" }));
+    expect(input.lockOn).toBe(true);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "r" }));
+    expect(input.lockOn).toBe(false);
+  });
+
   it("stops listening after dispose", () => {
     input.dispose();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));

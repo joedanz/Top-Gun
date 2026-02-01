@@ -22,6 +22,7 @@ export class Hud {
   altitudeText: TextBlock;
   headingText: TextBlock;
   ammoText: TextBlock;
+  missileText: TextBlock;
   healthText: TextBlock;
 
   constructor() {
@@ -40,16 +41,18 @@ export class Hud {
     this.altitudeText = createLabel("ALT: 0");
     this.headingText = createLabel("HDG: 0°");
     this.ammoText = createLabel("AMMO: 0");
+    this.missileText = createLabel("MSL: 0");
     this.healthText = createLabel("HP: 100");
 
     panel.addControl(this.speedText);
     panel.addControl(this.altitudeText);
     panel.addControl(this.headingText);
     panel.addControl(this.ammoText);
+    panel.addControl(this.missileText);
     panel.addControl(this.healthText);
   }
 
-  update(aircraft: Aircraft, ammo: number): void {
+  update(aircraft: Aircraft, ammo: number, missileAmmo = 0): void {
     const speed = Math.round(aircraft.speed);
     const altitude = Math.round(aircraft.mesh.position.y);
 
@@ -61,6 +64,7 @@ export class Hud {
     this.altitudeText.text = `ALT: ${altitude}`;
     this.headingText.text = `HDG: ${headingDeg}°`;
     this.ammoText.text = `AMMO: ${ammo}`;
+    this.missileText.text = `MSL: ${missileAmmo}`;
     this.healthText.text = `HP: ${aircraft.health}`;
   }
 }

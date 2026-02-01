@@ -234,4 +234,10 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.radar).toBeDefined();
   });
+
+  it("creates a MissileLockSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.missileLockSystem).toBeDefined();
+  });
 });

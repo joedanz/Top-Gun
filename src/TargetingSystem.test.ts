@@ -74,7 +74,7 @@ function makeAircraft(pos = { x: 0, y: 50, z: 0 }, rotY = 0, speed = 100) {
     speed,
     alive: true,
     health: 100,
-    input: { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false },
+    input: { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false },
   };
 }
 
@@ -101,16 +101,16 @@ describe("TargetingSystem", () => {
 
   it("cycles to next target on cycleTarget input", () => {
     const player = makeAircraft({ x: 0, y: 50, z: 0 });
-    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true };
+    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true, lockOn: false };
     const e1 = makeAircraft({ x: 100, y: 50, z: 0 });
     const e2 = makeAircraft({ x: 200, y: 50, z: 0 });
 
     // First update: selects nearest (e1), cycleTarget pressed → advances to e2
     system.update(player as never, [e1 as never, e2 as never], null as never);
     // Release and press again
-    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false };
+    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false };
     system.update(player as never, [e1 as never, e2 as never], null as never);
-    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true };
+    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true, lockOn: false };
     system.update(player as never, [e1 as never, e2 as never], null as never);
     // Should wrap around back to e1
     expect(system.currentTarget).toBe(e1);
@@ -118,7 +118,7 @@ describe("TargetingSystem", () => {
 
   it("skips dead enemies when cycling", () => {
     const player = makeAircraft({ x: 0, y: 50, z: 0 });
-    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true };
+    player.input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: true, lockOn: false };
     const e1 = makeAircraft({ x: 100, y: 50, z: 0 });
     const e2 = makeAircraft({ x: 200, y: 50, z: 0 });
     e2.alive = false;

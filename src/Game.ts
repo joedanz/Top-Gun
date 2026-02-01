@@ -18,6 +18,7 @@ import { HitFlash } from "./HitFlash";
 import { Hud } from "./Hud";
 import { TargetingSystem } from "./TargetingSystem";
 import { Radar } from "./Radar";
+import { MissileLockSystem } from "./MissileLockSystem";
 
 export class Game {
   engine: Engine;
@@ -39,6 +40,7 @@ export class Game {
   hud: Hud;
   targetingSystem: TargetingSystem;
   radar: Radar;
+  missileLockSystem: MissileLockSystem;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -76,6 +78,7 @@ export class Game {
     this.hud = new Hud();
     this.targetingSystem = new TargetingSystem();
     this.radar = new Radar();
+    this.missileLockSystem = new MissileLockSystem(this.scene);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
@@ -124,7 +127,8 @@ export class Game {
       camera.position.z += shakeOffset.z;
 
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
-      this.hud.update(this.aircraft, this.weaponSystem.ammo);
+      this.missileLockSystem.update(this.aircraft, this.targetingSystem.currentTarget, dt);
+      this.hud.update(this.aircraft, this.weaponSystem.ammo, this.missileLockSystem.ammo);
       this.radar.update(this.aircraft, [this.enemy], []);
 
       this.scene.render();

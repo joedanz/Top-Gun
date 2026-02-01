@@ -36,6 +36,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `Ellipse.addControl` needed in GUI mocks when nesting TextBlock inside an Ellipse (lock indicator pattern)
 - Edge-triggered fire for missiles: track `prevFire` to detect press vs hold
 - Lock cone check: `Math.acos(dot / dist)` gives angle between player forward and target direction
+- MissionLoader is a static factory: `MissionLoader.load(missionData, scene)` returns all spawned entities
+- ObjectiveManager tracks kills via `recordKill()` and time via `update(dt)`, reports `outcome` as getter
+- Mission JSON files live in `public/missions/` — fetched at runtime, not bundled as imports
+- Mock `CreateCylinder` must return a NEW object per call (not spread of shared template) to avoid shared position refs
 
 ---
 
@@ -197,4 +201,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Missile turn rate of 2.0 rad/s gives good gameplay — fast enough to track, slow enough to dodge
   - `Ellipse.addControl` must be in GUI mock when nesting TextBlock inside Ellipse
   - Lock cone of PI/6 (30°) half-angle feels right — not too generous, not too strict
+---
+
+## 2026-02-01 - US-014
+- What was implemented: MissionData TypeScript interfaces, MissionLoader (static factory spawning player/enemies from JSON), ObjectiveManager (tracks destroy_enemies, destroy_all, survive_time objectives with success/failure outcome), example mission JSON (pacific-01)
+- Files changed: src/MissionData.ts, src/MissionLoader.ts, src/MissionLoader.test.ts, src/ObjectiveManager.ts, src/ObjectiveManager.test.ts, public/missions/pacific-01.json
+- **Tests added:** 16 new tests (10 ObjectiveManager + 6 MissionLoader), total now 170
+- **Learnings for future iterations:**
+  - MissionLoader.load() is a static factory returning MissionEntities — keeps it stateless and testable
+  - ObjectiveManager uses a getter `outcome` that derives state from kills/time/failed — no manual state transitions
+  - Mock objects with shared nested references (e.g., position) cause tests to interfere — always create fresh objects per mock call
+  - Mission JSON in public/ directory means it's served as static assets by Vite, fetchable at runtime
 ---

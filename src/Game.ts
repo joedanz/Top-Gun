@@ -33,6 +33,7 @@ import { BossHealthBar } from "./BossHealthBar";
 import { AssetLoader } from "./AssetLoader";
 import { AudioManager } from "./AudioManager";
 import { MusicManager } from "./MusicManager";
+import { VfxSystem } from "./VfxSystem";
 
 export class Game {
   engine: Engine;
@@ -62,6 +63,7 @@ export class Game {
   bossHealthBar: BossHealthBar;
   audioManager: AudioManager;
   musicManager: MusicManager;
+  vfxSystem: VfxSystem;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
@@ -121,6 +123,7 @@ export class Game {
     this.audioManager.addEnemyEngine(this.enemy.mesh);
     this.musicManager = new MusicManager(this.scene);
     this.musicManager.startTheater(mission.theater);
+    this.vfxSystem = new VfxSystem(this.scene);
 
     // Initialize boss system if this is a boss mission
     if (mission.bossIndex !== undefined && mission.bossIndex === 0) {
@@ -259,6 +262,30 @@ export class Game {
 
       this.collisionSystem.checkGroundCollision(this.aircraft);
       this.collisionSystem.checkGroundCollision(this.enemy);
+
+      // VFX: smoke trails on damaged aircraft
+      this.vfxSystem.updateSmokeTrail(this.aircraft);
+      this.vfxSystem.updateSmokeTrail(this.enemy);
+
+      // VFX: muzzle flash on gun fire
+      if (this.weaponManager.gunSystem.shotsFired > this.prevShotsFired) {
+        this.vfxSystem.spawnMuzzleFlash(
+          this.aircraft.mesh.position,
+          this.aircraft.mesh.rotation,
+        );
+      }
+
+      // VFX: missile exhaust trails
+      for (const m of this.weaponManager.missileLockSystem.missiles) {
+        this.vfxSystem.addMissileExhaust(m);
+      }
+      for (const m of this.weaponManager.radarMissiles) {
+        this.vfxSystem.addMissileExhaust(m);
+      }
+      for (const m of this.samMissiles) {
+        this.vfxSystem.addMissileExhaust(m);
+      }
+      this.vfxSystem.updateMissileExhausts();
 
       // Hit feedback
       if (this.collisionSystem.playerHitThisFrame) {

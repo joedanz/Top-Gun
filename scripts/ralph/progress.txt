@@ -82,6 +82,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `ObjectiveManager(objectives, totalEnemies, totalGroundTargets)` — 3rd param optional for backward compat
 - MissionData `groundTargets?: GroundTargetSpawn[]` — optional array of `{type, position}` objects
 - `destroy_ground_targets` objective type uses `recordGroundKill()` and counts against `totalGroundTargets`
+- MenuScene follows same HTML/CSS overlay pattern as BriefingScene/DebriefScene
+- SettingsScene persists to separate `topgun_settings_v1` localStorage key (not inside SaveManager)
+- `loadSettings(storage?)` / `saveSettings(settings, storage?)` accept injectable storage for testability
+- DebriefScene "Return to Menu" now goes to showMenu() instead of looping back to briefing
 
 ---
 
@@ -373,5 +377,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - CollisionSystem.checkGroundTargets() returns destroyed indices for ObjectiveManager.recordGroundKill()
   - Refactored spawnExplosion → spawnExplosionAt(position) to reuse for ground target destruction
   - ObjectiveManager constructor takes optional 3rd param totalGroundTargets — backward compatible
+  - Game.samMissiles array accumulates SAM-fired missiles; passed to countermeasureSystem for flare decoy
+---
+
+## 2026-02-01 - US-025
+- What was implemented: MenuScene (main menu with New Game, Continue, Settings buttons), SettingsScene (audio volume slider, graphics quality dropdown, persistence via localStorage), main.ts updated to start with menu and route "Return to Menu" from debrief back to menu
+- Files changed: src/MenuScene.ts, src/MenuScene.test.ts, src/SettingsScene.ts, src/SettingsScene.test.ts, src/main.ts
+- **Tests added:** 18 new tests (8 MenuScene + 10 SettingsScene), total now 335
+- **Learnings for future iterations:**
+  - SettingsScene uses separate localStorage key (`topgun_settings_v1`) to avoid coupling with SaveManager
+  - `loadSettings`/`saveSettings` helpers accept injectable storage for testability (same pattern as SaveManager)
+  - Menu → Settings → Back → Menu flow works cleanly with dispose/create pattern
+  - DebriefScene "Return to Menu" now navigates to showMenu() for proper game flow
   - Game.samMissiles array accumulates SAM-fired missiles; passed to countermeasureSystem for flare decoy
 ---

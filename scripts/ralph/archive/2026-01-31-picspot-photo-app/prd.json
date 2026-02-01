@@ -1,0 +1,1160 @@
+{
+  "project": "PicSpot",
+  "description": "SaaS family photo sharing app with subscription billing, manual face tagging, EXIF metadata extraction, and album sharing",
+  "planTiers": {
+    "free": {
+      "name": "Free",
+      "priceMonthly": 0,
+      "priceAnnual": 0,
+      "limits": {
+        "storageGB": 1,
+        "albums": 3,
+        "photos": 500,
+        "membersPerAlbum": 5,
+        "faceTags": 100
+      }
+    },
+    "pro": {
+      "name": "Pro",
+      "priceMonthly": 9.99,
+      "priceAnnual": 99,
+      "limits": {
+        "storageGB": 50,
+        "albums": -1,
+        "photos": 10000,
+        "membersPerAlbum": 20,
+        "faceTags": -1
+      }
+    },
+    "family": {
+      "name": "Family",
+      "priceMonthly": 19.99,
+      "priceAnnual": 199,
+      "limits": {
+        "storageGB": 200,
+        "albums": -1,
+        "photos": -1,
+        "membersPerAlbum": 50,
+        "faceTags": -1
+      }
+    }
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Initialize project structure",
+      "description": "As a developer, I need the project scaffolded with Vite, React, TypeScript, Tailwind, Convex, and UploadThing so I can start building features.",
+      "acceptanceCriteria": [
+        "Vite + React + TypeScript project created with 'npm create vite@latest'",
+        "Tailwind CSS configured with tailwind.config.js and postcss.config.js",
+        "Convex initialized with 'npx convex dev' and convex/ directory created",
+        "UploadThing dependencies installed (uploadthing, @uploadthing/react)",
+        "Environment variables documented in .env.example (CONVEX_DEPLOYMENT, UPLOADTHING_SECRET, UPLOADTHING_APP_ID)",
+        "Project runs locally with 'npm run dev' without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Define Convex schema for users and albums",
+      "description": "As a developer, I need database tables for users, albums, album members, and invites defined so I can store core application data.",
+      "acceptanceCriteria": [
+        "convex/schema.ts defines 'users' table: id, name, email, avatarUrl (optional), createdAt, stripeCustomerId (optional), planId (string with default 'free')",
+        "convex/schema.ts defines 'albums' table: id, name, description (optional), ownerId, createdAt, shareableLink (optional), isPublic (boolean)",
+        "convex/schema.ts defines 'albumMembers' table: albumId, userId, role ('owner' | 'editor' | 'viewer'), invitedAt",
+        "convex/schema.ts defines 'albumInvites' table: albumId, email, role, token, expiresAt, acceptedAt (optional)",
+        "Index on users by_email, by_stripe_customer_id",
+        "Schema generates without errors when running 'npx convex dev'",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Updated to include SaaS fields (stripeCustomerId, planId) on users table"
+    },
+    {
+      "id": "US-003",
+      "title": "Define Convex schema for photos, faces, and people",
+      "description": "As a developer, I need database tables for photos, faces, and people defined so I can store photo and face tagging data.",
+      "acceptanceCriteria": [
+        "convex/schema.ts defines 'photos' table: id, albumId, uploaderId, storageId, url, filename, fileSize (bytes), uploadedAt, exifDate (optional), exifLat (optional), exifLng (optional), width (optional), height (optional)",
+        "convex/schema.ts defines 'faces' table: id, photoId, x, y, width, height (all as percentages 0-100), personId (optional)",
+        "convex/schema.ts defines 'people' table: id, albumId, name, representativeFaceId (optional), createdBy",
+        "All foreign key relationships use v.id() type for referential integrity",
+        "Schema generates without errors",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Added fileSize field for storage tracking"
+    },
+    {
+      "id": "US-036",
+      "title": "Define Convex schema for subscriptions and billing",
+      "description": "As a developer, I need database tables for subscriptions and usage tracking so I can implement SaaS billing.",
+      "acceptanceCriteria": [
+        "convex/schema.ts defines 'subscriptions' table: id, userId, planId ('free' | 'pro' | 'family'), status ('active' | 'canceled' | 'past_due'), stripeSubscriptionId (optional), stripePriceId (optional), billingCycle ('monthly' | 'annual' | null for free), currentPeriodStart (optional), currentPeriodEnd (optional), cancelAtPeriodEnd (boolean, default false), createdAt",
+        "convex/schema.ts defines 'usageCache' table: userId, storageUsedBytes, photoCount, albumCount, faceTagCount, lastCalculated",
+        "Indexes: subscriptions by_user, subscriptions by_stripe_subscription_id, usageCache by_user",
+        "Schema generates without errors",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "SaaS fields on users table moved to US-002"
+    },
+    {
+      "id": "US-004",
+      "title": "Implement email/password authentication backend",
+      "description": "As a developer, I need Better-Auth configured with email/password authentication so users can create accounts and log in.",
+      "acceptanceCriteria": [
+        "Better-Auth Convex component installed (@convex-dev/better-auth)",
+        "Convex component registered in convex.config.ts",
+        "Email/password authentication enabled with betterAuth({ emailAndPassword: { enabled: true } })",
+        "Auth configuration file created with proper database adapter",
+        "Better-Auth HTTP routes configured for auth endpoints",
+        "Password minimum length validation (8 characters)",
+        "New users automatically get 'free' plan and subscription record created via afterCreate hook",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Migrated from @convex-dev/auth to @convex-dev/better-auth. Uses triggers.user.onCreate for subscription creation."
+    },
+    {
+      "id": "US-005",
+      "title": "Create authentication UI components",
+      "description": "As a user, I want sign up and login forms so I can access my account.",
+      "acceptanceCriteria": [
+        "SignUpForm component with email, password, and name fields using Better-Auth client",
+        "LoginForm component with email and password fields using Better-Auth client",
+        "Better-Auth client created with createAuthClient() from @better-auth/react",
+        "Form validation shows error messages for invalid input",
+        "Use authClient.signIn.email() and authClient.signUp.email() for authentication",
+        "Successful login redirects to /albums page",
+        "Logout button in header when authenticated using authClient.signOut()",
+        "Session persists across page refreshes via Better-Auth session management",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Uses createAuthClient() with crossDomainClient() plugin. Auth client in src/lib/auth-client.ts."
+    },
+    {
+      "id": "US-006",
+      "title": "Implement Google OAuth",
+      "description": "As a user, I want to sign in with Google so I can access the app without creating a new password.",
+      "acceptanceCriteria": [
+        "Google OAuth provider configured in Better-Auth: socialProviders: { google: { clientId, clientSecret } }",
+        "AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET env vars documented in .env.example",
+        "Redirect URI configured in Google Cloud Console: /api/auth/callback/google",
+        "'Sign in with Google' button on login/signup pages using authClient.signIn.social({ provider: 'google' })",
+        "OAuth flow creates/links user account with Google profile data",
+        "User name and image populated from Google profile",
+        "New OAuth users get 'free' plan subscription created via afterCreate hook",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Uses Better-Auth's built-in Google OAuth support. Callback URL: {VITE_CONVEX_SITE_URL}/api/auth/callback/google. GoogleSignInButton component in src/components/GoogleSignInButton.tsx."
+    },
+    {
+      "id": "US-007",
+      "title": "Implement Apple OAuth",
+      "description": "As a user, I want to sign in with Apple so I can use my Apple ID.",
+      "acceptanceCriteria": [
+        "Apple OAuth provider configured in Better-Auth: socialProviders: { apple: { clientId, clientSecret } }",
+        "Apple OAuth env vars documented (AUTH_APPLE_ID, AUTH_APPLE_SECRET, etc.)",
+        "Add https://appleid.apple.com to trustedOrigins in auth configuration",
+        "'Sign in with Apple' button on login/signup pages using authClient.signIn.social({ provider: 'apple' })",
+        "OAuth flow handles Apple's private email relay feature",
+        "Note: Apple requires HTTPS and does not support localhost for development",
+        "New OAuth users get 'free' plan subscription created via afterCreate hook",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill (or test on staging with HTTPS)"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Apple Sign In requires HTTPS - cannot test on localhost. May need to defer full testing to staging deployment."
+    },
+    {
+      "id": "US-008",
+      "title": "Create album backend mutations",
+      "description": "As a developer, I need Convex mutations to create albums and manage membership so the UI can interact with album data.",
+      "acceptanceCriteria": [
+        "createAlbum mutation: checks album limit, creates album with current user as owner, adds owner to albumMembers, updates usageCache",
+        "getMyAlbums query: returns all albums where user is owner or member",
+        "getAlbum query: returns album details if user has access",
+        "updateAlbum mutation: owner can update name/description",
+        "deleteAlbum mutation: owner can delete album (cascades to members, invites, updates usageCache)",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Backend mutations in convex/albums.ts. Includes usage cache updates for album count."
+    },
+    {
+      "id": "US-009",
+      "title": "Create album list and creation UI",
+      "description": "As a user, I want to see my albums and create new ones so I can organize my photos.",
+      "acceptanceCriteria": [
+        "/albums page shows grid of album cards (name, description preview, photo count placeholder)",
+        "'Create Album' button opens modal with name (required) and description (optional) fields",
+        "Create button disabled with tooltip if album limit reached",
+        "Album created successfully adds it to the list in real-time",
+        "Empty state shown when user has no albums",
+        "Albums sorted by most recently created",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "AlbumCard and CreateAlbumModal components in src/components/. AlbumsPage uses useQuery for real-time updates."
+    },
+    {
+      "id": "US-010",
+      "title": "Create album invitation backend",
+      "description": "As a developer, I need mutations to invite users to albums and accept invitations.",
+      "acceptanceCriteria": [
+        "inviteToAlbum mutation: checks membersPerAlbum limit, creates albumInvites record with unique token, role, 7-day expiry",
+        "getPendingInvites query: returns pending invites for an album (owner only)",
+        "revokeInvite mutation: owner can delete pending invite",
+        "acceptInvite mutation: validates token, checks limit, creates albumMembers record, marks invite as accepted",
+        "getInviteByToken query: returns invite details for accept page",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "Backend mutations in convex/invites.ts. Member limit checks deferred to US-042."
+    },
+    {
+      "id": "US-011",
+      "title": "Create album invitation UI",
+      "description": "As an album owner, I want to invite people by email so they can access my album.",
+      "acceptanceCriteria": [
+        "'Invite' button in album settings (visible only to owner)",
+        "Invite button disabled with tooltip if member limit reached",
+        "Invite form with email field and role selector (editor/viewer)",
+        "Pending invitations list shows email, role, and revoke button",
+        "/invite/[token] page shows album name and 'Accept Invitation' button",
+        "Accept redirects to album view after adding membership",
+        "Expired/invalid tokens show error message",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": "Added limit check UI"
+    },
+    {
+      "id": "US-012",
+      "title": "Implement shareable album links",
+      "description": "As an album owner, I want to generate a public link so anyone can view my album.",
+      "acceptanceCriteria": [
+        "generateShareableLink mutation: creates unique shareableLink string on album",
+        "disableShareableLink mutation: clears shareableLink field",
+        "'Get shareable link' toggle in album settings with copy-to-clipboard button",
+        "/shared/[link] page loads album without authentication",
+        "Shared view shows photos in grid (read-only, no upload/edit)",
+        "Invalid/disabled links show 404 page",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": "Implemented shareable links with generate/disable/copy functionality"
+    },
+    {
+      "id": "US-013",
+      "title": "Implement album member management",
+      "description": "As an album owner, I want to view and manage members so I can control access.",
+      "acceptanceCriteria": [
+        "getAlbumMembers query: returns members with user details (name, email, role, joinedAt)",
+        "updateMemberRole mutation: owner can change member role (editor ↔ viewer)",
+        "removeMember mutation: owner can remove members (not self)",
+        "Members list in album settings showing name, email, role",
+        "Role dropdown and remove button for each member",
+        "Member count shown with limit (e.g., '3 of 5 members')",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": "Added memberName/memberEmail fields to albumMembers for denormalized user info display"
+    },
+    {
+      "id": "US-014",
+      "title": "Implement photo upload backend",
+      "description": "As a developer, I need a photo upload flow that stores files and creates photo records.",
+      "acceptanceCriteria": [
+        "UploadThing configured with Convex integration for image uploads",
+        "generateUploadUrl Convex action returns presigned URL",
+        "createPhoto mutation: creates photo record with albumId, uploaderId, storageId, url, filename, fileSize, uploadedAt",
+        "getPhotos query: returns all photos in an album sorted by uploadedAt desc",
+        "Only editors and owners can upload (permission check)",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Uses Convex storage for uploads. Includes getPhoto query for single photo retrieval."
+    },
+    {
+      "id": "US-015",
+      "title": "Create photo upload UI",
+      "description": "As an album member, I want to upload photos so I can add them to the album.",
+      "acceptanceCriteria": [
+        "Upload button in album view (visible to editors/owners only)",
+        "Upload area shows storage usage (e.g., '0.5 GB of 1 GB') and photo count (e.g., '150 of 500 photos')",
+        "File picker accepts image types (jpg, png, heic, webp)",
+        "Multiple file selection supported",
+        "Drag-and-drop zone for bulk upload",
+        "Upload blocked with upgrade prompt if storage OR photo count limit exceeded",
+        "Upload progress indicator per file",
+        "Photos appear in album grid after upload completes",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Uses Convex Storage API for uploads. PhotoUpload component with drag-drop, progress bars, and limit enforcement."
+    },
+    {
+      "id": "US-016",
+      "title": "Extract EXIF metadata on upload",
+      "description": "As the system, I need to extract EXIF data from photos so users can search by date and location.",
+      "acceptanceCriteria": [
+        "exifr library installed for client-side EXIF extraction",
+        "Extract DateTimeOriginal for capture date (fallback to upload date)",
+        "Extract GPSLatitude/GPSLongitude for location",
+        "Extract image dimensions (width, height)",
+        "EXIF data stored in photo record on creation",
+        "Photos without EXIF handled gracefully (null values)",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "Uses exifr library for client-side extraction. EXIF extraction runs in parallel with upload for performance."
+    },
+    {
+      "id": "US-017",
+      "title": "Create photo grid view",
+      "description": "As a user, I want to see photos in a grid layout so I can browse the album visually.",
+      "acceptanceCriteria": [
+        "Responsive grid layout: 2 cols on mobile, 3-4 on tablet, 5-6 on desktop",
+        "Photos displayed as square thumbnails with object-fit: cover",
+        "Lazy loading for performance (IntersectionObserver or library)",
+        "Click photo to open detail view",
+        "Loading skeleton while photos load",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Uses native loading=lazy attribute for lazy loading. Click handler is a placeholder for US-018 lightbox."
+    },
+    {
+      "id": "US-018",
+      "title": "Create photo lightbox view",
+      "description": "As a user, I want to view a photo in full size so I can see details.",
+      "acceptanceCriteria": [
+        "Lightbox overlay opens when clicking photo in grid",
+        "Full-resolution image loads in lightbox",
+        "Close button (X) in top-right corner",
+        "Click outside image to close",
+        "Escape key closes lightbox",
+        "Dark semi-transparent backdrop",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "PhotoLightbox component with X button, backdrop click, and Escape key close functionality"
+    },
+    {
+      "id": "US-019",
+      "title": "Add lightbox navigation",
+      "description": "As a user, I want to navigate between photos in the lightbox so I can browse without closing it.",
+      "acceptanceCriteria": [
+        "Left/right arrow buttons for previous/next photo",
+        "Arrow keys navigate between photos",
+        "Navigation wraps around (last → first, first → last)",
+        "Current photo index shown (e.g., '3 of 24')",
+        "Preload adjacent images for smooth navigation",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "Added navigation arrows, keyboard nav (ArrowLeft/Right), wrap-around, photo counter, and adjacent image preloading"
+    },
+    {
+      "id": "US-020",
+      "title": "Display photo metadata in lightbox",
+      "description": "As a user, I want to see when and where a photo was taken.",
+      "acceptanceCriteria": [
+        "Metadata panel in lightbox sidebar or overlay",
+        "Shows capture date (or 'Uploaded on [date]' if no EXIF)",
+        "Shows location as lat/lng coordinates (or 'Unknown location')",
+        "Shows uploader name",
+        "Shows filename",
+        "Panel can be toggled visible/hidden",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "Added uploaderName field to photos schema (denormalized). Toggle via info button or 'i' key."
+    },
+    {
+      "id": "US-021",
+      "title": "Implement timeline view",
+      "description": "As a user, I want to see photos organized by date so I can browse chronologically.",
+      "acceptanceCriteria": [
+        "Photos grouped by date (using exifDate or uploadedAt)",
+        "Date headers as section dividers (e.g., 'January 15, 2024')",
+        "Sorted newest-first by default",
+        "Toggle button to sort oldest-first",
+        "Sort preference persists in URL param",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "PhotoTimeline component groups photos by exifDate or uploadedAt. Sort toggle persists in URL param."
+    },
+    {
+      "id": "US-022",
+      "title": "Implement photo deletion",
+      "description": "As a photo uploader or album owner, I want to delete photos so I can remove unwanted images.",
+      "acceptanceCriteria": [
+        "deletePhoto mutation: removes photo record and storage file, updates usageCache",
+        "Cascade deletes associated face records",
+        "Only uploader or album owner can delete (permission check)",
+        "Delete button in photo lightbox",
+        "Confirmation dialog before deletion",
+        "Photo removed from grid immediately after deletion",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": "Added usage cache update. 14 new tests added."
+    },
+    {
+      "id": "US-023",
+      "title": "Integrate AWS Rekognition and update schema",
+      "description": "As a developer, I need AWS Rekognition configured and schema updated so I can implement automatic face detection and recognition.",
+      "acceptanceCriteria": [
+        "Install @aws-sdk/client-rekognition package",
+        "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION env vars documented in .env.example",
+        "Update faces table schema: add rekognitionFaceId (optional string), detectionConfidence (optional number), matchConfidence (optional number), status ('pending' | 'confirmed' | 'rejected')",
+        "Update albums table schema: add rekognitionCollectionId (optional string)",
+        "Update people table schema: add rekognitionFaceIds (optional array of strings) for storing indexed face IDs",
+        "createRekognitionCollection Convex action: creates collection for album, stores collectionId on album",
+        "deleteRekognitionCollection Convex action: deletes collection when album deleted",
+        "Update deleteAlbum mutation to also delete Rekognition collection",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": true,
+      "notes": "AWS Rekognition for accurate cross-age face recognition. Collection per album for data isolation. Uses rekognitionHelpers.ts for internal queries/mutations (Node.js files can only export actions)."
+    },
+    {
+      "id": "US-024",
+      "title": "Auto-detect faces on photo upload",
+      "description": "As a user, I want faces automatically detected when I upload photos so I don't have to manually draw boxes.",
+      "acceptanceCriteria": [
+        "detectFacesInPhoto Convex action: fetches photo from storage, calls Rekognition.detectFaces()",
+        "Rekognition returns bounding boxes, confidence scores, and face attributes",
+        "Create face records for each detected face with status='pending', store bounding box as percentages",
+        "Face records include detectionConfidence from Rekognition",
+        "Trigger face detection automatically after photo upload completes (in createPhoto mutation or via scheduled job)",
+        "Handle photos with no faces gracefully (no face records created)",
+        "Handle Rekognition API errors gracefully (log error, don't block upload)",
+        "Update usageCache.faceTagCount when faces are created",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": true,
+      "notes": "Faces auto-detected on upload. Status='pending' until user confirms. Detection is async to not block upload UX."
+    },
+    {
+      "id": "US-025",
+      "title": "Implement face recognition and matching",
+      "description": "As a user, I want the system to recognize who is in each photo by matching faces to people I've already identified.",
+      "acceptanceCriteria": [
+        "indexFaceInCollection Convex action: adds confirmed face to album's Rekognition collection, stores rekognitionFaceId",
+        "searchFacesInCollection Convex action: searches collection for matching faces, returns matches with confidence",
+        "After face detection, automatically search for matches in album's collection",
+        "If match found with >80% confidence, set suggestedPersonId on face record",
+        "matchConfidence stored on face record to show user how confident the match is",
+        "When user confirms a face identity, index that face in the collection for future matching",
+        "When user corrects a wrong match, the corrected face gets indexed under the correct person",
+        "Handle new albums with empty collections (no matches yet)",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": true,
+      "notes": "Cross-age recognition via Rekognition SearchFaces. Confidence threshold of 80% balances accuracy vs false positives."
+    },
+    {
+      "id": "US-026",
+      "title": "Face detection review UI",
+      "description": "As a user, I want to see detected faces on my photos and confirm or reject them.",
+      "acceptanceCriteria": [
+        "Photo lightbox shows detected face overlays with dashed borders",
+        "Pending faces (unconfirmed) shown in yellow/orange, confirmed in green",
+        "Face overlay shows suggested name if match found (with confidence percentage)",
+        "Clicking a face opens identification panel",
+        "Quick actions: 'Confirm' button accepts suggested match, 'Not a face' button rejects detection",
+        "Rejected faces get status='rejected' and are hidden from view",
+        "Badge on photo thumbnails shows count of pending faces needing review",
+        "getFaces query returns faces with their status and suggested person info",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 27,
+      "passes": true,
+      "notes": "Visual distinction between pending/confirmed faces. Quick-confirm for accurate matches."
+    },
+    {
+      "id": "US-027",
+      "title": "Face identification UI - assign and correct names",
+      "description": "As a user, I want to name faces and correct wrong matches so the system learns who's who.",
+      "acceptanceCriteria": [
+        "Face identification panel shows face thumbnail cropped from photo",
+        "If suggested match exists, show 'Is this [Name]?' with Yes/No buttons",
+        "Autocomplete dropdown suggests existing people in album sorted by match confidence",
+        "Can type new name to create new person",
+        "confirmFace mutation: sets status='confirmed', assigns personId, indexes face in Rekognition",
+        "correctFace mutation: changes personId, re-indexes face under correct person in Rekognition",
+        "createPerson mutation: creates person with name, optionally sets this face as representative",
+        "After confirming, face overlay updates to show person name",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 28,
+      "passes": true,
+      "notes": "Every confirmed face improves future recognition accuracy. Representative face used for people grid thumbnails."
+    },
+    {
+      "id": "US-028",
+      "title": "Create people list view",
+      "description": "As a user, I want to see all people identified in an album so I can browse photos by person.",
+      "acceptanceCriteria": [
+        "'People' tab in album navigation",
+        "Grid of people cards with representative face thumbnail (cropped from photo)",
+        "getPeople query: returns people with confirmed face count and representative face URL",
+        "Each card shows person name and photo count",
+        "Click person navigates to person detail page",
+        "Sort by: most photos, alphabetical, recently added",
+        "Empty state: 'No people identified yet. Faces are auto-detected when you upload photos.'",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 29,
+      "passes": true,
+      "notes": "Representative face provides visual recognition. Photo count helps users find frequently photographed people."
+    },
+    {
+      "id": "US-029",
+      "title": "Create person detail page",
+      "description": "As a user, I want to see all photos containing a specific person.",
+      "acceptanceCriteria": [
+        "/albums/[albumId]/people/[personId] shows photos of that person",
+        "getPhotosByPerson query: returns photos with confirmed faces linked to personId",
+        "Photo grid layout same as album view",
+        "Person name as page title with edit button",
+        "Stats: 'X photos' count displayed",
+        "Face thumbnail strip showing sample faces of this person",
+        "Back button returns to people list",
+        "Empty state if person has no confirmed faces (edge case after corrections)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 30,
+      "passes": true,
+      "notes": "Face thumbnail strip helps verify it's the right person across different ages/photos."
+    },
+    {
+      "id": "US-030",
+      "title": "Person management - rename, merge, delete",
+      "description": "As a user, I want to manage people entries to fix mistakes and consolidate duplicates.",
+      "acceptanceCriteria": [
+        "updatePerson mutation: updates person name",
+        "Inline edit or modal for name change on person detail page",
+        "mergePeople mutation: moves all faces from source to target person, re-indexes faces in Rekognition, deletes source person",
+        "'Merge with...' button opens modal with dropdown of other people",
+        "Merge preview shows face counts: 'Merge 5 faces into [Target Name] (12 faces)'",
+        "deletePerson mutation: removes person, sets their faces back to status='pending' with no personId",
+        "'Delete person' with confirmation: 'This will unlink X faces. They can be re-identified.'",
+        "Updated name/merge reflects immediately in all UI",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 31,
+      "passes": true,
+      "notes": "Merge handles duplicate person entries from early mis-identifications. Delete doesn't lose face data, just unlinks."
+    },
+    {
+      "id": "US-031",
+      "title": "Implement date range filter",
+      "description": "As a user, I want to filter photos by date range so I can find photos from a specific time.",
+      "acceptanceCriteria": [
+        "Date range picker in album filter bar",
+        "Start date and end date input fields",
+        "getPhotos query accepts startDate/endDate params",
+        "Filters apply immediately on selection",
+        "'Clear' button resets date filter",
+        "Filter state preserved in URL params",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 38,
+      "passes": true,
+      "notes": "DateRangeFilter component with accessible inputs. Uses exifDate with uploadedAt fallback. URL params persist filter state."
+    },
+    {
+      "id": "US-032",
+      "title": "Implement person filter",
+      "description": "As a user, I want to filter photos by person so I can find photos of specific people.",
+      "acceptanceCriteria": [
+        "Person selector dropdown in album filter bar",
+        "Shows all people in current album",
+        "getPhotos query accepts personId param",
+        "Filters to photos containing selected person",
+        "Can combine with date filter",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 39,
+      "passes": true,
+      "notes": "PersonFilter dropdown component with loading/empty states. Filters by confirmed faces only. URL param persistence for personId."
+    },
+    {
+      "id": "US-033",
+      "title": "Implement combined filter UI",
+      "description": "As a user, I want to see and manage active filters clearly.",
+      "acceptanceCriteria": [
+        "Active filters shown as dismissible chips/tags",
+        "Each chip has X button to remove that filter",
+        "'Clear all filters' button when any filter active",
+        "Filter state preserved in URL params (reloadable/shareable)",
+        "Empty state message when no photos match filters",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 40,
+      "passes": true,
+      "notes": "ActiveFilters component with dismissible FilterChip subcomponent. Shows 'Clear all filters' when multiple filter types active."
+    },
+    {
+      "id": "US-034",
+      "title": "Implement responsive mobile layout",
+      "description": "As a mobile user, I want the app to work well on my phone.",
+      "acceptanceCriteria": [
+        "All pages usable on 375px+ viewport width",
+        "Touch-friendly tap targets (minimum 44px)",
+        "Photo grid adapts columns for screen width",
+        "Mobile navigation (hamburger menu or bottom nav)",
+        "Upload works from mobile camera roll",
+        "Lightbox swipe gestures for navigation",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 41,
+      "passes": true,
+      "notes": "Added MobileNav hamburger menu, useSwipeGesture hook, responsive Header, swipe gestures in PhotoLightbox"
+    },
+    {
+      "id": "US-035",
+      "title": "Deploy to production",
+      "description": "As the team, we need to deploy the app so users can access it.",
+      "acceptanceCriteria": [
+        "Frontend deployed to Vercel",
+        "Convex deployed to Convex cloud production",
+        "Environment variables configured in Vercel dashboard",
+        "UploadThing production keys configured",
+        "Stripe production keys configured",
+        "Stripe webhook endpoint configured for production URL",
+        "OAuth redirect URIs updated for production domain",
+        "App accessible at production URL without errors",
+        "Typecheck passes"
+      ],
+      "priority": 100,
+      "passes": false,
+      "notes": "Added Stripe production config. Priority set to 100 to ensure it comes absolutely last."
+    },
+    {
+      "id": "US-037",
+      "title": "Integrate Stripe backend",
+      "description": "As a developer, I need Stripe integration for payment processing and subscription management.",
+      "acceptanceCriteria": [
+        "Stripe SDK installed (stripe package)",
+        "STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET env vars documented",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY for frontend",
+        "createStripeCustomer Convex action: creates Stripe customer, stores stripeCustomerId on user",
+        "createCheckoutSession Convex action: creates Stripe checkout session for plan upgrade",
+        "Webhook handler for: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed",
+        "Webhooks update subscription status in database",
+        "Typecheck passes"
+      ],
+      "priority": 32,
+      "passes": true,
+      "notes": "Stripe SDK v20.2.0 with API version 2025-12-15.clover. HTTP webhook routes to Node.js action for Stripe SDK access. stripeCustomerId added to subscriptions table."
+    },
+    {
+      "id": "US-038",
+      "title": "Create pricing page",
+      "description": "As a visitor, I want to see pricing plans so I can decide which plan to subscribe to.",
+      "acceptanceCriteria": [
+        "/pricing page displays all three tiers (Free, Pro, Family)",
+        "Feature comparison table showing limits for each plan",
+        "Monthly/Annual toggle with savings displayed ('Save 17%')",
+        "CTA button for each plan ('Get Started' for Free, 'Subscribe' for paid)",
+        "Current plan highlighted if user is logged in",
+        "Responsive design for mobile",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 33,
+      "passes": true,
+      "notes": "Pricing page with 3 tiers, monthly/annual toggle, feature comparison table, current plan highlighting"
+    },
+    {
+      "id": "US-039",
+      "title": "Implement subscription checkout flow",
+      "description": "As a user, I want to subscribe to a paid plan so I can unlock more features.",
+      "acceptanceCriteria": [
+        "Clicking 'Subscribe' on pricing page redirects to Stripe Checkout",
+        "Checkout session includes selected plan and billing cycle",
+        "Success redirect to /billing?success=true shows confirmation",
+        "Cancel redirect to /pricing preserves state",
+        "Subscription record created/updated on successful payment",
+        "User's planId updated to new plan",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 34,
+      "passes": true,
+      "notes": "Subscribe buttons wired to createCheckoutSession action. BillingPage shows success confirmation. Cancel URL already configured in Stripe action."
+    },
+    {
+      "id": "US-040",
+      "title": "Create billing management page",
+      "description": "As a subscriber, I want to manage my subscription so I can upgrade, downgrade, or cancel.",
+      "acceptanceCriteria": [
+        "/billing page (requires authentication)",
+        "Shows current plan name and price",
+        "Shows billing cycle (monthly/annual) and next billing date",
+        "Shows usage vs limits for ALL metrics: storage, photos, albums, members per album, face tags",
+        "Usage displayed as progress bars with percentages",
+        "Over-limit items highlighted in red/warning color",
+        "'Change Plan' button opens plan selection modal",
+        "Downgrade warning shown if current usage exceeds new plan's limits",
+        "'Cancel Subscription' button with confirmation dialog",
+        "Canceled subscriptions show 'Active until [date]' message",
+        "Stripe Customer Portal link for payment method management",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 35,
+      "passes": true,
+      "notes": "Includes usage bars for all metrics, cancel subscription, Stripe portal link"
+    },
+    {
+      "id": "US-041",
+      "title": "Implement usage tracking",
+      "description": "As the system, I need to track user resource usage so I can enforce plan limits.",
+      "acceptanceCriteria": [
+        "getUserUsage query: returns current storageUsedBytes, photoCount, albumCount, faceTagCount",
+        "Usage calculated from actual data (photos.fileSize sum, counts from tables)",
+        "usageCache table updated on: photo upload/delete, album create/delete, face tag create/delete",
+        "getPlanLimits query: returns limits object for user's current plan (from planTiers config)",
+        "checkLimit helper function: compares usage vs plan limit, returns {allowed: boolean, current: number, limit: number, percentage: number}",
+        "Handle -1 (unlimited) in limit comparisons correctly",
+        "Typecheck passes"
+      ],
+      "priority": 36,
+      "passes": true,
+      "notes": "checkLimit helper added with LimitCheckResult type. Handles unlimited (-1) and edge cases."
+    },
+    {
+      "id": "US-042",
+      "title": "Enforce plan limits with upgrade prompts",
+      "description": "As a user on a limited plan, I want clear feedback when I hit limits so I know to upgrade.",
+      "acceptanceCriteria": [
+        "Photo upload checks BOTH storage limit AND photo count limit, blocks if either exceeded",
+        "Album creation checks album limit, blocks if exceeded",
+        "Member invite checks membersPerAlbum limit (based on album OWNER's plan), blocks if exceeded",
+        "Face tagging checks faceTag limit, blocks if exceeded",
+        "LimitReachedModal component shows: which limit hit, current usage, plan limit, upgrade CTA",
+        "Upgrade CTA links to /pricing with pre-selected recommended plan",
+        "Usage warnings shown at 80% and 95% of limits (toast notification)",
+        "Users over limit after downgrade: read access allowed, new creates blocked with upgrade prompt",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 37,
+      "passes": true,
+      "notes": "Includes photo count limit and downgrade handling"
+    },
+    {
+      "id": "US-043",
+      "title": "Create landing page",
+      "description": "As a visitor, I want to see a compelling landing page so I understand the product value.",
+      "acceptanceCriteria": [
+        "/ (root) shows landing page for unauthenticated users",
+        "Hero section with tagline and CTA ('Get Started Free')",
+        "Feature highlights (EXIF, face tagging, sharing)",
+        "Plan comparison summary with link to /pricing",
+        "Social proof section (placeholder for testimonials)",
+        "Footer with links (pricing, login, privacy, terms)",
+        "Authenticated users redirected to /albums",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 58,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "Install Leaflet map library and create base map component",
+      "description": "As a developer, I need a base map component using Leaflet so I can display photos on maps.",
+      "acceptanceCriteria": [
+        "Install leaflet, react-leaflet, and @types/leaflet packages",
+        "Create src/components/PhotoMap.tsx base component",
+        "Map renders with OpenStreetMap tiles",
+        "Support configurable center coordinates and zoom level",
+        "Support touch gestures for mobile (pinch to zoom, pan)",
+        "Map container has responsive height (fills parent)",
+        "5+ tests covering rendering, props, and touch support",
+        "Typecheck passes"
+      ],
+      "priority": 44,
+      "passes": true,
+      "notes": "Leaflet + react-leaflet installed. PhotoMap component with OSM tiles, configurable center/zoom, touch gestures."
+    },
+    {
+      "id": "US-045",
+      "title": "Display photo markers on album map view",
+      "description": "As a user, I want to see my photos displayed on a map so I can browse by location.",
+      "acceptanceCriteria": [
+        "Add 'Map' tab to AlbumDetailPage navigation (URL param ?tab=map)",
+        "Create getPhotosWithLocation query that returns photos with exifLat/exifLng",
+        "Display markers on map for each geolocated photo",
+        "Marker shows photo thumbnail on hover",
+        "Clicking marker opens photo in lightbox",
+        "Map auto-fits bounds to show all markers",
+        "Empty state shown when album has no geolocated photos",
+        "8+ tests covering markers, hover, click, bounds, empty state",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 45,
+      "passes": true,
+      "notes": "Map tab with AlbumMapTab component, getPhotosWithLocation query, markers with hover/click, auto-fit bounds, 17 tests total"
+    },
+    {
+      "id": "US-046",
+      "title": "Implement photo marker clustering",
+      "description": "As a user, I want markers to cluster when zoomed out so the map remains usable with many photos.",
+      "acceptanceCriteria": [
+        "Install react-leaflet-cluster package for marker clustering",
+        "Clusters show photo count badge",
+        "Clicking cluster zooms in to expand markers",
+        "Clusters dynamically group/ungroup as user zooms",
+        "Performance tested with 1000+ markers",
+        "5+ tests covering clustering behavior and performance",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 46,
+      "passes": true,
+      "notes": "react-leaflet-cluster with MarkerClusterGroup. chunkedLoading and maxClusterRadius=50 for performance."
+    },
+    {
+      "id": "US-047",
+      "title": "Filter photos by map bounding box",
+      "description": "As a user, I want to filter photos by drawing a selection area on the map.",
+      "acceptanceCriteria": [
+        "'Select Area' button enables rectangle selection mode on map",
+        "User can draw rectangle to define filter bounds",
+        "Add bounds params (north, south, east, west) to getPhotos query",
+        "Create LocationFilter component in filter bar showing active bounds",
+        "Filter persists in URL params",
+        "Combines with existing date/person filters",
+        "Clear bounds button removes location filter",
+        "10+ tests covering selection, filtering, URL persistence, filter combinations",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 47,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-048",
+      "title": "View all albums on a global map",
+      "description": "As a user, I want to see all my albums plotted on a map to browse by location.",
+      "acceptanceCriteria": [
+        "Create /albums/map route",
+        "Add 'Map View' toggle on AlbumsPage",
+        "Create getAlbumLocations query that calculates centroid for each album",
+        "Album markers show album name and photo count in popup",
+        "Clicking album marker navigates to album's map view",
+        "Empty state for users with no geolocated albums",
+        "8+ tests covering route, toggle, markers, navigation",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 48,
+      "passes": true,
+      "notes": "19 tests total (9 backend + 10 frontend). Centroid calculated from geolocated photos only."
+    },
+    {
+      "id": "US-049",
+      "title": "Reverse geocode photos to place names",
+      "description": "As a user, I want to see human-readable location names for my photos instead of just coordinates.",
+      "acceptanceCriteria": [
+        "Add locationName field (optional string) to photos schema",
+        "Create reverseGeocode Convex action using Nominatim API (free, no API key)",
+        "Respect Nominatim rate limit (1 request per second)",
+        "Schedule geocoding after photo upload (don't block upload)",
+        "Display place name in PhotoMetadataPanel",
+        "Fallback to coordinates if geocoding fails",
+        "6+ tests covering geocoding, rate limiting, display",
+        "Typecheck passes"
+      ],
+      "priority": 49,
+      "passes": true,
+      "notes": "Implemented using Nominatim API. Geocoding scheduled after upload. 12 tests added."
+    },
+    {
+      "id": "US-050",
+      "title": "Filter photos by location name search",
+      "description": "As a user, I want to search for photos by place name.",
+      "acceptanceCriteria": [
+        "Add location search input to LocationFilter component",
+        "Add locationSearch param to getPhotos query",
+        "Autocomplete suggestions from existing location names in album",
+        "Case-insensitive partial matching on locationName field",
+        "Combines with bounding box filter (AND logic)",
+        "Clear search button",
+        "8+ tests covering search, autocomplete, filtering, combinations",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 50,
+      "passes": true,
+      "notes": "Fixed pre-existing TypeScript errors in test files (Doc type casts for ctx.db.get() calls)"
+    },
+    {
+      "id": "US-051",
+      "title": "Define admin role schema",
+      "description": "As a developer, I need an admin role system so I can restrict access to admin features.",
+      "acceptanceCriteria": [
+        "Create admins table: userId (v.id('users')), createdAt, createdBy (v.id('users'))",
+        "Index on admins by_user_id",
+        "Create isAdmin internal query that checks if userId is in admins table",
+        "Document ADMIN_SEED_EMAILS env var in .env.example",
+        "Create ensureAdminSeeded mutation that creates admin records for seed emails",
+        "Seed admins on first app load if admins table is empty",
+        "5+ tests covering schema, isAdmin query, seeding",
+        "Typecheck passes"
+      ],
+      "priority": 51,
+      "passes": true,
+      "notes": "Separate admins table keeps admin logic isolated from Better-Auth user schema."
+    },
+    {
+      "id": "US-052",
+      "title": "Admin authentication middleware and audit logging",
+      "description": "As a developer, I need admin-only access control and audit logging for accountability.",
+      "acceptanceCriteria": [
+        "Create requireAdmin helper function that throws if user is not admin",
+        "Create adminAuditLog table: adminUserId, action (string), targetUserId (optional), details (string), timestamp",
+        "Create logAdminAction internal mutation",
+        "All admin mutations log their actions automatically",
+        "Non-admins receive clear error message when accessing admin features",
+        "5+ tests covering access control and audit logging",
+        "Typecheck passes"
+      ],
+      "priority": 52,
+      "passes": true,
+      "notes": "8 tests in adminMiddleware.test.ts. requireAdmin helper exported for use by other admin queries/mutations."
+    },
+    {
+      "id": "US-053",
+      "title": "Admin aggregate metrics queries",
+      "description": "As an admin, I want to see platform-wide metrics so I can monitor the business.",
+      "acceptanceCriteria": [
+        "Create getAggregateMetrics admin query",
+        "Returns: totalUsers, activeUsers (logged in within 30 days)",
+        "Returns: usersByPlan breakdown (free/pro/family counts)",
+        "Returns: totalStorageUsedBytes, totalPhotos, totalAlbums",
+        "Returns: MRR (Monthly Recurring Revenue) calculated from active subscriptions",
+        "Query protected by requireAdmin",
+        "6+ tests covering all metrics calculations",
+        "Typecheck passes"
+      ],
+      "priority": 53,
+      "passes": true,
+      "notes": "Real-time aggregation using usageCache.lastCalculated for active users. 7 tests in adminMetrics.test.ts."
+    },
+    {
+      "id": "US-054",
+      "title": "Admin user list query with search and filters",
+      "description": "As an admin, I want to search and filter users to find specific accounts.",
+      "acceptanceCriteria": [
+        "Create listUsers admin query",
+        "Search by email or name (case-insensitive partial match)",
+        "Filter by plan (free/pro/family)",
+        "Filter by status (active/past_due/canceled)",
+        "Cursor-based pagination with limit parameter",
+        "Returns user profile + subscription + usage data per user",
+        "Query protected by requireAdmin with audit logging",
+        "8+ tests covering search, filters, pagination",
+        "Typecheck passes"
+      ],
+      "priority": 54,
+      "passes": true,
+      "notes": "9 tests in adminUsers.test.ts. Search currently by userId (email/name search requires Better-Auth user data access)."
+    },
+    {
+      "id": "US-055",
+      "title": "Admin user detail and system health queries",
+      "description": "As an admin, I want to view detailed user info and monitor system health.",
+      "acceptanceCriteria": [
+        "Create getUserDetail admin query returning full user profile, subscription, usage, recent activity",
+        "Create getPastDueAccounts query returning users with past_due subscription status",
+        "Create getRecentSignups query returning users created in last N days",
+        "Create getRecentCancellations query returning recently canceled subscriptions",
+        "All queries protected by requireAdmin",
+        "6+ tests covering all queries",
+        "Typecheck passes"
+      ],
+      "priority": 55,
+      "passes": true,
+      "notes": "14 tests in adminUserDetail.test.ts. Queries return full user profile, subscription, usage, and recent albums."
+    },
+    {
+      "id": "US-056",
+      "title": "Admin dashboard UI - metrics overview",
+      "description": "As an admin, I want a dashboard showing platform metrics at a glance.",
+      "acceptanceCriteria": [
+        "Create /admin route (protected, redirects non-admins to /)",
+        "Create AdminDashboardPage.tsx",
+        "Display metrics cards: total users, active users, MRR, storage used",
+        "Display plan distribution chart (pie or bar chart)",
+        "Navigation links to: user list, past due accounts, recent signups, recent cancellations",
+        "Loading skeleton while metrics load",
+        "6+ tests covering rendering, protection, navigation",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 56,
+      "passes": true,
+      "notes": "Added 17 tests. Created checkAmIAdmin public query for frontend."
+    },
+    {
+      "id": "US-057",
+      "title": "Admin user management UI",
+      "description": "As an admin, I want to search, browse, and view user details.",
+      "acceptanceCriteria": [
+        "Create /admin/users route with AdminUsersPage.tsx",
+        "Search input for email/name",
+        "Filter dropdowns for plan and status",
+        "User table showing: name, email, plan, status, storage used, photo count, joined date",
+        "Pagination controls (next/previous)",
+        "Create /admin/users/:userId route with AdminUserDetailPage.tsx",
+        "Detail page shows: profile, subscription history, usage breakdown, recent albums",
+        "8+ tests covering search, filters, pagination, detail view",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 57,
+      "passes": true,
+      "notes": "31 tests total (14 in AdminUsersPage.test.tsx + 17 in AdminUserDetailPage.test.tsx). Search by userId (Better-Auth user data requires separate access for email/name search)."
+    },
+    {
+      "id": "US-058",
+      "title": "Manual photo face rescan",
+      "description": "As a user, I want to manually trigger face detection on a photo so I can detect faces that were missed or weren't detected initially.",
+      "acceptanceCriteria": [
+        "rescanPhotoFaces mutation: clears pending/rejected faces, calls detectFacesInPhoto, then runs matching",
+        "'Rescan Faces' button in photo lightbox menu (visible to editors/owners only)",
+        "Button disabled while scan is in progress to prevent duplicate requests",
+        "Loading state shown during rescan (spinner with 'Scanning for faces...')",
+        "Preserve existing confirmed faces (status='confirmed') - only remove pending/rejected",
+        "After detection completes, automatically run face matching against album's Rekognition collection",
+        "Ensure album's Rekognition collection exists before matching (create if needed)",
+        "Check face tag limit before creating new faces; show upgrade prompt if limit exceeded",
+        "Show success message with face count ('Found 3 faces') or 'No faces detected'",
+        "Handle errors gracefully (show error toast, allow retry)",
+        "6+ tests covering rescan trigger, face preservation, matching, limit checks, error handling",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 60,
+      "passes": true,
+      "notes": "11 backend tests + 6 UI tests. Rescan clears pending/rejected faces, preserves confirmed."
+    },
+    {
+      "id": "US-059",
+      "title": "Retroactive face matching when identifying people",
+      "description": "As a user, I want the system to automatically suggest matches for existing pending faces when I identify someone new, so I don't have to manually find every photo of that person.",
+      "acceptanceCriteria": [
+        "When a face is confirmed (confirmFace mutation), trigger retroactive matching as a scheduled job",
+        "retroactivelyMatchFaces internal action: searches all pending faces in album against the newly indexed face",
+        "For matches with >80% confidence, set suggestedPersonId on the pending face",
+        "Don't modify confirmed or rejected faces - only update pending faces",
+        "Process pending faces in batches of 50 with rate limiting to avoid Rekognition throttling",
+        "Limit total search to first 500 pending faces per confirmation to avoid timeout",
+        "Matching runs asynchronously (don't block the confirm action UI)",
+        "Handle case where person already has multiple indexed faces (search against all of them)",
+        "Show toast notification if new matches found ('Found 5 more photos that might be [Name]')",
+        "If no new matches found, don't show any notification",
+        "6+ tests covering retroactive matching, confidence threshold, batching, async execution",
+        "Typecheck passes"
+      ],
+      "priority": 61,
+      "passes": true,
+      "notes": "15 tests added (9 backend, 6 frontend toast component)"
+    },
+    {
+      "id": "US-060",
+      "title": "Batch album face detection",
+      "description": "As an album owner, I want to run face detection on all photos in an album that don't have faces detected, so I can quickly set up face tagging for bulk imported albums.",
+      "acceptanceCriteria": [
+        "getPhotosNeedingFaceDetection query: returns count of photos without any face records",
+        "'Scan All Photos for Faces' button in album settings (owner only)",
+        "Button shows count before starting ('Scan 45 photos for faces')",
+        "Button disabled if all photos already have faces detected",
+        "Button disabled with tooltip if at face tag limit",
+        "startBatchFaceDetection mutation: creates batchFaceDetectionJobs record, schedules processing",
+        "batchFaceDetectionJobs table: albumId, status ('pending'|'running'|'completed'|'cancelled'), totalPhotos, processedPhotos, facesFound, createdAt, completedAt",
+        "getBatchFaceDetectionProgress query: returns job status for current album",
+        "Progress UI shows 'Scanning photo 15 of 100...' with progress bar",
+        "Process photos in batches of 5 with 2-second delay between batches (respect Rekognition rate limits)",
+        "After each photo, run face matching against album's collection",
+        "cancelBatchFaceDetection mutation: sets job status to 'cancelled', stops further processing",
+        "'Cancel' button visible during scan",
+        "Check face tag limit during batch; stop early with message if limit would be exceeded",
+        "Summary toast shown when complete ('Scanned 100 photos, detected 250 faces')",
+        "Job survives page refresh (can navigate away and return to see progress)",
+        "10+ tests covering batch creation, progress tracking, cancellation, rate limiting, limits, persistence",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 62,
+      "passes": true,
+      "notes": "14 backend tests + 7 frontend tests. Batch processing with 5 photos per batch, 2s delay."
+    }
+  ]
+}

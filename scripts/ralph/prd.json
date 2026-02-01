@@ -1,0 +1,698 @@
+{
+  "project": "Top Gun",
+  "branchName": "ralph/topgun-flight-combat",
+  "description": "3D arcade flight combat game built with Babylon.js and TypeScript — campaign-driven, browser-based, casual-friendly",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Project Bootstrap",
+      "description": "As a developer, I need a working Babylon.js + TypeScript project so that I have a foundation to build on.",
+      "acceptanceCriteria": [
+        "Vite + TypeScript project initializes and runs with `npm run dev`",
+        "Babylon.js scene renders with camera, light, and a ground plane",
+        "A movable cube responds to keyboard input (WASD moves it around)",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 0: Project Setup",
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Aircraft Entity and Input Manager",
+      "description": "As a developer, I need an Aircraft entity class and InputManager abstraction so flight controls have a clean foundation. InputManager must be decoupled from entities (for future multiplayer readiness).",
+      "acceptanceCriteria": [
+        "Aircraft entity class owns a Babylon mesh (placeholder cone/cylinder shape)",
+        "InputManager abstraction reads keyboard state (WASD for pitch/roll, QE for yaw, Shift/Ctrl for throttle)",
+        "Aircraft reads from InputManager, not directly from keyboard events",
+        "Aircraft renders in the scene and responds to input (basic movement, no flight physics yet)",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 1: Core Flight",
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Arcade Flight Model",
+      "description": "As a player, I want to fly an aircraft that feels responsive and fun so that the core moment-to-moment gameplay is satisfying.",
+      "acceptanceCriteria": [
+        "FlightSystem applies velocity-based arcade movement to Aircraft entities",
+        "Speed affects turn rate (faster = wider turns)",
+        "Stall at low speed: nose drops automatically, speed recovers as aircraft dives — no player input required to recover",
+        "Altitude floor prevents flying underground",
+        "Debug UI overlay (Babylon GUI or dat.gui) to tweak flight parameters in real-time (sliders for max speed, turn rate, acceleration, stall threshold)",
+        "Typecheck passes",
+        "Verify in browser: flight feels smooth and responsive at 60 FPS"
+      ],
+      "epic": "Phase 1: Core Flight",
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Camera System",
+      "description": "As a player, I want a smooth third-person camera that follows my aircraft so I can see where I'm going and what I'm fighting.",
+      "acceptanceCriteria": [
+        "CameraSystem positions camera behind and slightly above the aircraft",
+        "Smooth interpolation — no snapping or jitter during turns",
+        "Camera pulls back slightly at high speed, tightens at low speed",
+        "Typecheck passes",
+        "Verify in browser: camera feels natural during aggressive maneuvering"
+      ],
+      "epic": "Phase 1: Core Flight",
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Terrain and Skybox",
+      "description": "As a player, I want to see ground and sky so the world feels real and I have spatial reference.",
+      "acceptanceCriteria": [
+        "Ground plane or basic heightmap terrain with a texture",
+        "Skybox with a sky/horizon/ground gradient",
+        "Terrain is large enough that the player doesn't fly off the edge in normal gameplay",
+        "Typecheck passes",
+        "Verify in browser: world feels expansive, no obvious seams"
+      ],
+      "epic": "Phase 1: Core Flight",
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Gun Combat (Projectiles)",
+      "description": "As a player, I want to fire guns at enemy aircraft so that I can engage in dogfights.",
+      "acceptanceCriteria": [
+        "Projectile entity class with visible tracer mesh (small elongated shape or line)",
+        "WeaponSystem spawns bullet projectiles from the aircraft nose on fire key press",
+        "Projectiles travel forward at high speed and despawn after max range or lifetime",
+        "Rate of fire is limited (not continuous stream)",
+        "Typecheck passes",
+        "Verify in browser: gun firing feels punchy with visible tracers"
+      ],
+      "epic": "Phase 2: Basic Combat",
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Enemy Aircraft with Basic AI",
+      "description": "As a player, I want enemy aircraft that fly and fight so I have something to dogfight against.",
+      "acceptanceCriteria": [
+        "Enemy aircraft entity spawns in the world with a distinct color (red) and flies autonomously using FlightSystem",
+        "AISystem implements basic pursuit: fly toward player, attempt to get behind player",
+        "Enemy fires guns when player is in front and within range",
+        "Enemy takes basic evasive action when being shot at (random turn)",
+        "Typecheck passes",
+        "Verify in browser: enemy provides a reasonable dogfight challenge"
+      ],
+      "epic": "Phase 2: Basic Combat",
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Collision Detection and Damage",
+      "description": "As a player, I want projectiles to hit aircraft and deal damage so combat has consequences.",
+      "acceptanceCriteria": [
+        "CollisionSystem detects intersections between projectiles and aircraft (bounding sphere)",
+        "Aircraft have a health value; bullets reduce health on hit",
+        "Aircraft destroyed at 0 health with explosion VFX (particle burst)",
+        "Ground collision destroys the player's aircraft",
+        "Player death triggers a simple 'mission failed' state (placeholder — full flow comes later)",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 2: Basic Combat",
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Screen Shake and Hit Feedback",
+      "description": "As a player, I want dramatic feedback when I take hits so combat feels impactful.",
+      "acceptanceCriteria": [
+        "Dramatic screen shake on taking damage (heavy shake for big hits, light for small)",
+        "Brief red flash or vignette on the screen edge when hit",
+        "Explosion particle effect is visible and satisfying when aircraft is destroyed",
+        "Typecheck passes",
+        "Verify in browser: hits register reliably, screen shake feels punchy"
+      ],
+      "epic": "Phase 2: Basic Combat",
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "HUD — Flight Instruments",
+      "description": "As a player, I want a heads-up display showing flight and combat information so I can make tactical decisions.",
+      "acceptanceCriteria": [
+        "HUD renders using Babylon GUI (AdvancedDynamicTexture), anchored to screen space",
+        "Speed indicator (knots or arbitrary units)",
+        "Altitude indicator",
+        "Heading indicator (compass)",
+        "Weapon status (ammo count)",
+        "Health/damage indicator",
+        "Typecheck passes",
+        "Verify in browser: HUD is readable at a glance, doesn't obscure gameplay"
+      ],
+      "epic": "Phase 3: HUD & Targeting",
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Targeting Reticle and Lead Indicator",
+      "description": "As a player, I want a targeting reticle so I know where to aim.",
+      "acceptanceCriteria": [
+        "Target reticle highlights the currently selected enemy (bracket or diamond overlay)",
+        "Lead indicator shows where to aim guns for deflection shooting",
+        "Cycle-target key (Tab or similar) to switch between enemies",
+        "Typecheck passes",
+        "Verify in browser: reticle and lead indicator make aiming intuitive"
+      ],
+      "epic": "Phase 3: HUD & Targeting",
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Radar Minimap",
+      "description": "As a player, I want a radar display so I know where enemies are relative to me.",
+      "acceptanceCriteria": [
+        "2D top-down radar minimap in a corner of the HUD",
+        "Shows relative positions of enemies (red dots) and friendlies (green dots) around a centered player icon",
+        "Radar range scales appropriately (not too zoomed in or out)",
+        "Typecheck passes",
+        "Verify in browser: radar makes it easy to locate enemies"
+      ],
+      "epic": "Phase 3: HUD & Targeting",
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Missile Lock-On System",
+      "description": "As a player, I want to lock onto enemies and fire missiles for an alternative to guns.",
+      "acceptanceCriteria": [
+        "Hold lock key while pointing near an enemy to begin lock-on (growing tone/visual indicator)",
+        "After lock-on completes, fire key launches a heat-seeking missile",
+        "Missile entity tracks the locked target with limited turning ability",
+        "Limited missile ammo per sortie",
+        "Typecheck passes",
+        "Verify in browser: lock-on feels tense, missile tracking is visible"
+      ],
+      "epic": "Phase 3: HUD & Targeting",
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Mission JSON Schema and Loader",
+      "description": "As a developer, I need a data-driven mission system so missions can be defined in JSON without recompiling.",
+      "acceptanceCriteria": [
+        "TypeScript interfaces for MissionData (theater, objectives, enemy spawns, player start position)",
+        "Mission JSON schema defined; at least one example mission JSON file exists",
+        "MissionLoader parses JSON and spawns entities (enemies, player) accordingly",
+        "ObjectiveManager tracks objective completion (e.g., 'destroy 3 enemies')",
+        "Mission ends when all objectives complete (success) or player dies (failure)",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 4: Mission System",
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Briefing Scene",
+      "description": "As a player, I want to see a mission briefing before flying so I know what to expect.",
+      "acceptanceCriteria": [
+        "BriefingScene (HTML/CSS overlay or Babylon GUI) shows mission name, description, objectives, and theater",
+        "Player presses a key/button to launch into the mission",
+        "Scene transitions cleanly to the MissionScene (no flicker)",
+        "Typecheck passes",
+        "Verify in browser: briefing displays correctly and transitions to gameplay"
+      ],
+      "epic": "Phase 4: Mission System",
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Debrief Scene and Mission Loop",
+      "description": "As a player, I want a debrief after each mission showing results so I get closure on each sortie.",
+      "acceptanceCriteria": [
+        "On mission success or failure: transition to DebriefScene",
+        "Debrief shows results: kills, time, pass/fail",
+        "Debrief offers 'next mission' or 'return to menu' options",
+        "Full loop works: briefing → fly → fight → debrief → menu/next",
+        "Typecheck passes",
+        "Verify in browser: full loop from briefing through debrief works end-to-end"
+      ],
+      "epic": "Phase 4: Mission System",
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Aircraft Data (JSON Stats)",
+      "description": "As a developer, I need aircraft stats defined in data so the flight model is data-driven.",
+      "acceptanceCriteria": [
+        "aircraft.json defines at least 3 aircraft: F-14 Tomcat, P-51 Mustang, F/A-18 Super Hornet",
+        "Each aircraft has distinct stats: max speed, turn rate, acceleration, weapon loadout",
+        "FlightSystem reads stats from aircraft data — no hardcoded values per aircraft type",
+        "Wide stat spread: P-51 is slow but turns tighter, F/A-18 is balanced, F-14 is fast but less agile",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 5: Aircraft Variety",
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Hangar Scene (Aircraft Selection)",
+      "description": "As a player, I want to choose my aircraft before a mission so I can pick the right tool for the job.",
+      "acceptanceCriteria": [
+        "HangarScene displays available aircraft with their stats (speed, agility, weapons)",
+        "Player selects an aircraft; selection carries into the next mission",
+        "Locked aircraft shown but not selectable (grayed out)",
+        "Typecheck passes",
+        "Verify in browser: hangar is navigable and stat differences are clear"
+      ],
+      "epic": "Phase 5: Aircraft Variety",
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Progression and Unlock System",
+      "description": "As a player, I want to unlock new aircraft and missions by playing so I feel a sense of progression.",
+      "acceptanceCriteria": [
+        "Completing missions awards a score/rating",
+        "New aircraft unlock at campaign milestones (e.g., complete Pacific theater → unlock F/A-18)",
+        "Missions unlock sequentially within each theater",
+        "Progress persists via localStorage (SaveManager)",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 5: Aircraft Variety",
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Advanced AI — Formations",
+      "description": "As a player, I want enemies that fly in formations so combat feels more realistic and challenging.",
+      "acceptanceCriteria": [
+        "Enemies can fly in wing pairs or diamond formations",
+        "Enemies break formation to engage when player is nearby, reform when disengaged",
+        "Formation leader determines flight path; wingmen maintain relative positions",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 6: Advanced Combat",
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Advanced AI — Evasive Maneuvers",
+      "description": "As a player, I want smarter enemies that evade effectively so combat stays challenging throughout the campaign.",
+      "acceptanceCriteria": [
+        "Evasive maneuvers: barrel rolls, split-S, break turns when missiles are incoming",
+        "Difficulty scales across campaign (early enemies are dumber, later enemies use advanced maneuvers)",
+        "AI difficulty configured per mission in mission JSON",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 6: Advanced Combat",
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Weapon Variety — Missiles, Rockets, Bombs",
+      "description": "As a player, I want bombs, rockets, and different missile types so missions have tactical variety.",
+      "acceptanceCriteria": [
+        "Heat-seeking missiles (AIM-9 type): lock required, good for dogfights",
+        "Radar-guided missiles (AIM-120 type): longer range, fire-and-forget after lock",
+        "Unguided rockets: burst fire, good against ground targets",
+        "Bombs: drop on ground targets, gravity-affected trajectory",
+        "Weapon loadout defined per aircraft in aircraft.json",
+        "Typecheck passes",
+        "Verify in browser: each weapon type feels distinct"
+      ],
+      "epic": "Phase 6: Advanced Combat",
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Countermeasures (Flares and Chaff)",
+      "description": "As a player, I want to deploy flares and chaff to defeat incoming missiles so I have defensive options.",
+      "acceptanceCriteria": [
+        "Flare key deploys flares (limited supply per sortie)",
+        "Flares have a chance to decoy heat-seeking missiles",
+        "Chaff has a chance to break radar missile lock",
+        "Visible flare/chaff particle effects behind aircraft",
+        "Typecheck passes",
+        "Verify in browser: deploying countermeasures is visually clear"
+      ],
+      "epic": "Phase 6: Advanced Combat",
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Ground Targets and SAM Sites",
+      "description": "As a player, I want to attack ground targets so there's more than just dogfighting.",
+      "acceptanceCriteria": [
+        "GroundTarget entity class: SAM sites, bunkers, vehicles, radar installations (placeholder meshes)",
+        "Ground targets can be destroyed with bombs, rockets, or guns",
+        "SAM sites fire surface-to-air missiles at the player",
+        "At least one air-to-ground mission JSON exists in the campaign",
+        "Typecheck passes",
+        "Verify in browser: ground attack gameplay loop works end-to-end"
+      ],
+      "epic": "Phase 6: Advanced Combat",
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Menu and UI Shell",
+      "description": "As a player, I want a main menu to navigate the game's features.",
+      "acceptanceCriteria": [
+        "Main menu (HTML/CSS overlay) with: New Game, Continue, Settings",
+        "Settings screen: audio volume slider, graphics quality toggle",
+        "Menu transitions cleanly to other scenes (hangar, briefing, etc.)",
+        "Typecheck passes",
+        "Verify in browser: menu navigation is intuitive"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Campaign Theater Selection",
+      "description": "As a player, I want to choose between campaign theaters so I can pick my battles.",
+      "acceptanceCriteria": [
+        "Theater/mission select screen showing 4 theaters: Pacific, Middle East, Europe, Arctic",
+        "Pacific and Middle East available from start; completing either unlocks Europe; completing Europe unlocks Arctic",
+        "Each theater shows completion progress (missions completed / total)",
+        "Selecting a theater shows its missions; selecting a mission goes to briefing",
+        "Typecheck passes",
+        "Verify in browser: theater selection is clear, locked theaters are visually distinct"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Save System",
+      "description": "As a player, I want my progress saved so I can pick up where I left off.",
+      "acceptanceCriteria": [
+        "SaveManager persists to localStorage: unlocked aircraft, completed missions, scores, unlocked theaters",
+        "Save loads automatically on game start — no manual save/load needed",
+        "Handles missing or corrupt save gracefully (reset to defaults)",
+        "Save data uses a versioned key for future migration",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Campaign Missions — Pacific Theater",
+      "description": "As a player, I want 5-8 missions in the Pacific theater to play through.",
+      "acceptanceCriteria": [
+        "5-8 mission JSON files for Pacific theater",
+        "Mix of mission types: tutorial, dogfight, carrier quals",
+        "Missions increase in difficulty progressively",
+        "Each mission has distinct objectives (not all 'destroy X enemies')",
+        "Theater boss encounter as the final mission",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Campaign Missions — Middle East Theater",
+      "description": "As a player, I want 5-8 missions in the Middle East theater focused on ground attack.",
+      "acceptanceCriteria": [
+        "5-8 mission JSON files for Middle East theater",
+        "Mix of mission types: ground attack, SAM suppression, precision strike",
+        "Desert terrain/skybox palette distinct from Pacific",
+        "Theater boss encounter as the final mission",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Campaign Missions — Europe Theater",
+      "description": "As a player, I want 5-8 missions in the Europe theater focused on high-altitude intercepts.",
+      "acceptanceCriteria": [
+        "5-8 mission JSON files for Europe theater",
+        "Mix of mission types: high-altitude intercept, stealth/recon, escort",
+        "European terrain/skybox palette distinct from other theaters",
+        "Theater boss encounter as the final mission",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Scoring and Medals",
+      "description": "As a player, I want to be scored and earn medals so I'm motivated to replay missions.",
+      "acceptanceCriteria": [
+        "Mission score calculated from: kills, accuracy, time, damage taken",
+        "Medal thresholds: Bronze, Silver, Gold per mission",
+        "Medals displayed on debrief scene and in mission select",
+        "Best score persisted in save data",
+        "Typecheck passes",
+        "Verify in browser: medals display correctly on debrief and mission select"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "Boss Encounters",
+      "description": "As a player, I want memorable boss fights at the end of each theater for climactic moments.",
+      "acceptanceCriteria": [
+        "At least one boss per theater (4 total) defined in mission JSON",
+        "Bosses have unique behavior patterns (not just tougher enemies — e.g., phases, special attacks)",
+        "Boss health bar visible on HUD during boss missions",
+        "Defeating boss triggers theater completion and unlocks next theater",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 7: Campaign Structure",
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "Asset Replacement — Aircraft Models",
+      "description": "As a developer, I need to swap placeholder meshes for real GLTF aircraft models.",
+      "acceptanceCriteria": [
+        "At least 3 aircraft have GLTF models loaded via Babylon AssetsManager",
+        "Models sourced from CGTrader/Sketchfab/TurboSquid (paid budget available)",
+        "Mesh swap is transparent to entity logic (only AssetLoader changes)",
+        "Typecheck passes",
+        "Verify in browser: real models render correctly and are visually distinguishable"
+      ],
+      "epic": "Phase 8: Polish & Assets",
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "Audio — Engine and Weapons SFX",
+      "description": "As a player, I want engine and weapon sounds so the game has audio feedback.",
+      "acceptanceCriteria": [
+        "Engine sound loop per aircraft (pitch varies with throttle via Babylon spatial audio)",
+        "Weapon SFX: gun fire, missile launch, explosions",
+        "Sounds attenuate with distance for enemies",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 8: Polish & Assets",
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "Audio — Music Tracks",
+      "description": "As a player, I want background music that fits each theater for atmosphere.",
+      "acceptanceCriteria": [
+        "Music tracks per theater (ambient during flight, intensity ramps during combat)",
+        "Music volume controllable in settings",
+        "Smooth crossfade between ambient and combat music states",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 8: Polish & Assets",
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "VFX Polish",
+      "description": "As a player, I want polished visual effects so the game looks and feels complete.",
+      "acceptanceCriteria": [
+        "Smoke trails on damaged aircraft",
+        "Muzzle flash on gun fire",
+        "Missile exhaust trail",
+        "Screen shake on hit (already implemented — verify it still works with new VFX)",
+        "Typecheck passes",
+        "Verify in browser: VFX enhance gameplay without hurting performance"
+      ],
+      "epic": "Phase 8: Polish & Assets",
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Performance Optimization",
+      "description": "As a player, I want the game to run at 60 FPS on mid-range hardware so it's enjoyable to play.",
+      "acceptanceCriteria": [
+        "Object pooling for projectiles and particle effects",
+        "LOD on terrain and distant objects",
+        "Frustum culling enabled",
+        "Profiled with Chrome DevTools — no frame drops below 30 FPS with 20+ entities on screen",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 8: Polish & Assets",
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Carrier Model and Flight Deck",
+      "description": "As a developer, I need a carrier entity with a flight deck so carrier operations have a physical location.",
+      "acceptanceCriteria": [
+        "Carrier entity with a model (placeholder or real) placed in ocean",
+        "Flight deck is a flat collision surface aircraft can land on",
+        "Carrier visible from the air as a landmark",
+        "Typecheck passes",
+        "Verify in browser: carrier renders in the ocean and is identifiable from altitude"
+      ],
+      "epic": "Phase 9: Carrier Operations",
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Carrier Takeoff and Landing",
+      "description": "As a player, I want to take off from and land on aircraft carriers for immersive naval aviation gameplay.",
+      "acceptanceCriteria": [
+        "Catapult takeoff sequence: throttle up → launch from deck",
+        "Landing approach with glideslope guidance (HUD shows AoA and lineup indicators)",
+        "Arresting wire catch on successful landing (deceleration on deck)",
+        "Failed landing = bolter (go around) or crash if too far off",
+        "Carrier quals mission in Pacific theater",
+        "Typecheck passes",
+        "Verify in browser: takeoff and landing feel distinct and rewarding"
+      ],
+      "epic": "Phase 9: Carrier Operations",
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Arctic Theater and Futuristic Content",
+      "description": "As a player, I want the final campaign theater with futuristic aircraft and drone enemies for a climactic endgame.",
+      "acceptanceCriteria": [
+        "Arctic terrain (snow/ice textures, cold palette skybox)",
+        "5-8 missions for Arctic theater",
+        "Drone swarm enemy type (many weak enemies in coordinated groups)",
+        "At least one futuristic/concept aircraft unlockable in this theater",
+        "Radar upgrades to rotating sweep display (contacts fade) for futuristic aircraft",
+        "Final boss encounter",
+        "Typecheck passes"
+      ],
+      "epic": "Phase 10: Final Content & Release",
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Tutorial Mission",
+      "description": "As a new player, I want a guided tutorial so I can learn the controls without reading a manual.",
+      "acceptanceCriteria": [
+        "First mission in Pacific theater is a tutorial",
+        "Step-by-step prompts on screen: throttle, turn, shoot, lock-on",
+        "Forgiving conditions (no enemies until combat tutorial step)",
+        "Skippable for returning players (button/key to skip)",
+        "Typecheck passes",
+        "Verify in browser: tutorial is completable without external instructions"
+      ],
+      "epic": "Phase 10: Final Content & Release",
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "Credits and Final Polish",
+      "description": "As a player, I want a credits scene and final polish after completing the campaign.",
+      "acceptanceCriteria": [
+        "Credits scene plays after completing the final Arctic mission",
+        "Credits scroll with project attribution",
+        "After credits, return to main menu",
+        "Typecheck passes",
+        "Verify in browser: credits play and return to menu"
+      ],
+      "epic": "Phase 10: Final Content & Release",
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

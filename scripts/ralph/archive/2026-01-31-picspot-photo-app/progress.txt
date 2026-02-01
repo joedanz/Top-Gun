@@ -1,0 +1,1501 @@
+# Ralph Progress Log
+Started: Sat Jan 24 21:37:11 EST 2026
+---
+
+## Codebase Patterns
+- Use Tailwind CSS utility classes for styling (configured in tailwind.config.js)
+- Environment variables prefixed with VITE_ are exposed to client-side code
+- Convex functions go in the convex/ directory
+- ABOUTME comments at the start of each file explain its purpose
+- Tailwind v4 is installed but using v3-style config (tailwind.config.js + postcss.config.js)
+- Convex schema uses `v.id("tableName")` for foreign key references
+- Union types for enums: `v.union(v.literal("a"), v.literal("b"))`
+- Always add indexes for frequently queried fields in Convex schema
+- Better-Auth: CRITICAL - Import from `"better-auth/minimal"` NOT `"better-auth"` in convex/auth.ts
+- Better-Auth: CRITICAL - Must add `crossDomain({ siteUrl })` and `convex({ authConfig })` plugins to betterAuth()
+- Better-Auth: Configure auth in `convex/auth.ts` with `createClient()` and `betterAuth()` functions
+- Better-Auth: Register routes in `convex/http.ts` with `authComponent.registerRoutes(http, createAuth, { cors: true })`
+- Better-Auth: Frontend uses `createAuthClient()` with `crossDomainClient()` plugin for auth (VITE_CONVEX_SITE_URL)
+- Better-Auth: Use Convex component system - `app.use(betterAuth)` in `convex.config.ts`
+- Better-Auth: Must set BETTER_AUTH_SECRET and SITE_URL env vars in Convex: `npx convex env set`
+- Better-Auth: Component uses its own user tables - DON'T define users table in schema, use v.string() for userId foreign keys
+- Better-Auth: CRITICAL - Triggers require BOTH: (1) `authFunctions = internal.auth` in createClient AND (2) `export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi()`
+- React Router: Use `useNavigate()` hook for programmatic navigation
+- React Router: Always check `isLoading` before redirecting based on `isAuthenticated` to avoid flash of wrong page
+- Convex Node.js: Files with `"use node";` at the top can ONLY export actions. Queries/mutations must be in separate files.
+- Convex Scheduler: Use `ctx.scheduler.runAfter(0, internal.module.action, args)` to trigger actions from mutations
+- AWS Rekognition: Collection operations are in convex/rekognition.ts, helper queries/mutations in convex/rekognitionHelpers.ts
+- convex-test: CRITICAL - Cast `ctx.db.get()` results AFTER t.run(), not inside: `await t.run(async (ctx) => ctx.db.get(id)) as Doc<"tableName"> | null`
+- convex-test: Import `Doc` from `./_generated/dataModel` for type-safe database casts
+
+---
+
+## 2026-01-24 21:38 - US-001
+- What was implemented:
+  - Created Vite + React + TypeScript project scaffold
+  - Configured Tailwind CSS with tailwind.config.js and postcss.config.js
+  - Initialized Convex directory structure with placeholder schema
+  - Installed UploadThing dependencies (uploadthing, @uploadthing/react)
+  - Created .env.example documenting required environment variables
+  - Added ConvexProvider wrapper in main.tsx
+- Files changed:
+  - package.json (project config, dependencies, scripts)
+  - tailwind.config.js (Tailwind configuration)
+  - postcss.config.js (PostCSS with Tailwind/autoprefixer)
+  - src/main.tsx (React entry with Convex provider)
+  - src/App.tsx (Basic app component with Tailwind styling)
+  - src/index.css (Global CSS with Tailwind directives)
+  - convex/schema.ts (Empty Convex schema placeholder)
+  - convex/_generated/api.d.ts (Type placeholder for Convex API)
+  - .env.example (Environment variable documentation)
+  - index.html (Updated title to PhotoSpot)
+- **Learnings for future iterations:**
+  - Tailwind v4 uses different init commands - `npx tailwindcss init` may not work, create config files manually
+  - VITE_CONVEX_URL env var is used for the Convex client connection
+  - UploadThing requires both `uploadthing` and `@uploadthing/react` packages
+---
+
+## 2026-01-24 - US-002
+- What was implemented:
+  - Defined Convex schema for users, albums, album members, and album invites
+  - Added appropriate indexes for all tables (by_email, by_owner, by_album, etc.)
+  - Used v.id() for referential integrity between tables
+  - Used v.union() with v.literal() for role enum types
+- Files changed:
+  - convex/schema.ts (Complete schema for user/album management)
+- **Learnings for future iterations:**
+  - Convex validates schema at TypeScript level first - typecheck catches most errors
+  - `npx convex codegen` requires a deployment, but `npm run typecheck` works locally
+  - Consider compound indexes like `by_album_and_user` for common query patterns
+---
+
+## 2026-01-24 - US-002 (SaaS Update)
+- What was implemented:
+  - Added SaaS billing fields to users table: stripeCustomerId, planId
+  - Added by_stripe_customer_id index for Stripe webhook lookups
+  - planId is optional with application-level default of 'free'
+- Files changed:
+  - convex/schema.ts (Added SaaS fields to users table)
+- **Learnings for future iterations:**
+  - Use v.optional() for fields that may not exist on all records
+  - Plan tier validation happens at application level, not schema level
+  - Stripe customer ID index enables fast webhook processing
+---
+
+## 2026-01-24 - US-003
+- What was implemented:
+  - Defined Convex schema for photos table (photo metadata with EXIF fields)
+  - Defined Convex schema for faces table (face bounding box as percentages)
+  - Defined Convex schema for people table (named individuals for tagging)
+  - Added indexes: by_album, by_uploader, by_album_and_date, by_photo, by_person, by_album_and_name
+- Files changed:
+  - convex/schema.ts (Added photos, faces, and people tables)
+- **Learnings for future iterations:**
+  - Store face bounding boxes as percentages (0-100) for responsive rendering regardless of display size
+  - Use v.optional(v.id("tableName")) for optional foreign key relationships
+  - Circular references work in Convex (faces.personId ↔ people.representativeFaceId)
+  - Compound indexes like by_album_and_date enable efficient sorted queries
+---
+
+## 2026-01-24 - US-036
+- What was implemented:
+  - Added subscriptions table with Stripe subscription fields (stripeSubscriptionId, stripePriceId, billingCycle, currentPeriodStart, currentPeriodEnd, cancelAtPeriodEnd)
+  - Added usageCache table for denormalized usage counts (storageUsedBytes, photoCount, albumCount, faceTagCount)
+  - planId uses v.union() with literals for type safety ('free' | 'pro' | 'family')
+  - billingCycle includes v.null() for free plan users
+  - Added indexes: by_user, by_stripe_subscription_id for subscriptions; by_user for usageCache
+- Files changed:
+  - convex/schema.ts (Added subscriptions and usageCache tables)
+- **Learnings for future iterations:**
+  - Use v.union() with v.null() when a field can be null (e.g., billingCycle for free users)
+  - Denormalized cache tables (usageCache) trade consistency for performance - update on each create/delete operation
+  - by_stripe_subscription_id index needed for webhook processing when Stripe sends subscription updates
+---
+
+## 2026-01-24 - US-004
+- What was implemented:
+  - Installed @convex-dev/auth package for authentication
+  - Created convex/auth.ts with Password provider and afterUserCreatedOrUpdated callback
+  - Created convex/auth.config.ts with domain configuration
+  - Created convex/http.ts for auth HTTP routes
+  - Updated convex/schema.ts to include authTables (authAccounts, authSessions, etc.)
+  - Updated users table to use Convex Auth's optional field conventions
+  - Added afterUserCreatedOrUpdated callback that creates free subscription and usage cache for new users
+  - Updated src/main.tsx to use ConvexAuthProvider instead of ConvexProvider
+  - Documented JWT_PRIVATE_KEY, JWKS, and SITE_URL env vars in .env.example
+- Files changed:
+  - package.json, package-lock.json (added @convex-dev/auth)
+  - convex/auth.ts (new - auth setup with Password provider)
+  - convex/auth.config.ts (new - auth domain configuration)
+  - convex/http.ts (new - auth HTTP routes)
+  - convex/schema.ts (added authTables, updated users table)
+  - src/main.tsx (switched to ConvexAuthProvider)
+  - .env.example (added auth env vars documentation)
+- **Learnings for future iterations:**
+  - Convex Auth's Password provider includes 8-char minimum validation by default
+  - Use `afterUserCreatedOrUpdated` callback for side effects on signup (not `createOrUpdateUser` which replaces the entire flow)
+  - The users table needs fields like `emailVerificationTime`, `isAnonymous` etc. to be compatible with authTables
+  - MutationCtx is the correct type for the callback context (not ActionCtx)
+  - Check for existing subscription before creating to handle the "update" case in afterUserCreatedOrUpdated
+---
+
+## 2026-01-24 - US-005
+- What was implemented:
+  - Installed react-router-dom for client-side routing
+  - Created SignUpForm component with name, email, password fields and client-side validation
+  - Created LoginForm component with email, password fields and client-side validation
+  - Created Header component showing logout button when authenticated
+  - Created LoginPage, SignUpPage, and AlbumsPage (placeholder) components
+  - Set up BrowserRouter with routes for /, /login, /signup, /albums
+  - Root route redirects to /albums if authenticated, /login if not
+  - Login/signup pages redirect to /albums after successful auth
+  - Albums page redirects to /login if not authenticated
+- Files changed:
+  - package.json, package-lock.json (added react-router-dom)
+  - src/App.tsx (added BrowserRouter and routes)
+  - src/components/SignUpForm.tsx (new - signup form with validation)
+  - src/components/LoginForm.tsx (new - login form with validation)
+  - src/components/Header.tsx (new - header with logout button)
+  - src/pages/LoginPage.tsx (new - login page wrapper)
+  - src/pages/SignUpPage.tsx (new - signup page wrapper)
+  - src/pages/AlbumsPage.tsx (new - placeholder albums page)
+- **Learnings for future iterations:**
+  - useConvexAuth() returns `isAuthenticated` and `isLoading` for auth state
+  - useAuthActions() returns `signIn` and `signOut` functions
+  - signIn("password", formData) with flow="signIn" or "signUp" for login/signup
+  - ConvexAuthProvider handles session persistence automatically via cookies
+  - Always check isLoading before redirecting based on isAuthenticated
+---
+
+## 2026-01-25 - US-004 (Better-Auth Migration)
+- What was implemented:
+  - Migrated from @convex-dev/auth to @convex-dev/better-auth + better-auth
+  - Created convex/convex.config.ts with `app.use(betterAuth)` component registration
+  - Rewrote convex/auth.ts using Better-Auth patterns:
+    - `createClient<DataModel>()` with `triggers.user.onCreate` for subscription creation
+    - `betterAuth()` with `emailAndPassword.enabled: true`
+    - User additional fields: planId, stripeCustomerId, avatarUrl
+  - Updated convex/auth.config.ts to use `getAuthConfigProvider()` from @convex-dev/better-auth
+  - Updated convex/http.ts with `authComponent.registerRoutes(http, createAuth, { cors: true })`
+  - Removed authTables from convex/schema.ts (Better-Auth manages its own tables)
+  - Updated .env.example with VITE_CONVEX_SITE_URL, BETTER_AUTH_SECRET, SITE_URL
+  - Added `npm run check` script combining typecheck and convex typecheck
+- Files changed:
+  - convex/convex.config.ts (NEW - Convex component registration)
+  - convex/auth.ts (REWRITTEN - Better-Auth configuration)
+  - convex/auth.config.ts (UPDATED - Better-Auth provider)
+  - convex/http.ts (UPDATED - Better-Auth routes)
+  - convex/schema.ts (UPDATED - removed authTables)
+  - .env.example (UPDATED - new env vars)
+  - package.json (UPDATED - dependencies and scripts)
+- **Learnings for future iterations:**
+  - Better-Auth with Convex uses a component architecture - `app.use(betterAuth)` in convex.config.ts
+  - Use `triggers` in `createClient()` for Convex-specific side effects, NOT `databaseHooks` in `betterAuth()`
+  - triggers provide `GenericMutationCtx` with full `ctx.db` access for database operations
+  - Run `npx convex dev` to generate types for the Better-Auth component (components.betterAuth)
+  - Dual-site architecture: .convex.cloud for queries/mutations, .convex.site for HTTP auth routes
+  - Frontend needs VITE_CONVEX_SITE_URL env var pointing to .convex.site URL
+  - This is a staged migration: backend first (US-004), frontend second (US-005)
+  - Browser will fail until US-005 updates frontend imports from @convex-dev/auth/react to Better-Auth client
+---
+
+## 2026-01-25 - US-005 (Better-Auth Frontend)
+- What was implemented:
+  - Created src/lib/auth-client.ts with Better-Auth client configuration
+  - Uses createAuthClient() with crossDomainClient() and convexClient() plugins
+  - Updated main.tsx to use ConvexBetterAuthProvider instead of ConvexAuthProvider
+  - Updated LoginForm to use authClient.signIn.email({ email, password })
+  - Updated SignUpForm to use authClient.signUp.email({ email, password, name })
+  - Updated Header to use authClient.useSession() and authClient.signOut()
+  - Updated App.tsx and AlbumsPage to use authClient.useSession() for auth state
+  - Removed all imports from @convex-dev/auth/react
+- Files changed:
+  - src/lib/auth-client.ts (NEW - Better-Auth client configuration)
+  - src/main.tsx (UPDATED - ConvexBetterAuthProvider)
+  - src/App.tsx (UPDATED - authClient.useSession())
+  - src/components/LoginForm.tsx (UPDATED - authClient.signIn.email())
+  - src/components/SignUpForm.tsx (UPDATED - authClient.signUp.email())
+  - src/components/Header.tsx (UPDATED - authClient.useSession(), authClient.signOut())
+  - src/pages/AlbumsPage.tsx (UPDATED - authClient.useSession())
+- **Learnings for future iterations:**
+  - Better-Auth client uses `createAuthClient()` from "better-auth/react"
+  - Must include both `convexClient()` and `crossDomainClient()` plugins from "@convex-dev/better-auth/client/plugins"
+  - baseURL must point to VITE_CONVEX_SITE_URL (the .convex.site URL)
+  - Session state: `authClient.useSession()` returns `{ data: session, isPending }` where `session?.user` indicates authentication
+  - Sign in: `authClient.signIn.email({ email, password })` returns `{ data, error }`
+  - Sign up: `authClient.signUp.email({ email, password, name })` returns `{ data, error }`
+  - Sign out: `authClient.signOut()` - no parameters needed
+  - Provider: Use `ConvexBetterAuthProvider` with both `client` and `authClient` props
+---
+
+## 2026-01-25 - Trigger Fix (Better-Auth)
+- What was implemented:
+  - Fixed Better-Auth triggers not firing for user creation
+  - Added authFunctions reference to createClient config
+  - Added export of authComponent.triggersApi() (creates internal functions)
+  - Changed all userId fields from v.id("users") to v.string() (Better-Auth uses string IDs)
+  - Removed unused users table from schema (Better-Auth manages its own)
+  - Verified subscription and usageCache are created on signup via browser test
+- Files changed:
+  - convex/auth.ts (UPDATED - added authFunctions, triggers, triggersApi export)
+  - convex/schema.ts (UPDATED - string IDs, removed users table)
+- **Learnings for future iterations:**
+  - Better-Auth triggers require TWO things to work:
+    1. `authFunctions` param in createClient config: `authFunctions = internal.auth as any as AuthFunctions`
+    2. Export of triggersApi(): `export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi()`
+  - Without BOTH of these, triggers silently don't fire (no errors, just nothing happens)
+  - Better-Auth user IDs are strings (not Convex document IDs), so use v.string() for all userId foreign keys
+  - Better-Auth manages its own user tables in the component namespace - don't define a users table in schema
+  - The triggersApi() export generates internal functions that Convex can call - these become `internal.auth`
+---
+
+## 2026-01-25 - US-006 (Google OAuth)
+- What was implemented:
+  - Added Google OAuth provider to Better-Auth configuration in convex/auth.ts
+  - Created GoogleSignInButton component with Google logo SVG
+  - Integrated Google sign-in button into LoginForm and SignUpForm
+  - Added "Or continue with email" divider between OAuth and email/password forms
+  - Documented AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET env vars in .env.example
+  - OAuth callback URL: {VITE_CONVEX_SITE_URL}/api/auth/callback/google
+- Files changed:
+  - convex/auth.ts (UPDATED - added socialProviders.google config)
+  - src/components/GoogleSignInButton.tsx (NEW - reusable OAuth button)
+  - src/components/LoginForm.tsx (UPDATED - added Google button)
+  - src/components/SignUpForm.tsx (UPDATED - added Google button)
+  - .env.example (UPDATED - Google OAuth setup instructions)
+- **Learnings for future iterations:**
+  - Better-Auth's socialProviders config is minimal: just clientId and clientSecret
+  - OAuth sign-in uses authClient.signIn.social({ provider: 'google', callbackURL: '/albums' })
+  - The callbackURL in signIn.social() is where users go AFTER successful OAuth, not the OAuth callback
+  - OAuth callback URL is automatic: {baseUrl}/api/auth/callback/{provider}
+  - User profile (name, image) is auto-populated from Google OAuth response
+  - When creating PRs, always ensure base branch is master, not stale branches
+---
+
+## 2026-01-25 - US-007 (Mark Complete)
+- What was implemented:
+  - US-007 was already fully implemented and merged in commit 7474679
+  - Verified all acceptance criteria met via browser testing
+  - Updated PRD to mark story as passes: true
+- Files changed:
+  - scripts/ralph/prd.json (UPDATED - marked US-007 as passes: true)
+- **Learnings for future iterations:**
+  - Apple OAuth requires HTTPS - cannot fully test OAuth flow on localhost
+  - Apple button uses black background per Apple's brand guidelines
+  - trustedOrigins must include https://appleid.apple.com for Apple OAuth
+  - OAuth callback URL: {VITE_CONVEX_SITE_URL}/api/auth/callback/apple
+---
+
+## 2026-01-25 - US-008
+- What was implemented:
+  - Created convex/albums.ts with all album CRUD mutations and queries
+  - createAlbum: creates album with current user as owner, adds owner to albumMembers, updates usageCache
+  - getMyAlbums: returns all albums where user is owner or member with photo count and role
+  - getAlbum: returns album details with permission check (member or public access)
+  - updateAlbum: allows owner to update name/description
+  - deleteAlbum: cascade deletes all associated data (members, invites, photos, faces, people) and updates usageCache
+- Files changed:
+  - convex/albums.ts (NEW - album CRUD operations)
+  - scripts/ralph/prd.json (UPDATED - marked US-008 as passes: true)
+- **Learnings for future iterations:**
+  - Better-Auth user ID is accessed via `ctx.auth.getUserIdentity()` then `identity.subject`
+  - Return empty array `[]` instead of null from queries when user not authenticated (for graceful handling)
+  - Always update usageCache when creating/deleting albums to keep limits tracking accurate
+  - Cascade deletes should handle all foreign key relationships: albumMembers, albumInvites, photos, faces, people
+---
+
+## 2026-01-25 - US-009
+- What was implemented:
+  - Created AlbumCard component displaying album thumbnail, name, description, photo count, and role badge
+  - Created CreateAlbumModal component with name (required) and description (optional) fields
+  - Updated AlbumsPage with responsive album grid, loading skeleton, and empty state
+  - Grid uses 2 cols mobile, 3 tablet, 4 desktop with Tailwind breakpoints
+  - Real-time updates via Convex `useQuery` for album list
+- Files changed:
+  - src/components/AlbumCard.tsx (NEW - album card display component)
+  - src/components/CreateAlbumModal.tsx (NEW - modal with form for creating albums)
+  - src/pages/AlbumsPage.tsx (UPDATED - integrated grid and modal)
+  - convex/_generated/api.d.ts (UPDATED - auto-generated types for albums module)
+- **Learnings for future iterations:**
+  - Convex queries return `undefined` while loading - use this to show loading states
+  - useMutation from `convex/react` for mutations, useQuery for queries
+  - Import `api` from `../../convex/_generated/api` for type-safe Convex calls
+  - Modal backdrop click handling: put onClick on backdrop div, not the modal content
+  - CRITICAL: Must run `npx convex dev` after adding new Convex functions or browser will error with "Could not find public function"
+---
+
+## 2026-01-25 - US-010
+- What was implemented:
+  - Created convex/invitations.ts with all invitation-related mutations and queries
+  - inviteToAlbum: validates album ownership, checks 7-day expiry, generates unique token, creates albumInvites record
+  - getPendingInvites: returns pending invites for album (owner only)
+  - revokeInvite: owner can delete pending invite
+  - acceptInvite: validates token, creates albumMembers record, marks invite as accepted
+  - getInviteByToken: returns invite details for accept page (public query, no auth needed)
+- Files changed:
+  - convex/invitations.ts (NEW - invitation mutations and queries)
+- **Learnings for future iterations:**
+  - Use crypto.randomUUID() for generating unique tokens in Convex
+  - Expiry should be stored as Unix timestamp (Date.now() + 7 * 24 * 60 * 60 * 1000)
+  - Public queries (like getInviteByToken) don't need authentication - useful for invite accept pages
+  - When accepting invite, check if user is already a member to avoid duplicates
+---
+
+## 2026-01-25 - US-011
+- What was implemented:
+  - Created AlbumDetailPage component with album header, photo grid placeholder, and invite modal
+  - Created InviteForm component with email input, role selector (editor/viewer), validation
+  - Created PendingInvitesList component showing pending invites with revoke functionality
+  - Created AcceptInvitePage for /invite/:token with states for loading, invalid token, expired, already accepted
+  - Added routes in App.tsx for /albums/:albumId and /invite/:token
+  - Added comprehensive tests for InviteForm, PendingInvitesList, and AcceptInvitePage
+- Files changed:
+  - src/pages/AlbumDetailPage.tsx (NEW - album detail with invite modal)
+  - src/components/InviteForm.tsx (NEW - email/role form for invitations)
+  - src/components/InviteForm.test.tsx (NEW - tests for form validation)
+  - src/components/PendingInvitesList.tsx (NEW - list pending invites with revoke)
+  - src/components/PendingInvitesList.test.tsx (NEW - tests for list display)
+  - src/pages/AcceptInvitePage.tsx (NEW - invite acceptance page)
+  - src/pages/AcceptInvitePage.test.tsx (NEW - tests for all invite states)
+  - src/App.tsx (UPDATED - added routes for album detail and invite pages)
+- **Learnings for future iterations:**
+  - Convex functions must be deployed with `npx convex dev` before they can be used in the browser
+  - The api.invites namespace corresponds to convex/invites.ts file
+  - Public queries (no auth required) are useful for invite acceptance pages where users may not be logged in
+  - Modal rendering: use fixed positioning with z-50 for proper overlay behavior
+  - AcceptInvitePage handles multiple states: loading, invalid token, expired, already accepted, and valid invite
+---
+
+## 2026-01-25 - US-012
+- What was implemented:
+  - Added generateShareableLink mutation to create unique UUID tokens for albums
+  - Added disableShareableLink mutation to revoke public access
+  - Added getAlbumByShareableLink query for public album lookup using by_shareable_link index
+  - Created ShareableLinkSection component with generate/copy/disable UI
+  - Created SharedAlbumPage for read-only public album viewing (/shared/:link)
+  - Integrated ShareableLinkSection into AlbumDetailPage invite modal
+  - Added route for shared album page in App.tsx
+- Files changed:
+  - convex/albums.ts (UPDATED - added shareable link mutations and query)
+  - src/components/ShareableLinkSection.tsx (NEW - shareable link UI component)
+  - src/components/ShareableLinkSection.test.tsx (NEW - 7 tests)
+  - src/pages/SharedAlbumPage.tsx (NEW - public album view page)
+  - src/pages/SharedAlbumPage.test.tsx (NEW - 6 tests)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated ShareableLinkSection)
+  - src/App.tsx (UPDATED - added /shared/:shareableLink route)
+- **Tests added:** 13 new tests in ShareableLinkSection.test.tsx and SharedAlbumPage.test.tsx
+- **Learnings for future iterations:**
+  - Schema already had shareableLink and isPublic fields plus by_shareable_link index - check schema before adding new fields
+  - crypto.randomUUID() works in Convex for generating unique tokens
+  - For components using multiple useMutation hooks, test mocking requires tracking call order
+  - Public pages (SharedAlbumPage) don't need auth but still use Convex queries
+  - Use getByDisplayValue for input elements with readonly values in tests
+---
+
+## 2026-01-25 08:37 - US-013
+- What was implemented:
+  - getAlbumMembers query returning members with user details (name, email, role)
+  - updateMemberRole mutation for owner to change editor/viewer roles
+  - removeMember mutation for owner to remove non-owner members
+  - Added memberName and memberEmail fields to albumMembers schema for denormalized user info
+  - MembersList component with role dropdown and remove button
+  - Member count display with limit ("1 of 5 members")
+  - Integrated MembersList into AlbumDetailPage invite modal
+- Files changed:
+  - convex/schema.ts - added memberName/memberEmail optional fields
+  - convex/albums.ts - added getAlbumMembers, updateMemberRole, removeMember
+  - convex/invites.ts - updated acceptInvite to store member info
+  - src/components/MembersList.tsx - new component
+  - src/components/MembersList.test.tsx - new tests
+  - src/pages/AlbumDetailPage.tsx - integrated MembersList
+- **Tests added:** 11 new tests in MembersList.test.tsx
+- **Learnings for future iterations:**
+  - Better-Auth user data requires denormalization - store name/email on albumMembers at creation time
+  - Existing records without denormalized fields will show "Unknown" - acceptable for migration
+  - Components must pass isOwner prop to conditionally show edit controls
+---
+
+## 2026-01-25 - US-014
+- What was implemented:
+  - Created convex/photos.ts with photo upload backend functionality
+  - generateUploadUrl action for Convex storage presigned URL generation
+  - createPhoto mutation with permission checks (only owner/editor can upload)
+  - getPhotos query returning photos sorted by uploadedAt desc
+  - getPhoto query for single photo retrieval
+  - Updates usageCache on photo creation (storageUsedBytes and photoCount)
+- Files changed:
+  - convex/photos.ts (NEW - photo upload/retrieval mutations and queries)
+  - convex/photos.test.ts (NEW - 13 comprehensive tests)
+  - convex/_generated/api.d.ts (UPDATED - auto-generated types)
+- **Tests added:** 13 new tests in convex/photos.test.ts
+- **Learnings for future iterations:**
+  - Convex Storage (ctx.storage.generateUploadUrl) is simpler than UploadThing for basic uploads
+  - convex-test requires running `t.run()` to directly access db for retrieving tokens from invite records
+  - Usage cache must be pre-created in tests (normally done by Better-Auth trigger on signup)
+  - Photo storage/count limits tracked on album OWNER's usageCache, not uploader's
+---
+
+## 2026-01-25 - US-015
+- What was implemented:
+  - PhotoUpload component with drag-and-drop support for image uploads
+  - Storage usage display (e.g., '0 B of 1 GB') and photo count (e.g., '0 of 500 photos')
+  - File input accepts image types: jpg, png, heic, webp
+  - Multiple file selection supported
+  - Upload progress indicator per file
+  - Block uploads with upgrade prompt when storage or photo limits exceeded
+  - getAlbumOwnerUsage query to fetch usage/limits for album owner's plan
+  - PLAN_LIMITS configuration embedded in convex/photos.ts
+- Files changed:
+  - convex/photos.ts (UPDATED - added getAlbumOwnerUsage query and PLAN_LIMITS)
+  - src/components/PhotoUpload.tsx (NEW - upload component)
+  - src/components/PhotoUpload.test.tsx (NEW - 14 tests)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated PhotoUpload, fetch photos)
+- **Tests added:** 14 new tests in PhotoUpload.test.tsx
+- **Learnings for future iterations:**
+  - formatBytes utility handles conversion to human-readable format (B, KB, MB, GB)
+  - toLocaleString() formats numbers with commas (5000 → "5,000")
+  - Usage limits are tracked on album OWNER, not the uploader
+  - Must run `npx convex dev --once` or have `npx convex dev` running for new queries to work
+  - Convex Storage upload flow: generateUploadUrl → fetch POST → createPhoto with storageId
+---
+
+## 2026-01-25 - US-016
+- What was implemented:
+  - Installed exifr library for client-side EXIF metadata extraction
+  - Added extractExifData() function to PhotoUpload component
+  - Extracts DateTimeOriginal as Unix timestamp for capture date
+  - Extracts GPS latitude/longitude coordinates (decimal degrees)
+  - Extracts image dimensions (ImageWidth, ImageHeight)
+  - EXIF extraction runs in parallel with upload URL generation for performance
+  - Handles missing EXIF data gracefully (returns empty object)
+  - Handles extraction errors gracefully (continues upload without EXIF)
+  - EXIF data passed to createPhoto mutation and stored in database
+- Files changed:
+  - package.json, package-lock.json (added exifr dependency)
+  - src/components/PhotoUpload.tsx (added EXIF extraction logic)
+  - src/components/PhotoUpload.test.tsx (added 6 EXIF tests)
+- **Tests added:** 6 new tests in PhotoUpload.test.tsx for EXIF extraction
+- **Learnings for future iterations:**
+  - exifr library returns parsed data with DateTimeOriginal as Date object, latitude/longitude as numbers
+  - exifr.parse() returns null for files without EXIF data
+  - Run EXIF extraction in parallel with other async operations (Promise.all) for better performance
+  - Spread EXIF data into mutation args: `...exifData` cleanly handles optional fields
+---
+
+## 2026-01-25 - US-017
+- What was implemented:
+  - Created PhotoGrid component with responsive grid layout
+  - Grid uses 2 columns on mobile, scales up to 6 columns on xl screens
+  - Photos displayed as square thumbnails with object-fit: cover
+  - Native lazy loading via loading="lazy" attribute (widely supported)
+  - Loading skeleton that hides when image onLoad fires
+  - Click handler passes photo and index for future lightbox integration
+  - Integrated PhotoGrid into AlbumDetailPage, replacing inline grid
+- Files changed:
+  - src/components/PhotoGrid.tsx (new component)
+  - src/components/PhotoGrid.test.tsx (new test file)
+  - src/pages/AlbumDetailPage.tsx (integrated PhotoGrid)
+- **Tests added:** 12 new tests in PhotoGrid.test.tsx
+- **Learnings for future iterations:**
+  - Native loading="lazy" is simpler than IntersectionObserver and widely supported
+  - Testing IntersectionObserver is complex; native lazy loading avoids this
+  - Tailwind responsive classes: grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6
+  - onLoad event on img element fires when image is fully loaded
+---
+
+## 2026-01-25 - US-018
+- What was implemented:
+  - Created PhotoLightbox component for full-screen photo viewing
+  - Full-resolution image display with dark semi-transparent backdrop
+  - Close functionality via X button in top-right corner
+  - Close by clicking backdrop (outside the image)
+  - Close by pressing Escape key
+  - Integrated lightbox into AlbumDetailPage
+  - State managed with useState for selectedPhoto
+- Files changed:
+  - src/components/PhotoLightbox.tsx (NEW - lightbox component)
+  - src/components/PhotoLightbox.test.tsx (NEW - 11 tests)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated lightbox)
+- **Tests added:** 11 new tests in PhotoLightbox.test.tsx
+- **Learnings for future iterations:**
+  - Use useCallback for event handlers to avoid unnecessary re-renders
+  - useEffect with cleanup function for keyboard event listeners
+  - stopPropagation on image click to prevent backdrop click handler from firing
+  - data-testid attributes help Playwright locate elements for testing
+---
+
+## 2026-01-25 - US-019
+- What was implemented:
+  - Added navigation controls to PhotoLightbox component
+  - Left/right arrow buttons for previous/next photo navigation
+  - Keyboard navigation with ArrowLeft and ArrowRight keys
+  - Wrap-around navigation (last → first, first → last)
+  - Photo counter display showing position (e.g., "3 of 24")
+  - Adjacent image preloading using <link rel="preload"> for smooth navigation
+  - Updated AlbumDetailPage to track currentIndex instead of selectedPhoto
+- Files changed:
+  - src/components/PhotoLightbox.tsx (UPDATED - added navigation)
+  - src/components/PhotoLightbox.test.tsx (UPDATED - 15 new tests)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - track index, pass photos array)
+- **Tests added:** 15 new tests for navigation functionality (26 total)
+- **Learnings for future iterations:**
+  - useMemo for calculating adjacent indices and preload URLs to avoid recalculation
+  - Wrap-around math: prevIndex = (current === 0) ? total - 1 : current - 1
+  - <link rel="preload" as="image"> for browser-native image preloading
+  - Parent component should track index, not photo object, for navigation to work
+  - Single photo albums work correctly with wrap-around (navigates to itself)
+---
+
+## 2026-01-25 - US-020
+- What was implemented:
+  - Created PhotoMetadataPanel component for displaying photo info
+  - Added metadata toggle to PhotoLightbox with info button (ⓘ) in header
+  - Keyboard shortcut 'i' to toggle metadata panel visibility
+  - Denormalized uploaderName field added to photos schema and createPhoto mutation
+  - Panel displays: filename, uploader name, capture/upload date, location coordinates
+  - Location shows formatted coordinates (N/S/E/W) or "Unknown location"
+  - Date shows "Captured" label for EXIF date, "Uploaded" for upload date
+- Files changed:
+  - convex/schema.ts (UPDATED - added uploaderName field)
+  - convex/photos.ts (UPDATED - store uploaderName on photo creation)
+  - src/components/PhotoMetadataPanel.tsx (NEW - metadata display component)
+  - src/components/PhotoMetadataPanel.test.tsx (NEW - 10 tests)
+  - src/components/PhotoLightbox.tsx (UPDATED - added info button and panel)
+  - src/components/PhotoLightbox.test.tsx (UPDATED - 6 new tests for metadata toggle)
+- **Tests added:** 16 new tests (10 for PhotoMetadataPanel, 6 for lightbox toggle)
+- **Learnings for future iterations:**
+  - Denormalize user info at creation time (like albumMembers.memberName) to avoid complex joins
+  - Intl.DateTimeFormat and Intl.NumberFormat for locale-aware formatting
+  - aria-pressed attribute for toggle buttons indicates state to screen readers
+  - Existing photos without uploaderName show "Unknown" gracefully
+---
+
+## 2026-01-25 - US-021
+- What was implemented:
+  - Created PhotoTimeline component that groups photos by date
+  - Uses exifDate when available, falls back to uploadedAt
+  - Date headers formatted with locale-aware Intl.DateTimeFormat
+  - Sort toggle button (Newest/Oldest first) with URL param persistence (?sort=asc|desc)
+  - Replaced PhotoGrid with PhotoTimeline in AlbumDetailPage
+  - Photos within each date group also sorted by time
+- Files changed:
+  - src/components/PhotoTimeline.tsx (NEW - timeline component)
+  - src/components/PhotoTimeline.test.tsx (NEW - 16 tests)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - use PhotoTimeline instead of PhotoGrid)
+- **Tests added:** 16 new tests in PhotoTimeline.test.tsx
+- **Learnings for future iterations:**
+  - Use UTC timestamps with noon time in tests to avoid timezone boundary issues
+  - Intl.DateTimeFormat("en-US", { year, month, day }) for locale-aware date formatting
+  - useSearchParams from react-router-dom for URL param persistence
+  - normalizeToDate() helper to group by date (set hours to midnight)
+  - PhotoGrid is still available for other contexts (SharedAlbumPage)
+---
+
+## 2026-01-25 - US-022
+- Implemented deletePhoto mutation with full permission checks (uploader or album owner)
+- Cascade deletes associated face records when photo is deleted
+- Updates usageCache (photoCount, storageUsedBytes, faceTagCount)
+- Added delete button to PhotoLightbox (trash icon in top-right)
+- Added confirmation dialog with Cancel/Confirm options
+- Fixed React hooks order bug in AlbumDetailPage (hooks must come before early returns)
+- Files changed: convex/photos.ts, convex/photos.test.ts, src/components/PhotoLightbox.tsx, src/components/PhotoLightbox.test.tsx, src/pages/AlbumDetailPage.tsx
+- **Tests added:** 14 new tests (9 backend mutation tests + 5 UI component tests)
+- **Learnings for future iterations:**
+  - React hooks must be called before any early returns in components - this includes useMutation and useCallback
+  - When adding features to components that have loading/error early returns, move all hooks to the top
+  - Permission logic: check uploader OR album owner for delete permissions
+  - Cascade deletes are important for data integrity (faces → photos)
+---
+
+## 2026-01-25 - US-023
+- What was implemented:
+  - Installed @aws-sdk/client-rekognition package
+  - Updated faces table schema: added rekognitionFaceId, detectionConfidence, matchConfidence, status fields
+  - Updated albums table schema: added rekognitionCollectionId field
+  - Updated people table schema: added rekognitionFaceIds array field
+  - Created convex/rekognition.ts with createRekognitionCollection and deleteRekognitionCollection actions
+  - Created convex/rekognitionHelpers.ts with internal queries/mutations (getAlbumForOwner, updateAlbumCollectionId, clearAlbumCollectionId)
+  - Added deleteCollectionById internal action for best-effort cleanup on album deletion
+  - Updated deleteAlbum mutation to schedule Rekognition collection cleanup via ctx.scheduler.runAfter
+- Files changed:
+  - package.json, package-lock.json (added @aws-sdk/client-rekognition)
+  - convex/schema.ts (added Rekognition fields to faces, albums, people tables)
+  - convex/rekognition.ts (NEW - Rekognition actions for collection management)
+  - convex/rekognitionHelpers.ts (NEW - internal mutations/queries)
+  - convex/rekognition.test.ts (NEW - 11 tests)
+  - convex/albums.ts (UPDATED - schedule collection deletion on album delete)
+- **Tests added:** 11 new tests in convex/rekognition.test.ts
+- **Learnings for future iterations:**
+  - CRITICAL: Convex files with "use node"; can ONLY export actions (public and internal). Queries and mutations must be in separate files without "use node"
+  - Use ctx.scheduler.runAfter() from mutations to trigger actions asynchronously
+  - Best-effort cleanup: schedule deletion but don't block on AWS failures (log errors, continue)
+  - AWS Rekognition collection IDs can use album ID to ensure uniqueness: `photospot-album-${albumId}`
+  - Return type annotations help Convex with type inference in actions: `returns: v.string()` and `handler: async (): Promise<string>`
+---
+
+## 2026-01-25 - US-024
+- What was implemented:
+  - Created convex/faceDetection.ts with detectFacesInPhoto action and detectFacesInPhotoInternal internal action
+  - Created convex/faceDetectionHelpers.ts with getPhoto internal query and createFacesForPhoto internal mutation
+  - detectFacesInPhoto fetches photo from Convex storage, calls Rekognition DetectFaces API
+  - Converts Rekognition bounding boxes (ratios 0-1) to percentages (0-100) for responsive rendering
+  - Creates face records with status='pending' and detectionConfidence from Rekognition
+  - Updates usageCache.faceTagCount when faces are created
+  - Updated createPhoto mutation to schedule face detection asynchronously via ctx.scheduler.runAfter(0, ...)
+  - Graceful error handling: AWS errors logged but don't block photo uploads
+- Files changed:
+  - convex/faceDetection.ts (NEW - AWS Rekognition face detection action)
+  - convex/faceDetectionHelpers.ts (NEW - internal mutations/queries for face creation)
+  - convex/faceDetection.test.ts (NEW - 10 tests)
+  - convex/photos.ts (UPDATED - schedule face detection after photo upload)
+- **Tests added:** 10 new tests in convex/faceDetection.test.ts
+- **Learnings for future iterations:**
+  - ctx.scheduler.runAfter(0, ...) runs actions immediately but asynchronously, perfect for non-blocking background tasks
+  - convex-test has issues with scheduled functions: "Write outside of transaction" errors appear but tests pass
+  - Rekognition DetectFaces returns BoundingBox with Left/Top/Width/Height as ratios (0-1), multiply by 100 for percentages
+  - Pattern: action fetches storage blob, processes with AWS SDK, calls internal mutation to persist results
+  - Keep face detection non-blocking: return early on errors, don't throw - let upload succeed regardless
+---
+
+---
+
+## 2026-01-25 15:15 - US-025
+- What was implemented:
+  - Created `convex/faceRecognition.ts` with AWS Rekognition actions for face indexing and searching
+  - Created `convex/faceRecognitionHelpers.ts` with mutations for confirmFace, correctFace, createPerson
+  - Added `indexFaceInCollection` action: indexes confirmed faces in album's Rekognition collection
+  - Added `searchFacesInCollection` action: searches collection for matching faces with confidence scores
+  - Added `searchAndSuggestMatchInternal` internal action: auto-suggests matches after face detection (>80% confidence)
+  - Added `confirmFace` mutation: confirms face identity, sets status to 'confirmed', schedules indexing
+  - Added `correctFace` mutation: changes face's personId, clears old rekognitionFaceId, schedules re-indexing
+  - Added `createPerson` mutation: creates new people in albums with optional representative face
+  - Added `suggestedPersonId` field to faces schema for auto-matched suggestions
+  - Updated `faceDetectionHelpers.ts` to schedule face matching search after detection
+- Files changed:
+  - convex/schema.ts (added suggestedPersonId field to faces)
+  - convex/faceRecognition.ts (new - AWS Rekognition actions)
+  - convex/faceRecognitionHelpers.ts (new - mutations and internal queries)
+  - convex/faceRecognition.test.ts (new - 15 tests for face recognition)
+  - convex/faceDetectionHelpers.ts (updated to trigger face matching after detection)
+  - convex/_generated/api.d.ts (regenerated types)
+- **Tests added:** 15 new tests in convex/faceRecognition.test.ts
+- **Learnings for future iterations:**
+  - Node.js files (`"use node"`) can ONLY export actions - mutations must be in separate helper files
+  - Re-exporting mutations from Node.js files doesn't work - keep public API in helpers file
+  - AWS SDK command types (e.g., `IndexFacesCommandOutput`) help with type safety
+  - The 80% confidence threshold for face matching balances accuracy vs false positives
+  - Face indexing should happen async after confirmation to not block the user
+  - When correcting a face assignment, must clear the old rekognitionFaceId and re-index under new person
+---
+
+## 2026-01-25 16:05 - US-026
+- What was implemented:
+  - Created `convex/faces.ts` with getFacesForPhoto query, rejectFace mutation, getPendingFaceCount query
+  - Created `src/components/FaceOverlay.tsx` - displays face bounding box with status-based styling
+  - Updated `src/components/PhotoTimeline.tsx` to show pending face count badge on thumbnails
+  - Updated `src/components/PhotoLightbox.tsx` to show face overlays with toggle (press 'f' key)
+  - Moved test setup files from `convex/test/` to `src/test/convex/` to avoid Convex bundling issues
+- Files changed:
+  - convex/faces.ts (new - queries and mutations for face management)
+  - convex/faces.test.ts (new - 12 tests for face queries/mutations)
+  - src/components/FaceOverlay.tsx (new - face overlay component)
+  - src/components/FaceOverlay.test.tsx (new - 14 tests for FaceOverlay)
+  - src/components/PhotoTimeline.tsx (added pending face badge)
+  - src/components/PhotoLightbox.tsx (integrated face overlays)
+  - src/pages/AlbumDetailPage.tsx (pass canEditFaces to lightbox)
+  - vitest.config.ts (updated test setup path)
+- **Tests added:** 26 new tests (12 in faces.test.ts, 14 in FaceOverlay.test.tsx)
+- **Learnings for future iterations:**
+  - Convex bundles all files in convex/ directory - test setup files with vi.mock() cause bundling errors
+  - Move test utilities outside convex/ (e.g., to src/test/convex/) to avoid "vi.queueMock() is forbidden" errors
+  - FaceOverlay uses percentages for position (x%, y%, width%, height%) to work at any image size
+  - Status-based styling: pending=yellow/dashed, confirmed=green/solid for visual distinction
+  - The 'f' key toggles face overlay visibility in the lightbox
+---
+
+## 2026-01-25 16:35 - US-027
+- What was implemented:
+  - Created `src/components/FaceIdentificationPanel.tsx` - modal panel for assigning names to faces
+  - Added `getAllPeopleForAlbum` query to convex/faces.ts for autocomplete dropdown
+  - Panel shows face thumbnail cropped from photo (circular preview)
+  - Autocomplete dropdown suggests existing people in album sorted by match confidence
+  - "Is this [Name]?" prompt shown when suggestedPersonId exists
+  - Can type new name to create new person via createPerson mutation
+  - Yes/No buttons for confirming/rejecting suggested matches
+  - Integrated into PhotoLightbox - clicking a face overlay opens the panel
+- Files changed:
+  - convex/faces.ts (added getAllPeopleForAlbum query)
+  - src/components/FaceIdentificationPanel.tsx (new - face identification UI)
+  - src/components/FaceIdentificationPanel.test.tsx (new - 16 tests)
+  - src/components/PhotoLightbox.tsx (integrated FaceIdentificationPanel)
+- **Tests added:** 16 new tests in FaceIdentificationPanel.test.tsx
+- **Learnings for future iterations:**
+  - Face thumbnails use CSS clip-path or background-position to crop from full photo
+  - Autocomplete pattern: filter on input change, show dropdown when matches exist
+  - Use onBlur with delay to allow click on dropdown items before closing
+  - confirmFace/correctFace/createPerson mutations already existed in faceRecognitionHelpers.ts
+  - FaceIdentificationPanel receives face, photo URL, albumId, and onClose callback
+---
+
+## 2026-01-25 16:44 - US-028
+- What was implemented:
+  - Created `convex/people.ts` with `getPeople` query returning people with face/photo counts
+  - Created `src/components/PeopleTab.tsx` with grid of PersonCard components
+  - Added "People" tab to AlbumDetailPage with tab navigation and URL persistence
+  - Grid shows person name, photo count, and representative face thumbnail (cropped from photo)
+  - Sorting options: most photos (default), alphabetical, recently added with URL param persistence
+  - FaceThumbnail component uses CSS transform/object-position to crop face region
+  - Empty state: "No people identified yet. Faces are auto-detected when you upload photos."
+  - Clicking person card navigates to `/albums/:albumId/people/:personId` (route ready for US-029)
+- Files changed:
+  - convex/people.ts (new - getPeople query with face counting)
+  - convex/people.test.ts (new - 10 backend tests)
+  - src/components/PeopleTab.tsx (new - People grid component)
+  - src/components/PeopleTab.test.tsx (new - 11 frontend tests)
+  - src/pages/AlbumDetailPage.tsx (added tab navigation, integrated PeopleTab)
+- **Tests added:** 21 new tests (10 in people.test.ts, 11 in PeopleTab.test.tsx)
+- **Learnings for future iterations:**
+  - Tab state persists in URL params (?tab=people) - default tab (photos) doesn't need URL param
+  - FaceThumbnail cropping: calculate face center as percentage, use CSS transform scale and object-position
+  - getPeople query counts unique photos (via Set) since a person can have multiple faces in same photo
+  - CRITICAL: Must run `npx convex dev --once` after adding new Convex files or browser gets "Could not find public function" error
+  - Empty state shows when array is empty, sort dropdown only appears when people exist
+---
+
+## 2026-01-25 17:15 - US-029
+- What was implemented:
+  - Created `convex/people.ts` with `getPerson` and `getPhotosByPerson` queries
+  - `getPerson` returns person details with confirmed face count, photo count, and sample faces for thumbnail strip
+  - `getPhotosByPerson` returns photos with confirmed faces linked to personId, sorted by date
+  - Created `src/pages/PersonDetailPage.tsx` with full UI:
+    - Breadcrumb navigation (Albums / Album / People / Person)
+    - Person name as page title with edit button placeholder
+    - Photo count stat display
+    - Face thumbnail strip showing sample faces (using CSS transform/object-position)
+    - Photo grid using existing PhotoGrid component
+    - Empty state for persons with no confirmed faces
+    - Loading skeleton while data fetches
+    - 404 state for non-existent persons
+  - Added route `/albums/:albumId/people/:personId` in App.tsx
+- Files changed:
+  - convex/people.ts (UPDATED - added getPerson and getPhotosByPerson queries)
+  - convex/people.test.ts (UPDATED - added 12 new tests for new queries)
+  - src/pages/PersonDetailPage.tsx (NEW - person detail page component)
+  - src/pages/PersonDetailPage.test.tsx (NEW - 11 tests for component)
+  - src/App.tsx (UPDATED - added route)
+- **Tests added:** 23 new tests (12 backend + 11 frontend)
+- **Learnings for future iterations:**
+  - FaceThumbnail cropping uses CSS `object-position` and `transform: scale()` to crop faces from full photos
+  - Calculate face center as percentage, then scale image around that point
+  - Sample faces limited to 6 to avoid UI clutter
+  - Edit button is a placeholder - actual rename functionality is in US-030
+  - Convex ID format is specific - passing invalid IDs to queries causes loading/error states
+---
+
+## 2026-01-25 17:35 - US-030
+- What was implemented:
+  - Added `updatePerson` mutation to update person names
+  - Added `mergePeople` mutation to combine duplicate people entries (moves all faces, re-indexes in Rekognition, deletes source person)
+  - Added `deletePerson` mutation to remove person entries (sets faces back to status='pending' with no personId)
+  - Inline name editing on person detail page with save/cancel buttons
+  - "Merge with..." modal showing face count preview and dropdown of other people in album
+  - "Delete person" confirmation dialog with warning: "This will unlink X faces. They can be re-identified."
+  - All changes reflect immediately in UI via Convex reactivity
+- Files changed:
+  - convex/people.ts (UPDATED - added updatePerson, mergePeople, deletePerson mutations)
+  - convex/people.test.ts (UPDATED - added 23 new tests for mutations)
+  - src/pages/PersonDetailPage.tsx (UPDATED - added inline edit, merge modal, delete modal)
+  - src/pages/PersonDetailPage.test.tsx (UPDATED - added 3 new tests for management features)
+- **Tests added:** 26 new tests (23 backend + 3 frontend)
+- **Learnings for future iterations:**
+  - Merge operation must re-index faces in Rekognition under the new person for recognition continuity
+  - Delete person doesn't delete face data - it resets faces to 'pending' status for re-identification
+  - Inline editing pattern: toggle between display mode (h1 + edit button) and edit mode (input + save/cancel)
+  - Modal confirmation dialogs should clearly explain the consequences of destructive actions
+---
+
+## 2026-01-25 17:46 - US-031
+- What was implemented:
+  - Added `startDate` and `endDate` optional params to `getPhotos` query for date range filtering
+  - Filtering uses exifDate when available, falls back to uploadedAt (matches existing behavior)
+  - Created `DateRangeFilter` component with accessible date inputs and Clear button
+  - Integrated filter in album detail page with URL param persistence (startDate/endDate in query string)
+  - Filter applies immediately on date selection
+  - Empty state message when no photos match: "No photos match the selected date range"
+- Files changed:
+  - convex/photos.ts (UPDATED - added startDate/endDate params to getPhotos)
+  - convex/photos.test.ts (UPDATED - added 6 new tests for date filtering)
+  - src/components/DateRangeFilter.tsx (NEW - date range picker component)
+  - src/components/DateRangeFilter.test.tsx (NEW - 11 tests for component)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated DateRangeFilter with URL params)
+- **Tests added:** 17 new tests (6 backend + 11 frontend)
+- **Learnings for future iterations:**
+  - Date inputs use native HTML date type for best accessibility and mobile UX
+  - URL params persistence uses useSearchParams hook from react-router-dom
+  - Memoize query args object to prevent unnecessary re-renders when params haven't changed
+  - For inclusive date filtering, convert end date to end of day (23:59:59.999)
+  - Use timestampToDateInput/dateInputToStartOfDay helpers to convert between formats
+---
+
+## 2026-01-25 18:45 - US-032
+- What was implemented:
+  - Added `personId` optional param to `getPhotos` query for filtering photos by person
+  - Only includes photos with confirmed faces (not pending/rejected) for the selected person
+  - Created `PersonFilter` component with dropdown selector for all people in album
+  - Loading state when people are still loading, empty state when no people identified
+  - Shows photo count next to each person name in dropdown
+  - Integrated filter in album detail page with URL param persistence (personId in query string)
+  - Filter combines with existing date range filter
+  - Empty state message updated: "No photos match the selected filters"
+- Files changed:
+  - convex/photos.ts (UPDATED - added personId param to getPhotos, filter by confirmed faces)
+  - convex/photos.test.ts (UPDATED - added 5 new tests for person filtering)
+  - src/components/PersonFilter.tsx (NEW - person selector dropdown component)
+  - src/components/PersonFilter.test.tsx (NEW - 11 tests for component)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated PersonFilter with URL params)
+- **Tests added:** 16 new tests (5 backend + 11 frontend)
+- **Learnings for future iterations:**
+  - Person filtering uses confirmed faces only - pending/rejected faces don't count for filtering
+  - Query faces by person using by_person index, then filter to confirmed status
+  - Combine multiple filters by applying them sequentially to the filteredPhotos array
+  - PersonFilter pattern: loading/empty/active states cover all edge cases
+---
+
+## 2026-01-25 18:55 - US-033
+- What was implemented:
+  - Created `ActiveFilters` component showing active filters as dismissible chips
+  - FilterChip subcomponent with X button to remove individual filters
+  - Date filter chip shows range ("1/1/2024 – 6/30/2024") or single ("From: 1/1/2024")
+  - Person filter chip shows person name or "Selected person" fallback
+  - "Clear all filters" button appears when multiple filter types are active
+  - Integrated into AlbumDetailPage with callbacks for removing filters
+  - Empty state message: "No photos match the selected filters" with helpful guidance
+  - URL params persist filter state for reloadable/shareable links
+- Files changed:
+  - src/components/ActiveFilters.tsx (NEW - active filters display component)
+  - src/components/ActiveFilters.test.tsx (NEW - 14 tests for component)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - integrated ActiveFilters, added removal callbacks)
+- **Tests added:** 14 new tests in ActiveFilters.test.tsx
+- **Learnings for future iterations:**
+  - Use `Intl.DateTimeFormat` for locale-aware date formatting in filter chips
+  - "Clear all filters" should only show when there are multiple filter *types*, not just multiple values
+  - Filter chips need accessible aria-labels for screen readers (e.g., "Remove date filter")
+  - Tailwind's rounded-full class creates pill-shaped chips common in filter UIs
+---
+
+## 2026-01-25 19:02 - US-034
+- What was implemented:
+  - MobileNav component: Hamburger menu with slide-out drawer for mobile navigation
+  - useSwipeGesture hook: Touch gesture detection for swipe left/right
+  - Updated Header to be responsive: desktop nav hidden on mobile, hamburger shown on mobile
+  - Added swipe gesture support to PhotoLightbox for mobile photo navigation
+  - Touch-friendly tap targets (min 44px) on all interactive elements
+  - Focus management and Escape key support in mobile nav
+- Files changed:
+  - src/components/MobileNav.tsx (new - hamburger menu component)
+  - src/components/MobileNav.test.tsx (new - 10 tests)
+  - src/components/Header.tsx (updated - responsive nav)
+  - src/components/Header.test.tsx (new - 7 tests)
+  - src/hooks/useSwipeGesture.ts (new - swipe gesture hook)
+  - src/hooks/useSwipeGesture.test.tsx (new - 8 tests)
+  - src/components/PhotoLightbox.tsx (updated - added swipe navigation)
+  - src/components/PhotoLightbox.test.tsx (updated - 6 new swipe tests)
+- **Tests added:** 31 new tests (10 MobileNav, 8 useSwipeGesture, 7 Header, 6 PhotoLightbox swipe)
+- **Learnings for future iterations:**
+  - Tailwind breakpoint md (768px) is the standard mobile/desktop breakpoint
+  - Use `md:hidden` to hide on desktop, `hidden md:flex` to show only on desktop
+  - Touch targets: use `min-h-11 min-w-11` for 44px minimum (h-11 = 2.75rem = 44px)
+  - useSwipeGesture hook pattern: store touch start position, compare with touch end, check threshold
+  - Focus management: use requestAnimationFrame for focus after state updates
+  - Photo upload already works with mobile camera roll via native file input with accept attribute
+---
+
+## 2026-01-25 19:25 - US-037
+- What was implemented:
+  - Installed Stripe SDK v20.2.0 for payment processing
+  - `createStripeCustomer` action: creates Stripe customer linked to user
+  - `createCheckoutSession` action: creates Stripe checkout session for subscription
+  - `createBillingPortalSession` action: creates Stripe billing portal session for subscription management
+  - Webhook handler for Stripe events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed
+  - Added stripeCustomerId field to subscriptions schema with index
+  - Environment variables documented in .env.example
+- Files changed:
+  - package.json (added stripe dependency)
+  - convex/schema.ts (added stripeCustomerId field and index)
+  - convex/stripe.ts (new - main Stripe actions)
+  - convex/stripeHelpers.ts (new - internal queries/mutations)
+  - convex/stripeWebhook.ts (new - HTTP action for webhook endpoint)
+  - convex/stripeWebhookHandler.ts (new - Node.js internal action)
+  - convex/http.ts (updated - register Stripe webhook route)
+  - convex/stripe.test.ts (new - 13 tests)
+  - .env.example (added Stripe environment variables)
+- **Tests added:** 13 new tests in convex/stripe.test.ts
+- **Learnings for future iterations:**
+  - Convex HTTP actions CANNOT be in "use node" files - split into HTTP handler + Node.js internal action
+  - Stripe SDK v20 API version 2025-12-15.clover has breaking changes:
+    - current_period_start/end moved from Subscription to subscription.items.data[0]
+    - Invoice.subscription moved to invoice.parent?.subscription_details?.subscription
+  - Don't create custom ActionContext interfaces - just inline code in the handler to avoid type incompatibility
+  - Stripe webhook signature verification requires raw body string, not parsed JSON
+  - Use PRICE_TO_PLAN mapping object for reverse lookup from price ID to plan info
+---
+
+## 2026-01-25 19:50 - US-038
+- What was implemented:
+  - Created `/pricing` page displaying all three subscription tiers (Free, Pro, Family)
+  - Feature comparison table showing limits for each plan (storage, photos, albums, members, face tags)
+  - Monthly/Annual billing toggle with "Save 17%" badge
+  - CTA buttons: "Get Started" for Free, "Subscribe" for paid plans
+  - Current plan highlighted with green border and "Current Plan" badge when user is logged in
+  - Responsive mobile design: cards stack vertically, hamburger menu
+  - Added `getMySubscription` query to stripeHelpers.ts to fetch user's current plan
+- Files changed:
+  - src/pages/PricingPage.tsx (NEW - pricing page component)
+  - src/pages/PricingPage.test.tsx (NEW - 16 tests)
+  - src/App.tsx (UPDATED - added /pricing route)
+  - convex/stripeHelpers.ts (UPDATED - added getMySubscription query)
+- **Tests added:** 16 new tests in PricingPage.test.tsx
+- **Learnings for future iterations:**
+  - Must run `npx convex dev --once` after adding new Convex functions or browser shows "Could not find public function" error
+  - Pricing page uses PLAN_TIERS constant for consistent plan data across the app
+  - Annual pricing calculation: multiply monthly by 10 (not 12) to show 17% savings
+  - Use conditional rendering for "Current Plan" vs "Get Started"/"Subscribe" buttons based on user's subscription
+---
+
+## 2026-01-25 20:15 - US-039
+- What was implemented:
+  - Wired Subscribe buttons on PricingPage to call `createCheckoutSession` action
+  - Added loading state and error handling for checkout flow
+  - Created BillingPage with success confirmation banner when `?success=true`
+  - BillingPage shows current plan, billing cycle, and next billing date
+  - "Change Plan" button links back to pricing page
+  - Added `/billing` route to App.tsx
+  - Cancel redirect already configured in `createCheckoutSession` action (`cancel_url: /pricing`)
+- Files changed:
+  - src/pages/PricingPage.tsx (UPDATED - added useAction, checkout handler, loading/error states)
+  - src/pages/PricingPage.test.tsx (UPDATED - added 6 checkout flow tests)
+  - src/pages/BillingPage.tsx (NEW - billing page with success confirmation)
+  - src/pages/BillingPage.test.tsx (NEW - 8 tests)
+  - src/App.tsx (UPDATED - added /billing route)
+- **Tests added:** 14 new tests (6 in PricingPage.test.tsx checkout flow, 8 in BillingPage.test.tsx)
+- **Learnings for future iterations:**
+  - Stripe Checkout cancel_url is already configured in the backend action - no frontend work needed for cancel redirect
+  - Use window.location.href for external redirects (Stripe Checkout) instead of React Router navigate
+  - Mock window.location in tests by deleting and recreating the property
+  - Multiple "Loading" elements can appear (Header + main content) - use getAllByText in tests
+---
+
+## 2026-01-25 20:14 - US-040
+- What was implemented:
+  - Created `/billing` page with comprehensive subscription and usage management
+  - Added `convex/usage.ts` with `getUserUsage`, `getPlanLimits`, and `getMaxMembersPerAlbum` queries
+  - Added `cancelSubscription` action to `convex/stripe.ts`
+  - Extended `getMySubscription` query to return `stripeCustomerId` and `stripeSubscriptionId`
+  - BillingPage shows current plan name, price, billing cycle, next billing date
+  - Usage displayed as progress bars for: Storage, Photos, Albums, Face Tags
+  - Progress bars change color: blue (<80%), yellow (>80%), red (over limit)
+  - "-1" unlimited values display as "Unlimited" text
+  - "Change Plan" button links to /pricing
+  - "Manage Payment" button opens Stripe Customer Portal (paid plans only)
+  - "Cancel Subscription" button with confirmation dialog (paid plans only)
+  - Canceled subscriptions show "Your subscription will end on [date]"
+  - Members per album limit displayed as info text
+- Files changed:
+  - convex/usage.ts (NEW - usage and limit queries)
+  - convex/usage.test.ts (NEW - 9 tests)
+  - convex/stripe.ts (UPDATED - added cancelSubscription action)
+  - convex/stripeHelpers.ts (UPDATED - extended getMySubscription)
+  - src/pages/BillingPage.tsx (UPDATED - full billing management UI)
+  - src/pages/BillingPage.test.tsx (UPDATED - now 22 tests total)
+- **Tests added:** 31 new tests (9 in usage.test.ts, 22 in BillingPage.test.tsx)
+- **Learnings for future iterations:**
+  - Use -1 as sentinel value for "unlimited" limits - easy to check in UI
+  - Progress bar color coding helps users understand urgency (blue/yellow/red)
+  - Remember to run `npx convex codegen` or `npx convex dev --once` after adding new Convex files
+  - Tests using call-order mocking for multiple useQuery hooks need a counter reset pattern
+  - PLAN_LIMITS constant should be centralized and exported for reuse
+---
+
+## 2026-01-25 20:20 - US-041
+- What was implemented:
+  - Added `checkLimit` helper function that compares current usage against plan limits
+  - Returns `LimitCheckResult` with `{allowed, current, limit, percentage}`
+  - Handles `-1` (unlimited) values correctly - returns allowed=true with 0% percentage
+  - Handles edge cases: zero limit, exact limit (allowed), over limit (not allowed)
+  - Existing queries (`getUserUsage`, `getPlanLimits`, `getMaxMembersPerAlbum`) were already complete
+  - Existing usageCache updates were already in place (photo/album/face operations)
+- Files changed:
+  - convex/usage.ts (UPDATED - added checkLimit function and LimitCheckResult type)
+  - convex/usage.test.ts (UPDATED - added 8 new tests for checkLimit)
+- **Tests added:** 8 new tests for checkLimit helper (17 total in usage.test.ts)
+- **Learnings for future iterations:**
+  - Pure helper functions (not Convex queries) can be exported and imported directly in tests
+  - Use `import { checkLimit } from "./usage"` instead of `require()` in test files
+  - The checkLimit helper is designed for client-side use - UI can import and use it directly
+  - Unlimited limits (-1) should return 0% percentage since there's no meaningful ratio
+---
+
+## 2026-01-25 20:42 - US-042
+- What was implemented:
+  - Backend enforcement: All resource-creating mutations now check plan limits
+    - `albums.createAlbum` checks album count limit (3 for Free)
+    - `photos.createPhoto` checks BOTH storage AND photo count limits
+    - `invites.inviteToAlbum` checks membersPerAlbum limit based on album OWNER's plan
+    - `faceDetectionHelpers.createFacesForPhoto` checks face tag limit
+  - LimitReachedModal component shows which limit hit, usage stats, and upgrade CTA
+  - UsageWarningBanner displays inline warnings at 80% (warning) and 95% (critical) thresholds
+  - PhotoUpload.tsx integrated with usage tracking and warning display
+  - AlbumsPage.tsx shows LimitReachedModal when album limit reached
+  - getUsageWithWarnings query returns usage, limits, warning levels, and percentages
+  - getAlbumOwnerUsage query for photo upload component
+- Files changed:
+  - convex/albums.ts (UPDATED - added album limit check)
+  - convex/photos.ts (UPDATED - added storage AND photo count limit checks)
+  - convex/invites.ts (UPDATED - added member limit check based on owner's plan)
+  - convex/faceDetectionHelpers.ts (UPDATED - added face tag limit check)
+  - convex/usage.ts (UPDATED - added getUsageWithWarnings query)
+  - src/components/LimitReachedModal.tsx (NEW - modal showing limit hit with upgrade CTA)
+  - src/components/LimitReachedModal.test.tsx (NEW - 12 tests)
+  - src/components/UsageWarningBanner.tsx (NEW - inline warning banner component)
+  - src/components/PhotoUpload.tsx (UPDATED - integrated usage tracking and warnings)
+  - src/pages/AlbumsPage.tsx (UPDATED - integrated LimitReachedModal)
+  - convex/limits.test.ts (NEW - 10 backend limit enforcement tests)
+- **Tests added:** 22 new tests (10 in limits.test.ts, 12 in LimitReachedModal.test.tsx)
+- **Learnings for future iterations:**
+  - Member invite limit is based on album OWNER's plan, not the inviter's plan
+  - Check limits BEFORE creating resources, not after
+  - convex-test has known issues with scheduled functions - the "Write outside of transaction" error is a convex-test limitation, not a real bug
+  - Usage warnings at 80% and 95% give users advance notice before hitting hard limits
+  - Users over limit after downgrade: queries still work (read access), mutations block (no new creates)
+---
+
+## 2026-01-25 21:10 - US-044
+- What was implemented:
+  - Installed leaflet, react-leaflet, and @types/leaflet packages
+  - Created PhotoMap.tsx base component using react-leaflet MapContainer and TileLayer
+  - Map renders with OpenStreetMap tiles and proper attribution
+  - Support for configurable center coordinates (default [0,0]) and zoom level (default 2)
+  - Touch gestures enabled via scrollWheelZoom for mobile pinch-to-zoom and pan
+  - Responsive container fills parent element (100% width and height)
+  - Accepts children prop for future marker integration
+  - Custom className prop for additional styling
+- Files changed:
+  - package.json, package-lock.json (added leaflet, react-leaflet, @types/leaflet)
+  - src/components/PhotoMap.tsx (NEW - base map component)
+  - src/components/PhotoMap.test.tsx (NEW - 11 tests)
+- **Tests added:** 11 new tests in PhotoMap.test.tsx
+- **Learnings for future iterations:**
+  - Leaflet CSS must be imported: `import "leaflet/dist/leaflet.css"`
+  - react-leaflet uses MapContainer (not Map) as the main wrapper
+  - TileLayer with OpenStreetMap tiles: `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
+  - Mock react-leaflet in tests by returning simple divs with data attributes for props
+  - scrollWheelZoom={true} enables both scroll wheel zoom on desktop and pinch-to-zoom on mobile
+---
+
+## 2026-01-25 21:35 - US-045
+- What was implemented:
+  - Added 'Map' tab to AlbumDetailPage navigation with URL param ?tab=map
+  - Created getPhotosWithLocation query that returns photos with both exifLat AND exifLng
+  - Created AlbumMapTab component displaying photo markers on a Leaflet map
+  - Marker shows photo thumbnail on hover via Popup component
+  - Clicking marker opens photo in lightbox via onPhotoClick callback
+  - Map auto-fits bounds to show all markers using FitBounds helper component
+  - Empty state shown when album has no geolocated photos
+  - Uses react-leaflet Marker, Popup, and useMap for interaction
+- Files changed:
+  - convex/photos.ts (added getPhotosWithLocation query)
+  - convex/photos.test.ts (added 8 new tests for getPhotosWithLocation)
+  - src/components/AlbumMapTab.tsx (NEW - map tab component with markers)
+  - src/components/AlbumMapTab.test.tsx (NEW - 9 component tests)
+  - src/pages/AlbumDetailPage.tsx (added Map tab to navigation)
+- **Tests added:** 17 new tests (8 backend + 9 frontend)
+- **Learnings for future iterations:**
+  - getPhotosWithLocation uses null checks for BOTH exifLat AND exifLng (both required for valid coords)
+  - Handle 0 as valid coordinate - use explicit null checks, not truthiness
+  - FitBounds component uses useMap() hook to access map instance and fitBounds()
+  - Mock react-leaflet components by returning divs with data-testid for testing
+  - Convex dev must be running for new queries to work - start with `npx convex dev`
+---
+
+## 2026-01-25 21:45 - US-046
+- What was implemented:
+  - Installed react-leaflet-cluster package for marker clustering
+  - Wrapped individual Markers in MarkerClusterGroup component
+  - Clusters show photo count badge when markers are grouped
+  - Clicking cluster zooms in to expand markers (zoomToBoundsOnClick)
+  - Shows cluster coverage area on hover (showCoverageOnHover)
+  - Performance optimization with chunkedLoading for 1000+ markers
+  - maxClusterRadius=50 controls clustering aggressiveness
+  - Import cluster CSS files for default cluster styling
+- Files changed:
+  - package.json, package-lock.json (added react-leaflet-cluster)
+  - src/components/AlbumMapTab.tsx (added MarkerClusterGroup wrapper)
+  - src/components/AlbumMapTab.test.tsx (added 5 clustering tests)
+- **Tests added:** 5 new tests for marker clustering (14 total in AlbumMapTab.test.tsx)
+- **Learnings for future iterations:**
+  - react-leaflet-cluster CSS is at `dist/assets/` not `lib/assets/`
+  - MarkerClusterGroup props: showCoverageOnHover, zoomToBoundsOnClick, maxClusterRadius, chunkedLoading
+  - chunkedLoading improves performance by loading markers incrementally
+  - Mock MarkerClusterGroup in tests with data attributes to verify props are passed correctly
+  - Performance test with 1000 markers validates the clustering doesn't cause browser freeze
+---
+
+## 2026-01-25 21:50 - US-047
+- What was implemented:
+  - Added bounding box filtering to getPhotos query (boundsNorth/South/East/West params)
+  - Implemented bounding box filtering logic in backend (photos must have lat/lng within bounds)
+  - Created LocationFilter component displaying active bounds in filter bar
+  - Added rectangle selection mode to AlbumMapTab with "Select Area" button
+  - Selection mode shows crosshair cursor and draws rectangle as user drags
+  - Wired up bounds filter to URL params (boundsNorth/South/East/West)
+  - Combined bounds filter with existing date/person filters
+  - Added "Clear Selection" button to remove bounds filter
+  - Updated ActiveFilters to show location filter chip
+- Files changed:
+  - convex/photos.ts (added bounds filtering logic)
+  - convex/photos.test.ts (added 11 backend tests)
+  - src/components/LocationFilter.tsx (new component)
+  - src/components/LocationFilter.test.tsx (8 new tests)
+  - src/components/AlbumMapTab.tsx (added selection mode, SelectionHandler, Rectangle)
+  - src/components/AlbumMapTab.test.tsx (added useMapEvents mock)
+  - src/components/ActiveFilters.tsx (added locationBounds support)
+  - src/pages/AlbumDetailPage.tsx (wired up bounds to URL params and queries)
+- **Tests added:** 19 new tests (11 backend + 8 frontend)
+- **Learnings for future iterations:**
+  - react-leaflet's useMapEvents hook lets you capture map interaction events
+  - Disable map.dragging during selection mode to prevent pan interference
+  - L.latLngBounds normalizes coordinates so north is always > south
+  - Use Rectangle component from react-leaflet to visualize bounds
+  - URL params with multiple coordinates: store each coordinate separately
+  - Mock useMapEvents in tests to prevent "no export" errors
+---
+
+## 2026-01-25 22:15 - US-048
+- What was implemented:
+  - Created `/albums/map` route for global album map view
+  - Added "Map View" toggle button on AlbumsPage (with map icon SVG)
+  - Created `getAlbumLocations` query that calculates centroid from geolocated photos
+  - Centroid calculated as average lat/lng of all photos with location in each album
+  - Album markers show name and photo count in popup (e.g., "15 of 20 photos with location")
+  - Clicking marker navigates to album's map view (`/albums/:albumId?tab=map`)
+  - Empty state for users with no geolocated albums: "No Albums with Location"
+  - FitBounds component auto-fits map to show all album markers
+  - Breadcrumb navigation: Albums / Map
+  - Back to Albums button and List View link for navigation
+- Files changed:
+  - convex/albums.ts (added getAlbumLocations query)
+  - convex/albumLocations.test.ts (new - 9 backend tests)
+  - src/pages/AlbumsMapPage.tsx (new - global album map page)
+  - src/pages/AlbumsMapPage.test.tsx (new - 10 component tests)
+  - src/pages/AlbumsPage.tsx (added Map View toggle button)
+  - src/App.tsx (added /albums/map route)
+- **Tests added:** 19 new tests (9 in albumLocations.test.ts, 10 in AlbumsMapPage.test.tsx)
+- **Learnings for future iterations:**
+  - Centroid calculation: sum lat/lng separately, divide by count for average
+  - Use explicit null checks for coordinates (not truthiness) - 0 is a valid lat/lng value
+  - FitBounds component uses useMap() hook to access map instance for fitBounds()
+  - Filter photos with BOTH exifLat AND exifLng for valid coordinates
+  - Albums without geolocated photos are excluded from the map (return null, filter later)
+---
+
+## 2026-01-25 22:20 - US-049
+- What was implemented:
+  - Added locationName field (optional string) to photos schema
+  - Created geocoding.ts action using Nominatim API (free, no API key required)
+  - Created geocodingHelpers.ts with internal mutations for updating photos
+  - Modified createPhoto mutation to schedule geocoding after upload when coordinates present
+  - Updated PhotoMetadataPanel to display place name (with raw coordinates as tooltip)
+- Files changed:
+  - convex/schema.ts (added locationName field)
+  - convex/geocoding.ts (new - Nominatim API integration)
+  - convex/geocodingHelpers.ts (new - internal mutations)
+  - convex/photos.ts (schedule geocoding after upload)
+  - convex/_generated/api.d.ts (updated types)
+  - src/components/PhotoMetadataPanel.tsx (display locationName)
+  - src/components/PhotoMetadataPanel.test.tsx (4 new tests)
+  - convex/geocoding.test.ts (new - 8 tests)
+- **Tests added:** 12 new tests (8 in geocoding.test.ts, 4 in PhotoMetadataPanel.test.tsx)
+- **Learnings for future iterations:**
+  - Nominatim API requires User-Agent header per their usage policy
+  - Schedule async work (like geocoding) using `ctx.scheduler.runAfter(0, ...)` pattern
+  - For geocoding, only schedule when coordinates are present (check before scheduling)
+  - Follow the pattern of separate helpers file for internal queries/mutations used by node actions
+---
+
+## 2026-01-25 - US-050
+- What was implemented:
+  - Added locationSearch parameter to getPhotos query for text search by location name
+  - Case-insensitive partial matching on locationName field using JavaScript filter
+  - Created LocationFilter component with search input and autocomplete suggestions
+  - getLocationSuggestions query returns unique location names in album matching prefix
+  - Combines with existing bounding box filter (AND logic)
+  - Clear search button when text is entered
+  - Added locationSearch URL param persistence in AlbumDetailPage
+  - Updated ActiveFilters to show location search as a removable chip
+- Files changed:
+  - convex/photos.ts (added locationSearch param to getPhotos)
+  - convex/locationSearch.test.ts (NEW - 25 tests for location search)
+  - src/components/LocationFilter.tsx (UPDATED - added search input with autocomplete)
+  - src/components/LocationFilter.test.tsx (UPDATED - 8 additional tests)
+  - src/components/ActiveFilters.tsx (UPDATED - location search chip)
+  - src/pages/AlbumDetailPage.tsx (UPDATED - wired up locationSearch param)
+  - Multiple test files fixed for TypeScript errors (Doc type casts)
+- **Tests added:** 25 new tests in convex/locationSearch.test.ts
+- **Learnings for future iterations:**
+  - convex-test `ctx.db.get()` returns a union type - cast with `as Doc<"tableName"> | null` AFTER `t.run()`, not inside the lambda
+  - Incorrect: `await t.run(async (ctx) => ctx.db.get(id) as Doc<"albums"> | null)`
+  - Correct: `await t.run(async (ctx) => ctx.db.get(id)) as Doc<"albums"> | null`
+  - Import `Doc` from `./_generated/dataModel` for type-safe database casts
+  - Use `vi.mocked(fn).mock.calls` to access mock call history in vitest
+  - Add explicit return types to handlers when TypeScript can't infer them: `Promise<{ success: boolean; error?: string }>`
+---
+
+## 2026-01-25 22:52 - US-051
+- What was implemented:
+  - Created admins table schema with userId, createdAt, createdBy fields
+  - Added by_user_id index for fast admin lookups
+  - Created isAdmin internal query that checks if userId is in admins table
+  - Created ensureAdminSeeded mutation that creates admin records for seed emails
+  - Seeding only runs when admins table is empty (prevents accidental overwrites)
+  - Documented ADMIN_SEED_EMAILS env var in .env.example
+- Files changed:
+  - convex/schema.ts (UPDATED - added admins table)
+  - convex/admin.ts (NEW - admin queries and mutations)
+  - convex/admin.test.ts (NEW - 8 tests)
+  - .env.example (UPDATED - documented ADMIN_SEED_EMAILS)
+- **Tests added:** 8 new tests in convex/admin.test.ts
+- **Learnings for future iterations:**
+  - Keep admin logic separate from Better-Auth user schema for clean separation of concerns
+  - Use string IDs (not v.id("users")) for Better-Auth user references since Better-Auth manages its own user tables
+  - Admin seeding pattern: check if table is empty before seeding to make it safe to call multiple times
+  - Internal queries (internalQuery) are not exposed publicly - good for sensitive operations like isAdmin
+---
+
+## 2026-01-25 23:05 - US-052
+- What was implemented:
+  - Created adminAuditLog table schema with adminUserId, action, targetUserId, details, timestamp fields
+  - Added by_admin and by_timestamp indexes for querying audit logs
+  - Created requireAdmin helper function that throws for non-admin users
+  - Created logAdminAction internal mutation for creating audit trail entries
+  - Created checkAdminAccess internal query for testing requireAdmin behavior
+- Files changed:
+  - convex/schema.ts (UPDATED - added adminAuditLog table)
+  - convex/admin.ts (UPDATED - added requireAdmin, logAdminAction, checkAdminAccess)
+  - convex/adminMiddleware.test.ts (NEW - 8 tests)
+- **Tests added:** 8 new tests in convex/adminMiddleware.test.ts
+- **Learnings for future iterations:**
+  - requireAdmin is a pure helper function (not a Convex query/mutation) so it can be imported and used directly in other functions
+  - logAdminAction is an internal mutation called from other admin mutations to maintain audit trail
+  - checkAdminAccess is a test helper that wraps requireAdmin logic without throwing, returning { isAdmin, error? }
+  - Use internalMutation for audit logging so it's not exposed publicly but can be called from other functions
+---
+
+## 2026-01-25 23:10 - US-053
+- What was implemented:
+  - Created getAggregateMetrics admin query for platform-wide statistics
+  - Returns: totalUsers (from subscription records), activeUsers (users with activity in last 30 days)
+  - Returns: usersByPlan breakdown (free/pro/family counts)
+  - Returns: totalStorageUsedBytes, totalPhotos, totalAlbums
+  - Returns: MRR calculated from active paid subscriptions (monthly + annual/12)
+  - Query protected by requireAdmin middleware
+  - Active users tracked via usageCache.lastCalculated timestamp
+- Files changed:
+  - convex/adminMetrics.ts (NEW - admin aggregate metrics query)
+  - convex/adminMetrics.test.ts (NEW - 7 tests)
+  - convex/_generated/api.d.ts (UPDATED - generated types)
+- **Tests added:** 7 new tests in convex/adminMetrics.test.ts
+- **Learnings for future iterations:**
+  - Convex queries are pure read operations - they cannot call ctx.scheduler or have other side effects
+  - If audit logging is needed for queries, it must be done client-side or via a separate mutation
+  - Active users can be approximated via usageCache.lastCalculated (updated when users upload photos, create albums, tag faces)
+  - MRR calculation: monthly subscriptions add their price, annual subscriptions add price/12 for monthly equivalent
+---
+
+## 2026-01-25 23:15 - US-054
+- What was implemented:
+  - Created listUsers admin query for user list with search, filters, and pagination
+  - Cursor-based pagination with configurable limit (default 20, max 100)
+  - Filter by plan (free/pro/family) and status (active/past_due/canceled)
+  - Search by userId (case-insensitive partial match)
+  - Returns subscription info (planId, status, billingCycle, createdAt, currentPeriodEnd)
+  - Returns usage data (storageUsedBytes, photoCount, albumCount, faceTagCount)
+  - Query protected by requireAdmin middleware
+- Files changed:
+  - convex/adminUsers.ts (NEW - admin user list query)
+  - convex/adminUsers.test.ts (NEW - 9 tests)
+  - convex/_generated/api.d.ts (UPDATED - generated types)
+- **Tests added:** 9 new tests in convex/adminUsers.test.ts
+- **Learnings for future iterations:**
+  - Better-Auth stores user data (name, email) in its own component tables, not accessible from regular Convex queries
+  - For full email/name search, would need either: (1) denormalize user data to subscriptions table, or (2) use an action to query Better-Auth's findMany
+  - Cursor-based pagination in Convex can be implemented manually by sorting, finding cursor position, then slicing
+  - When returning union types from queries, the return type must exactly match the validator schema
+---
+
+## 2026-01-25 23:30 - US-055
+- What was implemented:
+  - Created getUserDetail admin query returning full user profile with subscription, usage, and recent albums
+  - Created getPastDueAccounts query returning users with past_due subscription status
+  - Created getRecentSignups query returning users created in last N days
+  - Created getRecentCancellations query returning canceled/canceling subscriptions
+  - All queries protected by requireAdmin middleware
+  - getUserDetail returns: profile info, subscription details (including Stripe IDs), usage data, and up to 5 recent albums
+- Files changed:
+  - convex/adminUserDetail.ts (NEW - admin user detail and health queries)
+  - convex/adminUserDetail.test.ts (NEW - 14 tests)
+  - convex/_generated/api.d.ts (UPDATED - generated types)
+- **Tests added:** 14 new tests in convex/adminUserDetail.test.ts
+- **Learnings for future iterations:**
+  - Queries are pure read operations - cannot call ctx.scheduler or have side effects like audit logging
+  - Admin queries follow the pattern: requireAdmin check first, then build response
+  - For system health monitoring, filter subscriptions by status field directly (no index needed for infrequent queries)
+  - getUserDetail pattern: fetch subscription first, if not found return null; then fetch related data (usage, albums)
+---
+
+## 2026-01-25 23:36 - US-056
+- What was implemented:
+  - Created AdminDashboardPage with protected admin-only route
+  - Display metrics cards: total users, active users (last 30 days), MRR, storage used
+  - Display additional stats: total photos, total albums
+  - Plan distribution chart with horizontal bars showing Free/Pro/Family breakdown
+  - Quick Links section with navigation to user list, past due, recent signups, cancellations
+  - Loading skeleton while metrics load
+  - Access denied page for non-admin users
+  - Added checkAmIAdmin public query for frontend auth checks
+- Files changed:
+  - convex/admin.ts (added checkAmIAdmin query)
+  - src/App.tsx (added /admin route)
+  - src/pages/AdminDashboardPage.tsx (new file)
+  - src/pages/AdminDashboardPage.test.tsx (new file with 17 tests)
+- **Tests added:** 17 new tests in src/pages/AdminDashboardPage.test.tsx
+- **Learnings for future iterations:**
+  - The admin isAdmin query was internal-only, needed to add a public query for frontend
+  - Admin protection pattern: check auth, check admin status, show appropriate UI for each state
+  - Make all users admin for testing via Convex mutation when browser testing
+---
+
+## 2026-01-25 23:50 - US-057
+- What was implemented:
+  - Created /admin/users route with AdminUsersPage.tsx
+  - Search input for filtering by user ID
+  - Filter dropdowns for plan (All/Free/Pro/Family) and status (All/Active/Past Due/Canceled)
+  - User table showing: USER ID, PLAN, STATUS, STORAGE, PHOTOS, JOINED columns
+  - Pagination controls (Previous/Next) with "Showing N users" count
+  - Created /admin/users/:userId route with AdminUserDetailPage.tsx
+  - Detail page shows: user profile with plan/status badges, subscription details (billing cycle, joined, last active), Stripe details (customer ID, subscription ID), usage breakdown with progress bars, recent albums list
+  - Breadcrumb navigation (Admin / Users / userId)
+- Files changed:
+  - src/App.tsx (added /admin/users and /admin/users/:userId routes)
+  - src/pages/AdminUsersPage.tsx (new - user list page)
+  - src/pages/AdminUsersPage.test.tsx (new - 14 tests)
+  - src/pages/AdminUserDetailPage.tsx (new - user detail page)
+  - src/pages/AdminUserDetailPage.test.tsx (new - 17 tests)
+- **Tests added:** 31 new tests (14 in AdminUsersPage.test.tsx, 17 in AdminUserDetailPage.test.tsx)
+- **Learnings for future iterations:**
+  - Better-Auth user data (name, email) is stored in component tables - listUsers query uses userId for search since direct access to Better-Auth user tables requires separate setup
+  - Admin UI pattern: user list with clickable IDs → detail page with full information
+  - Usage breakdown with progress bars provides visual feedback on resource consumption
+  - Last active timestamp comes from usageCache.lastCalculated (updated on user actions)
+---
+
+## 2026-01-26 00:15 - US-043
+- What was implemented:
+  - Created LandingPage component with hero section, tagline, and CTAs
+  - Feature highlights section showcasing EXIF metadata, face recognition, and sharing
+  - Plan comparison summary with Free/Pro/Family pricing
+  - Social proof section with placeholder testimonials
+  - Full footer with Product, Account, Legal, and Support links
+  - Updated App.tsx to render LandingPage at root instead of redirecting
+  - Authenticated users are redirected to /albums
+- Files changed:
+  - src/pages/LandingPage.tsx (new - landing page component)
+  - src/pages/LandingPage.test.tsx (new - 18 tests)
+  - src/App.tsx (updated root route to use LandingPage)
+- **Tests added:** 18 new tests in src/pages/LandingPage.test.tsx
+- **Learnings for future iterations:**
+  - LandingPage handles its own auth redirect internally via useEffect
+  - Multiple CTAs with same text on page require getAllBy* queries in tests
+  - Footer uses <a> tags for external/legal links, <Link> for internal navigation
+---
+
+## 2026-01-26 00:45 - US-058
+- What was implemented:
+  - Added `rescanPhotoFaces` mutation to convex/faces.ts for manual face rescanning
+  - Mutation clears pending/rejected faces, preserves confirmed faces
+  - Calls detectFacesInPhoto internal action, then schedules face matching
+  - Ensures album's Rekognition collection exists before matching
+  - Checks face tag limit before creating new faces
+  - Added 'Rescan Faces' button to PhotoLightbox component (editors/owners only)
+  - Button shows loading state with "Scanning..." text while rescan is in progress
+  - Success/error message shows face count or error
+  - Also fixed LandingPage.test.tsx tests that were broken by landing page redesign
+- Files changed:
+  - convex/faces.ts (added rescanPhotoFaces mutation)
+  - convex/rescanFaces.test.ts (new - 11 backend tests)
+  - src/components/PhotoLightbox.tsx (added Rescan button with loading state)
+  - src/components/PhotoLightbox.test.tsx (added 6 UI tests)
+  - src/pages/LandingPage.test.tsx (fixed 7 broken tests to match redesigned content)
+- **Tests added:** 17 new tests (11 backend + 6 UI)
+- **Learnings for future iterations:**
+  - When landing page is redesigned, tests must be updated to match new content
+  - Rescan button only appears for editors/owners (canEditFaces prop)
+  - Face rescan preserves confirmed faces but clears pending/rejected for fresh detection
+  - The "Write outside of transaction" errors in convex-test are known limitations with scheduled functions, not real failures
+---
+
+## 2026-01-26 00:57 - US-059
+- What was implemented:
+  - Retroactive face matching when confirming faces
+  - `retroactivelyMatchFacesInternal` action in convex/faceRecognition.ts
+  - Helper queries/mutations in convex/retroactiveMatching.ts
+  - Added `retroactiveMatchResults` table to schema for notifications
+  - `RetroactiveMatchToast` component with slide-in animation
+  - Integrated toast notifications into AlbumDetailPage
+  - Batch processing (50 faces/batch) with 2s delays for rate limiting
+  - Limited to 500 faces per confirmation to avoid timeouts
+  - Only updates pending faces with >80% confidence matches
+- Files changed:
+  - convex/faceRecognition.ts (added retroactivelyMatchFacesInternal action, updated indexFaceInCollectionInternal)
+  - convex/retroactiveMatching.ts (new - helper queries/mutations)
+  - convex/retroactiveMatching.test.ts (new - 9 backend tests)
+  - convex/schema.ts (added retroactiveMatchResults table)
+  - src/components/RetroactiveMatchToast.tsx (new - toast component)
+  - src/components/RetroactiveMatchToast.test.tsx (new - 6 UI tests)
+  - src/index.css (added slideIn animation)
+  - src/pages/AlbumDetailPage.tsx (integrated toast component)
+- **Tests added:** 15 new tests (9 backend + 6 frontend)
+- **Learnings for future iterations:**
+  - Scheduled actions can chain: indexFaceInCollectionInternal schedules retroactivelyMatchFacesInternal
+  - For notifications from async jobs, use a table + reactive query pattern
+  - Explicit return types on Convex queries help catch type mismatches (PendingFaceInfo[])
+  - The "Write outside of transaction" warnings in convex-test are expected when testing scheduled jobs
+---
+
+## 2026-01-26 01:17 - US-060
+- What was implemented:
+  - Batch face detection for albums - scan all photos without face records at once
+  - batchFaceDetectionJobs table for tracking batch scan progress
+  - getPhotosNeedingFaceDetection query to find photos without face records
+  - startBatchFaceDetection mutation to kick off batch processing
+  - getBatchFaceDetectionProgress query for real-time progress UI
+  - cancelBatchFaceDetection mutation to stop mid-scan
+  - processNextBatch Node.js action for batch processing with rate limiting
+  - BatchFaceDetectionButton UI component with progress bar and cancel
+  - Face tag limit warnings when approaching plan limits
+  - Integrated into album settings modal (owner only)
+- Files changed:
+  - convex/schema.ts (added batchFaceDetectionJobs table)
+  - convex/batchFaceDetection.ts (queries and mutations)
+  - convex/batchFaceDetectionAction.ts (Node.js action for batch processing)
+  - convex/batchFaceDetection.test.ts (14 backend tests)
+  - src/components/BatchFaceDetectionButton.tsx (UI component)
+  - src/components/BatchFaceDetectionButton.test.tsx (7 UI tests)
+  - src/pages/AlbumDetailPage.tsx (integrated button in settings modal)
+- **Tests added:** 21 new tests (14 backend + 7 frontend)
+- **Learnings for future iterations:**
+  - Grammar matters: "1 photo needs" vs "N photos need" - TDD catches UI text issues
+  - convex-test "Write outside of transaction" errors are expected when testing scheduled actions
+  - Use `type` import for dataModel imports in test files to fix Vite resolution issues
+  - Batch processing: 5 photos per batch with 2s delays respects AWS Rekognition rate limits
+  - Job persistence via database allows progress to survive page refresh
+---

@@ -1,0 +1,40 @@
+# Ralph Progress Log
+Started: Sat Jan 24 21:37:11 EST 2026
+---
+
+## Codebase Patterns
+- Use Tailwind CSS utility classes for styling (configured in tailwind.config.js)
+- Environment variables prefixed with VITE_ are exposed to client-side code
+- Convex functions go in the convex/ directory
+- ABOUTME comments at the start of each file explain its purpose
+- Tailwind v4 is installed but using v3-style config (tailwind.config.js + postcss.config.js)
+- Run `npm run check` before committing (typecheck + tests)
+- Tests: `convex/*.test.ts` for backend, `src/**/*.test.tsx` for components
+- Use convex-test for Convex function tests, @testing-library/react for UI
+
+---
+
+## 2026-01-24 21:38 - US-001
+- What was implemented:
+  - Created Vite + React + TypeScript project scaffold
+  - Configured Tailwind CSS with tailwind.config.js and postcss.config.js
+  - Initialized Convex directory structure with placeholder schema
+  - Installed UploadThing dependencies (uploadthing, @uploadthing/react)
+  - Created .env.example documenting required environment variables
+  - Added ConvexProvider wrapper in main.tsx
+- Files changed:
+  - package.json (project config, dependencies, scripts)
+  - tailwind.config.js (Tailwind configuration)
+  - postcss.config.js (PostCSS with Tailwind/autoprefixer)
+  - src/main.tsx (React entry with Convex provider)
+  - src/App.tsx (Basic app component with Tailwind styling)
+  - src/index.css (Global CSS with Tailwind directives)
+  - convex/schema.ts (Empty Convex schema placeholder)
+  - convex/_generated/api.d.ts (Type placeholder for Convex API)
+  - .env.example (Environment variable documentation)
+  - index.html (Updated title to PhotoSpot)
+- **Learnings for future iterations:**
+  - Tailwind v4 uses different init commands - `npx tailwindcss init` may not work, create config files manually
+  - VITE_CONVEX_URL env var is used for the Convex client connection
+  - UploadThing requires both `uploadthing` and `@uploadthing/react` packages
+---

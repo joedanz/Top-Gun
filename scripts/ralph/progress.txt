@@ -418,3 +418,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - TheaterSelectScene uses data attributes (`data-theater-id`, `data-mission-id`, `data-action`) for testable DOM queries
   - After debrief "Next Mission" now returns to theater select (not just next mission) for proper campaign navigation
 ---
+
+## 2026-02-01 - US-028
+- What was implemented: 4 new Pacific theater mission JSON files (pacific-02 through pacific-05), completing the 5-mission Pacific campaign
+- Files changed: public/missions/pacific-02.json, public/missions/pacific-03.json, public/missions/pacific-04.json, public/missions/pacific-05.json, src/PacificMissions.test.ts
+- **Tests added:** 10 new tests in src/PacificMissions.test.ts, total now 367
+- **Learnings for future iterations:**
+  - Mission JSON files can be tested by importing them directly via Vite's resolveJsonModule (no fs/path needed)
+  - Progressive difficulty: aiDifficulty 1→1→2→2→3 across 5 missions feels right
+  - Mix objective types: destroy_enemies (count), survive_time, destroy_all keeps missions varied
+  - Boss missions should have a named enemy with distinct color and diamond formation for dramatic feel
+  - Same test pattern (import JSON, validate structure/progression) can be reused for other theater test files
+---

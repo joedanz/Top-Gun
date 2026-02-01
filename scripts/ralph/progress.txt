@@ -396,6 +396,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Game.samMissiles array accumulates SAM-fired missiles; passed to countermeasureSystem for flare decoy
 ---
 
+## 2026-02-01 - US-027
+- What was implemented: Additional test coverage validating save system acceptance criteria — auto-load on construction, theater unlock persistence across sessions, score persistence, corrupt data recovery, null field handling, empty string handling, versioned key isolation
+- Files changed: src/SaveManager.test.ts, src/ProgressionManager.test.ts
+- **Tests added:** 7 new tests (3 SaveManager + 4 ProgressionManager), total now 357
+- **Learnings for future iterations:**
+  - Save system was already fully implemented in US-019 (SaveManager + ProgressionManager) — US-027 was primarily about validation
+  - Theater unlock state is derived from completed missions rather than stored separately — avoids redundant data
+  - `null` values in parsed JSON fields need explicit fallback via `??` operator (already handled in SaveManager.load)
+  - Empty string in localStorage triggers JSON.parse error, which falls through to the catch block returning defaults
+---
+
 ## 2026-02-01 - US-026
 - What was implemented: TheaterSelectScene (HTML/CSS overlay showing 4 theaters with unlock states, expandable mission lists, completion progress), MissionManifest (static campaign data), ProgressionManager theater unlock/progress methods, main.ts flow updated to menu → theater select → briefing
 - Files changed: src/TheaterSelectScene.ts, src/TheaterSelectScene.test.ts, src/MissionManifest.ts, src/ProgressionManager.ts, src/ProgressionManager.test.ts, src/main.ts

@@ -1,0 +1,31 @@
+{
+  "name": "topgun",
+  "version": "1.0.0",
+  "description": "3D arcade flight combat game built with Babylon.js and TypeScript",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit && vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joedanz/Top-Gun.git"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@babylonjs/core": "^8.49.6",
+    "@babylonjs/gui": "^8.49.6"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@vitest/browser": "^4.0.18",
+    "jsdom": "^27.4.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

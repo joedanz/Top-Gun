@@ -79,6 +79,44 @@ describe("ObjectiveManager", () => {
     });
   });
 
+  describe("destroy_ground_targets objective", () => {
+    beforeEach(() => {
+      const objectives: ObjectiveData[] = [
+        { type: "destroy_ground_targets", description: "Destroy 2 ground targets", count: 2 },
+      ];
+      manager = new ObjectiveManager(objectives, 0, 3);
+    });
+
+    it("starts incomplete", () => {
+      expect(manager.allComplete()).toBe(false);
+    });
+
+    it("tracks ground kills and completes when count reached", () => {
+      manager.recordGroundKill();
+      expect(manager.allComplete()).toBe(false);
+      manager.recordGroundKill();
+      expect(manager.allComplete()).toBe(true);
+    });
+
+    it("reports ground kill progress", () => {
+      manager.recordGroundKill();
+      const statuses = manager.getStatuses();
+      expect(statuses[0].progress).toBe("1/2");
+    });
+
+    it("uses total ground targets as count when no explicit count given", () => {
+      const objectives: ObjectiveData[] = [
+        { type: "destroy_ground_targets", description: "Destroy all ground targets" },
+      ];
+      const mgr = new ObjectiveManager(objectives, 0, 3);
+      mgr.recordGroundKill();
+      mgr.recordGroundKill();
+      expect(mgr.allComplete()).toBe(false);
+      mgr.recordGroundKill();
+      expect(mgr.allComplete()).toBe(true);
+    });
+  });
+
   describe("multiple objectives", () => {
     it("requires all objectives to be complete", () => {
       const objectives: ObjectiveData[] = [

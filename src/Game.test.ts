@@ -257,4 +257,24 @@ describe("Game", () => {
     expect(typeof game.dispose).toBe("function");
     game.dispose();
   });
+
+  it("creates ground targets from mission data", () => {
+    const missionWithGt: MissionData = {
+      ...sampleMission,
+      groundTargets: [
+        { type: "sam", position: { x: 50, y: 0, z: 100 } },
+        { type: "bunker", position: { x: -50, y: 0, z: 200 } },
+      ],
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, missionWithGt, vi.fn());
+    expect(game.groundTargets).toHaveLength(2);
+    expect(game.groundTargets[0].type).toBe("sam");
+    expect(game.groundTargets[1].type).toBe("bunker");
+  });
+
+  it("initializes empty ground targets when mission has none", () => {
+    const game = createGame();
+    expect(game.groundTargets).toHaveLength(0);
+  });
 });

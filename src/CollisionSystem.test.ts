@@ -43,6 +43,7 @@ vi.mock("@babylonjs/core", () => {
 
 import { CollisionSystem } from "./CollisionSystem";
 import type { Aircraft } from "./Aircraft";
+import type { GroundTarget } from "./GroundTarget";
 import type { Projectile } from "./Projectile";
 import type { WeaponSystem } from "./WeaponSystem";
 
@@ -225,5 +226,63 @@ describe("CollisionSystem", () => {
     system.update([aircraft], [ws], []);
 
     expect(aircraft.health).toBe(100);
+  });
+
+  describe("ground target collisions", () => {
+    function makeGroundTarget(x: number, y: number, z: number, health = 80): GroundTarget {
+      return {
+        mesh: { position: { x, y, z }, dispose: vi.fn() },
+        health,
+        alive: true,
+        type: "sam",
+      } as unknown as GroundTarget;
+    }
+
+    it("damages ground target when projectile hits", () => {
+      const gt = makeGroundTarget(10, 0, 10);
+      const projectile = makeProjectile(10, 0, 10);
+      const ws = makeWeaponSystem([projectile]);
+
+      system.checkGroundTargets([gt], [ws], []);
+
+      expect(gt.health).toBeLessThan(80);
+      expect(projectile.alive).toBe(false);
+    });
+
+    it("destroys ground target at 0 health and returns its index", () => {
+      const gt = makeGroundTarget(10, 0, 10, 5);
+      const projectile = makeProjectile(10, 0, 10);
+      const ws = makeWeaponSystem([projectile]);
+
+      const destroyed = system.checkGroundTargets([gt], [ws], []);
+
+      expect(gt.alive).toBe(false);
+      expect(destroyed).toContain(0);
+    });
+
+    it("damages ground target with hittables (bombs/rockets)", () => {
+      const gt = makeGroundTarget(10, 0, 10);
+      const hittable = {
+        mesh: { position: { x: 10, y: 0, z: 10 }, dispose: vi.fn() },
+        alive: true,
+        damage: 50,
+      };
+
+      system.checkGroundTargets([gt], [], [hittable]);
+
+      expect(gt.health).toBe(30);
+      expect(hittable.alive).toBe(false);
+    });
+
+    it("skips dead ground targets", () => {
+      const gt = makeGroundTarget(10, 0, 10);
+      gt.alive = false;
+      const projectile = makeProjectile(10, 0, 10);
+      const ws = makeWeaponSystem([projectile]);
+
+      system.checkGroundTargets([gt], [ws], []);
+
+      expect(projectile.alive).toBe(true);
+    });
   });
 });

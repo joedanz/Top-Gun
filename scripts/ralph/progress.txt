@@ -124,6 +124,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `carrier_landing` objective type in ObjectiveManager — records via `recordCarrierLanding()`
 - Glideslope guidance: ideal altitude = deckY + tan(3.5°) * distance; error shows on HUD as ◆/▲/▼
 - Approach detection: altitude < 40, speed < 80, distance < 250 from carrier
+- Terrain and Skybox accept optional `theater?: Theater` param for per-theater color palettes
+- SweepRadar is polymorphic with Radar — Game.ts uses `instanceof SweepRadar` to call correct update signature
+- `THEATER_AIRCRAFT_UNLOCKS` in ProgressionManager maps theater completion to aircraft unlock (arctic → x-02)
 - Trap tolerance: speed ≤ 80, pitch deviation ≤ 0.35 rad — otherwise bolter or crash
 
 ---
@@ -601,4 +604,18 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Crash detection: must be in Approaching state AND touching deck — speed > 100 + pitch > 0.3 rad from level
   - Bolter: aircraft passes z > carrier.z + 70 while in Approaching state without trapping
   - `startOnDeck` field in MissionData positions player on carrier deck and sets speed to 0
+---
+
+## 2026-02-01 - US-040
+- What was implemented: Arctic theater with 5 missions (arctic-01 through arctic-05), theater-specific terrain/skybox palettes, X-02 Wyvern futuristic aircraft, SweepRadar with rotating sweep line and contact fading, Arctic aircraft unlock in ProgressionManager, drone swarm formations in missions
+- Files changed: src/Terrain.ts, src/Skybox.ts, src/SweepRadar.ts, src/Game.ts, src/ProgressionManager.ts, public/data/aircraft.json, public/missions/arctic-01.json through arctic-04.json, public/models/x-02.glb, src/ArcticMissions.test.ts, src/ArcticPalette.test.ts, src/FuturisticAircraft.test.ts, src/SweepRadar.test.ts
+- **Tests added:** 28 new tests (12 ArcticMissions + 4 ArcticPalette + 5 FuturisticAircraft + 7 SweepRadar), total now 585
+- **Learnings for future iterations:**
+  - Terrain and Skybox accept optional `theater` param — lookup table maps theater to color palette
+  - SweepRadar uses angular sweep beam (SWEEP_WIDTH = PI/6) that reveals contacts when passing over their bearing
+  - Contact fade uses linear alpha decay (FADE_RATE = 0.2/s) — contacts slowly disappear between sweep passes
+  - `instanceof SweepRadar` check in Game.ts render loop handles polymorphic radar update (SweepRadar needs dt)
+  - THEATER_AIRCRAFT_UNLOCKS extended: arctic → x-02 (futuristic aircraft unlocked by completing Arctic theater)
+  - X-02 Wyvern has highest maxSpeed (300) and most radar missiles (6) — clearly superior endgame aircraft
+  - Arctic missions use coordinated drone swarms via multiple diamond/wing formations (6-9 enemies per mission)
 ---

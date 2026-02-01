@@ -77,6 +77,11 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - CountermeasureSystem alternates flare/chaff on each F key press; falls back if one type is depleted
 - Flare decoy uses probabilistic check (`Math.random() < threshold`) — mock Math.random for deterministic tests
 - `deployCountermeasure` field added to FlightInput — F key in InputManager
+- GroundTarget uses CreateBox mesh; SAM type fires Missile via `tryFire(scene, targetPos, dt)` with cooldown
+- `CollisionSystem.checkGroundTargets()` returns destroyed indices — caller records ground kills via ObjectiveManager
+- `ObjectiveManager(objectives, totalEnemies, totalGroundTargets)` — 3rd param optional for backward compat
+- MissionData `groundTargets?: GroundTargetSpawn[]` — optional array of `{type, position}` objects
+- `destroy_ground_targets` objective type uses `recordGroundKill()` and counts against `totalGroundTargets`
 
 ---
 
@@ -356,4 +361,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Flare decoy is probabilistic (70% for heat-seekers, 60% for radar) — use `vi.spyOn(Math, 'random')` for deterministic tests
   - Edge-triggered deploy + cooldown (0.3s) prevents spamming countermeasures
   - HUD.update() takes optional CountermeasureSystem param — backward compatible with existing callers
+---
+
+## 2026-02-01 - US-024
+- What was implemented: GroundTarget entity (SAM, bunker, vehicle, radar with type-specific health/colors), SAM missile firing with cooldown and limited ammo, CollisionSystem.checkGroundTargets() for weapon-vs-ground-target collisions, ObjectiveManager destroy_ground_targets objective type, MissionData groundTargets schema, MissionLoader ground target spawning, Game integration with SAM missiles and ground kill tracking, middleeast-01 air-to-ground mission JSON
+- Files changed: src/GroundTarget.ts, src/GroundTarget.test.ts, src/CollisionSystem.ts, src/CollisionSystem.test.ts, src/Game.ts, src/Game.test.ts, src/MissionData.ts, src/MissionLoader.ts, src/MissionLoader.test.ts, src/ObjectiveManager.ts, src/ObjectiveManager.test.ts, public/missions/middleeast-01.json
+- **Tests added:** 23 new tests (11 GroundTarget + 4 CollisionSystem + 4 ObjectiveManager + 2 MissionLoader + 2 Game), total now 317
+- **Learnings for future iterations:**
+  - GroundTarget uses MeshBuilder.CreateBox (not CreateCylinder) — mock must include CreateBox
+  - SAM tryFire() returns Missile[] — caller manages the missile array and updates them each frame
+  - CollisionSystem.checkGroundTargets() returns destroyed indices for ObjectiveManager.recordGroundKill()
+  - Refactored spawnExplosion → spawnExplosionAt(position) to reuse for ground target destruction
+  - ObjectiveManager constructor takes optional 3rd param totalGroundTargets — backward compatible
+  - Game.samMissiles array accumulates SAM-fired missiles; passed to countermeasureSystem for flare decoy
 ---

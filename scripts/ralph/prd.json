@@ -98,7 +98,7 @@
       ],
       "epic": "Phase 2: Basic Combat",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

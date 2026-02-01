@@ -17,6 +17,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Use `vi.hoisted()` for mock functions referenced inside `vi.mock()` factories (hoisting issue)
 - Skybox uses `infiniteDistance = true` so it always renders behind everything
 - Terrain at 4000x4000 units is large enough for extended flight without reaching edges
+- FlightInput interface now includes `fire: boolean` — all mock inputs must include it
+- Projectile direction uses same math as FlightSystem: `sin(rotY)` for X, `cos(rotY)` for Z
 
 ---
 
@@ -79,4 +81,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `StandardMaterial.disableLighting = true` + `emissiveColor` gives a flat unlit sky color
   - 4000x4000 terrain with 32 subdivisions provides good coverage without perf issues
   - `(mock.calls[0] as unknown[])[1]` cast needed for TypeScript when accessing mock call args
+---
+
+## 2026-02-01 - US-006
+- What was implemented: Projectile entity (tracer mesh, forward movement, lifetime expiry), WeaponSystem (spawns projectiles from aircraft nose, rate-of-fire cooldown), fire key (Space) added to InputManager/FlightInput
+- Files changed: src/Projectile.ts, src/Projectile.test.ts, src/WeaponSystem.ts, src/WeaponSystem.test.ts, src/InputManager.ts, src/InputManager.test.ts, src/Game.ts, src/Game.test.ts, src/Aircraft.test.ts, src/CameraSystem.test.ts, src/FlightSystem.test.ts
+- **Tests added:** 13 new tests (5 Projectile + 6 WeaponSystem + 1 InputManager fire + 1 Game), total now 65
+- **Learnings for future iterations:**
+  - Adding a field to FlightInput requires updating ALL mock input objects across test files
+  - Projectile uses same direction math as FlightSystem for consistency
+  - WeaponSystem cooldown of 0.15s gives a good rate of fire (~6.7 rounds/sec)
+  - `as never` cast works for passing partial mock objects to typed system methods in tests
 ---

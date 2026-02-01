@@ -131,4 +131,10 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.flightSystem).toBeDefined();
   });
+
+  it("creates a CameraSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.cameraSystem).toBeDefined();
+  });
 });

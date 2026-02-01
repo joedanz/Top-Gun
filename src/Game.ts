@@ -5,6 +5,7 @@ import { Engine, Scene, FreeCamera, HemisphericLight, Vector3, MeshBuilder, Colo
 import { InputManager } from "./InputManager";
 import { Aircraft } from "./Aircraft";
 import { FlightSystem } from "./FlightSystem";
+import { CameraSystem } from "./CameraSystem";
 import { DebugPanel } from "./DebugPanel";
 
 export class Game {
@@ -13,6 +14,7 @@ export class Game {
   aircraft: Aircraft;
   input: InputManager;
   flightSystem: FlightSystem;
+  cameraSystem: CameraSystem;
   debugPanel: DebugPanel;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -22,7 +24,6 @@ export class Game {
 
     const camera = new FreeCamera("camera", new Vector3(0, 15, -20), this.scene);
     camera.setTarget(Vector3.Zero());
-    camera.attachControl(canvas, true);
 
     const light = new HemisphericLight("light", new Vector3(0, 1, 0), this.scene);
     light.intensity = 0.7;
@@ -32,11 +33,13 @@ export class Game {
     this.input = new InputManager();
     this.aircraft = new Aircraft(this.scene, this.input);
     this.flightSystem = new FlightSystem();
+    this.cameraSystem = new CameraSystem(camera);
     this.debugPanel = new DebugPanel(this.flightSystem);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
+      this.cameraSystem.update(this.aircraft, dt);
       this.scene.render();
     });
 

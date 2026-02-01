@@ -1,0 +1,58 @@
+{
+  "aircraft": [
+    {
+      "id": "f-14",
+      "name": "F-14 Tomcat",
+      "flightParams": {
+        "maxSpeed": 260,
+        "acceleration": 50,
+        "deceleration": 30,
+        "turnRate": 1.6,
+        "stallThreshold": 25,
+        "stallNoseDrop": 0.8,
+        "stallSpeedRecovery": 15,
+        "altitudeFloor": 2
+      },
+      "weaponLoadout": {
+        "gunAmmo": 200,
+        "missiles": 6
+      }
+    },
+    {
+      "id": "p-51",
+      "name": "P-51 Mustang",
+      "flightParams": {
+        "maxSpeed": 140,
+        "acceleration": 25,
+        "deceleration": 20,
+        "turnRate": 2.8,
+        "stallThreshold": 15,
+        "stallNoseDrop": 0.6,
+        "stallSpeedRecovery": 12,
+        "altitudeFloor": 2
+      },
+      "weaponLoadout": {
+        "gunAmmo": 300,
+        "missiles": 0
+      }
+    },
+    {
+      "id": "fa-18",
+      "name": "F/A-18 Super Hornet",
+      "flightParams": {
+        "maxSpeed": 220,
+        "acceleration": 45,
+        "deceleration": 35,
+        "turnRate": 2.2,
+        "stallThreshold": 20,
+        "stallNoseDrop": 0.8,
+        "stallSpeedRecovery": 15,
+        "altitudeFloor": 2
+      },
+      "weaponLoadout": {
+        "gunAmmo": 250,
+        "missiles": 4
+      }
+    }
+  ]
+}

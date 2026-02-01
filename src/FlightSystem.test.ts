@@ -167,4 +167,47 @@ describe("FlightSystem", () => {
     expect(customSystem.params.maxSpeed).toBe(500);
     expect(customSystem.params.turnRate).toBe(5);
   });
+
+  it("uses per-aircraft flightParams when set on the aircraft", () => {
+    const fastParams: FlightParams = {
+      maxSpeed: 300,
+      acceleration: 60,
+      deceleration: 30,
+      turnRate: 1.5,
+      stallThreshold: 25,
+      stallNoseDrop: 0.8,
+      stallSpeedRecovery: 15,
+      altitudeFloor: 2,
+    };
+    aircraft.flightParams = fastParams;
+    input.throttle = 1;
+    system.update(aircraft, 1);
+    // Should use aircraft's maxSpeed (300), not system default (200)
+    expect(aircraft.speed).toBeLessThanOrEqual(300);
+    expect(aircraft.speed).toBeGreaterThan(0);
+  });
+
+  it("uses different params for different aircraft in same system", () => {
+    const slowInput = makeInput({ throttle: 1 });
+    const fastInput = makeInput({ throttle: 1 });
+    const slowCraft = new Aircraft(makeScene(), slowInput);
+    const fastCraft = new Aircraft(makeScene(), fastInput);
+
+    slowCraft.flightParams = {
+      maxSpeed: 100, acceleration: 20, deceleration: 20,
+      turnRate: 3.0, stallThreshold: 15, stallNoseDrop: 0.6,
+      stallSpeedRecovery: 12, altitudeFloor: 2,
+    };
+    fastCraft.flightParams = {
+      maxSpeed: 300, acceleration: 60, deceleration: 30,
+      turnRate: 1.5, stallThreshold: 25, stallNoseDrop: 0.8,
+      stallSpeedRecovery: 15, altitudeFloor: 2,
+    };
+
+    system.update(slowCraft, 1);
+    system.update(fastCraft, 1);
+
+    // Fast aircraft should have accelerated more
+    expect(fastCraft.speed).toBeGreaterThan(slowCraft.speed);
+  });
 });

@@ -86,6 +86,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - SettingsScene persists to separate `topgun_settings_v1` localStorage key (not inside SaveManager)
 - `loadSettings(storage?)` / `saveSettings(settings, storage?)` accept injectable storage for testability
 - DebriefScene "Return to Menu" now goes to showMenu() instead of looping back to briefing
+- MissionManifest (`src/MissionManifest.ts`) holds static mission metadata (id, title, jsonPath) per theater — use for UI without fetching JSONs
+- CAMPAIGN_THEATERS array in MissionManifest and THEATER_MISSIONS in ProgressionManager must stay in sync
+- TheaterSelectScene takes `TheaterInfo[]` — build via `buildTheaterInfos()` in main.ts using ProgressionManager
+- Scene flow: menu → theater select → briefing → hangar → fly → debrief → theater select (or menu)
 
 ---
 
@@ -390,4 +394,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Menu → Settings → Back → Menu flow works cleanly with dispose/create pattern
   - DebriefScene "Return to Menu" now navigates to showMenu() for proper game flow
   - Game.samMissiles array accumulates SAM-fired missiles; passed to countermeasureSystem for flare decoy
+---
+
+## 2026-02-01 - US-026
+- What was implemented: TheaterSelectScene (HTML/CSS overlay showing 4 theaters with unlock states, expandable mission lists, completion progress), MissionManifest (static campaign data), ProgressionManager theater unlock/progress methods, main.ts flow updated to menu → theater select → briefing
+- Files changed: src/TheaterSelectScene.ts, src/TheaterSelectScene.test.ts, src/MissionManifest.ts, src/ProgressionManager.ts, src/ProgressionManager.test.ts, src/main.ts
+- **Tests added:** 15 new tests (10 TheaterSelectScene + 5 ProgressionManager), total now 350
+- **Learnings for future iterations:**
+  - MissionManifest avoids fetching every mission JSON just to populate theater/mission select — static metadata is sufficient
+  - `isTheaterUnlocked` uses chain logic: pacific/middleeast always available, europe after either is complete, arctic after europe
+  - `isTheaterComplete` checks all missions in THEATER_MISSIONS array — keep this in sync with MissionManifest
+  - TheaterSelectScene uses data attributes (`data-theater-id`, `data-mission-id`, `data-action`) for testable DOM queries
+  - After debrief "Next Mission" now returns to theater select (not just next mission) for proper campaign navigation
 ---

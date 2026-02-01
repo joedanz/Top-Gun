@@ -14,6 +14,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - ECS-like pattern: entities hold state, systems operate on entities (FlightSystem updates Aircraft)
 - `@babylonjs/gui` mocks also need class syntax for StackPanel, Slider, TextBlock (used with `new`)
 - FlightSystem.params is mutable — DebugPanel sliders write directly to it for real-time tuning
+- Use `vi.hoisted()` for mock functions referenced inside `vi.mock()` factories (hoisting issue)
+- Skybox uses `infiniteDistance = true` so it always renders behind everything
+- Terrain at 4000x4000 units is large enough for extended flight without reaching edges
 
 ---
 
@@ -63,4 +66,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Lerp smoothing factor of 0.05 gives a nice smooth follow without feeling laggy
   - Speed-dependent distance formula: `baseDistance + (speed/maxSpeed) * speedDistanceScale`
   - Mock FreeCamera needs position as MockVector3 (with x/y/z), not a plain object
+---
+
+## 2026-02-01 - US-005
+- What was implemented: Terrain class (4000x4000 textured ground plane) and Skybox class (large box with emissive gradient material, infinite distance)
+- Files changed: src/Terrain.ts, src/Terrain.test.ts, src/Skybox.ts, src/Skybox.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 8 new tests (3 Terrain + 4 Skybox + 1 Game), total now 52
+- **Learnings for future iterations:**
+  - `vi.hoisted()` is required when mock functions need to be referenced inside `vi.mock()` factory (Vitest hoists `vi.mock` calls above variable declarations)
+  - Babylon.js `infiniteDistance = true` makes skybox always render behind everything
+  - `StandardMaterial.backFaceCulling = false` needed for skybox so inside faces are visible
+  - `StandardMaterial.disableLighting = true` + `emissiveColor` gives a flat unlit sky color
+  - 4000x4000 terrain with 32 subdivisions provides good coverage without perf issues
+  - `(mock.calls[0] as unknown[])[1]` cast needed for TypeScript when accessing mock call args
 ---

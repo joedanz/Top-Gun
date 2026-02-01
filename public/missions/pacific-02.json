@@ -1,24 +1,30 @@
 {
   "id": "pacific-02",
-  "title": "Patrol Route",
-  "description": "Patrol the sector and eliminate any hostile aircraft you encounter. Intel reports scattered enemy patrols in the area.",
+  "title": "Carrier Quals",
+  "description": "Complete carrier qualification. Launch from the deck, engage a target drone, then return and land on the carrier.",
   "theater": "pacific",
   "playerStart": {
-    "position": { "x": 0, "y": 60, "z": 0 },
+    "position": { "x": 0, "y": 4.25, "z": -230 },
     "heading": 0
   },
   "enemies": [
-    { "position": { "x": 300, "y": 55, "z": 500 } },
-    { "position": { "x": -200, "y": 65, "z": 700 } },
-    { "position": { "x": 400, "y": 50, "z": 900 } },
-    { "position": { "x": -100, "y": 70, "z": 1100 } }
+    { "position": { "x": 200, "y": 50, "z": 300 } }
   ],
   "aiDifficulty": 1,
+  "carrier": {
+    "position": { "x": 0, "y": 0, "z": -200 },
+    "heading": 0
+  },
+  "startOnDeck": true,
   "objectives": [
     {
       "type": "destroy_enemies",
-      "description": "Destroy 3 enemy aircraft",
-      "count": 3
+      "description": "Destroy the target drone",
+      "count": 1
+    },
+    {
+      "type": "carrier_landing",
+      "description": "Land on the carrier"
     }
   ]
 }

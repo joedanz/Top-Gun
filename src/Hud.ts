@@ -5,6 +5,7 @@ import { AdvancedDynamicTexture, TextBlock, StackPanel, Control } from "@babylon
 import type { Aircraft } from "./Aircraft";
 import { WeaponType, type WeaponManager } from "./WeaponManager";
 import type { CountermeasureSystem } from "./CountermeasureSystem";
+import type { LandingGuidance } from "./CarrierOps";
 
 const FONT_SIZE = 16;
 const TEXT_COLOR = "#00ff88";
@@ -35,6 +36,8 @@ export class Hud {
   ammoText: TextBlock;
   healthText: TextBlock;
   cmText: TextBlock;
+  aoaText: TextBlock;
+  lineupText: TextBlock;
 
   constructor() {
     const ui = AdvancedDynamicTexture.CreateFullscreenUI("hudUI");
@@ -63,9 +66,14 @@ export class Hud {
     panel.addControl(this.ammoText);
     panel.addControl(this.healthText);
     panel.addControl(this.cmText);
+
+    this.aoaText = createLabel("");
+    this.lineupText = createLabel("");
+    panel.addControl(this.aoaText);
+    panel.addControl(this.lineupText);
   }
 
-  update(aircraft: Aircraft, weapons: WeaponManager, countermeasures?: CountermeasureSystem): void {
+  update(aircraft: Aircraft, weapons: WeaponManager, countermeasures?: CountermeasureSystem, guidance?: LandingGuidance | null): void {
     const speed = Math.round(aircraft.speed);
     const altitude = Math.round(aircraft.mesh.position.y);
 
@@ -85,6 +93,19 @@ export class Hud {
 
     if (countermeasures) {
       this.cmText.text = `FLR: ${countermeasures.flareAmmo} CHF: ${countermeasures.chaffAmmo}`;
+    }
+
+    if (guidance) {
+      const gs = guidance.glideslopeError;
+      const gsSymbol = Math.abs(gs) < 2 ? "◆" : gs > 0 ? "▼" : "▲";
+      this.aoaText.text = `GS: ${gsSymbol}`;
+
+      const lu = guidance.lineupError;
+      const luSymbol = Math.abs(lu) < 2 ? "◆" : lu > 0 ? "◄" : "►";
+      this.lineupText.text = `LU: ${luSymbol}`;
+    } else {
+      this.aoaText.text = "";
+      this.lineupText.text = "";
     }
   }
 }

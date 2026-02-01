@@ -142,4 +142,53 @@ describe("Hud", () => {
     hud.update(aircraft as never, makeWeapons(WeaponType.RadarGuided, 2) as never);
     expect(hud.weaponText.text).toContain("AIM-120");
   });
+
+  describe("landing guidance", () => {
+    it("shows glideslope indicator when guidance provided", () => {
+      const aircraft = makeAircraft();
+      hud.update(aircraft as never, makeWeapons() as never, undefined, {
+        glideslopeError: 0,
+        lineupError: 0,
+        distance: 100,
+      });
+      expect(hud.aoaText.text).toContain("◆");
+    });
+
+    it("shows down arrow when too high", () => {
+      const aircraft = makeAircraft();
+      hud.update(aircraft as never, makeWeapons() as never, undefined, {
+        glideslopeError: 5,
+        lineupError: 0,
+        distance: 100,
+      });
+      expect(hud.aoaText.text).toContain("▼");
+    });
+
+    it("shows up arrow when too low", () => {
+      const aircraft = makeAircraft();
+      hud.update(aircraft as never, makeWeapons() as never, undefined, {
+        glideslopeError: -5,
+        lineupError: 0,
+        distance: 100,
+      });
+      expect(hud.aoaText.text).toContain("▲");
+    });
+
+    it("shows lineup indicator", () => {
+      const aircraft = makeAircraft();
+      hud.update(aircraft as never, makeWeapons() as never, undefined, {
+        glideslopeError: 0,
+        lineupError: 5,
+        distance: 100,
+      });
+      expect(hud.lineupText.text).toContain("◄");
+    });
+
+    it("hides landing guidance when no guidance provided", () => {
+      const aircraft = makeAircraft();
+      hud.update(aircraft as never, makeWeapons() as never);
+      expect(hud.aoaText.text).toBe("");
+      expect(hud.lineupText.text).toBe("");
+    });
+  });
 });

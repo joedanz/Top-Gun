@@ -37,6 +37,7 @@ import { VfxSystem } from "./VfxSystem";
 import { ProjectilePool } from "./ProjectilePool";
 import { applyPerformanceConfig } from "./PerformanceConfig";
 import { Carrier } from "./Carrier";
+import { CarrierOps } from "./CarrierOps";
 
 export class Game {
   engine: Engine;
@@ -63,6 +64,7 @@ export class Game {
   countermeasureSystem: CountermeasureSystem;
   groundTargets: GroundTarget[];
   carrier: Carrier | null = null;
+  carrierOps: CarrierOps | null = null;
   bossSystem: BossSystem | null = null;
   bossHealthBar: BossHealthBar;
   audioManager: AudioManager;
@@ -156,6 +158,10 @@ export class Game {
     // Spawn carrier if mission includes one
     if (mission.carrier) {
       this.carrier = new Carrier(this.scene, mission.carrier.position, mission.carrier.heading);
+      this.carrierOps = new CarrierOps(this.carrier);
+      if (mission.startOnDeck) {
+        this.carrierOps.startOnDeck(this.aircraft);
+      }
     }
 
     this.objectiveManager = new ObjectiveManager(
@@ -194,6 +200,17 @@ export class Game {
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
+
+      // Carrier operations
+      if (this.carrierOps) {
+        this.carrierOps.update(this.aircraft, dt);
+        if (this.carrierOps.landed) {
+          this.objectiveManager.recordCarrierLanding();
+        }
+        if (this.carrierOps.crashed) {
+          this.collisionSystem.missionFailed = true;
+        }
+      }
 
       // Update all player weapons
       this.weaponManager.update(this.aircraft, this.targetingSystem.currentTarget, dt);
@@ -323,7 +340,8 @@ export class Game {
       }
 
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
-      this.hud.update(this.aircraft, this.weaponManager, this.countermeasureSystem);
+      const guidance = this.carrierOps?.getGuidance(this.aircraft) ?? null;
+      this.hud.update(this.aircraft, this.weaponManager, this.countermeasureSystem, guidance);
       this.radar.update(this.aircraft, [this.enemy], []);
 
       // Track kills and mission time

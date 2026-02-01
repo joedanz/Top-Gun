@@ -3,7 +3,7 @@
 
 export type Theater = "pacific" | "middleeast" | "europe" | "arctic";
 
-export type ObjectiveType = "destroy_enemies" | "destroy_all" | "survive_time" | "destroy_ground_targets";
+export type ObjectiveType = "destroy_enemies" | "destroy_all" | "survive_time" | "destroy_ground_targets" | "carrier_landing";
 
 export interface ObjectiveData {
   type: ObjectiveType;
@@ -55,6 +55,8 @@ export interface MissionData {
   bossHealth?: number;
   /** Carrier placement for carrier operations missions. */
   carrier?: CarrierSpawn;
+  /** When true, player starts on carrier deck (catapult takeoff). */
+  startOnDeck?: boolean;
 }
 
 export interface CarrierSpawn {

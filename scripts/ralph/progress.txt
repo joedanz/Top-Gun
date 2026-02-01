@@ -430,3 +430,14 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Boss missions should have a named enemy with distinct color and diamond formation for dramatic feel
   - Same test pattern (import JSON, validate structure/progression) can be reused for other theater test files
 ---
+
+## 2026-02-01 - US-029
+- What was implemented: 4 new Middle East theater mission JSON files (middleeast-02 through middleeast-05), fixed middleeast-01 title to match MissionManifest
+- Files changed: public/missions/middleeast-01.json, public/missions/middleeast-02.json, public/missions/middleeast-03.json, public/missions/middleeast-04.json, public/missions/middleeast-05.json, src/MiddleEastMissions.test.ts
+- **Tests added:** 10 new tests in src/MiddleEastMissions.test.ts, total now 377
+- **Learnings for future iterations:**
+  - MissionManifest titles must match actual mission JSON titles — middleeast-01 was "SAM Suppression" but manifest said "Desert Strike"
+  - Middle East theater focuses on ground attack: majority of missions use destroy_ground_targets objective
+  - Combined objectives (air + ground in same mission) make boss encounters more challenging
+  - Convoy missions use vehicle ground targets in a line formation for visual storytelling
+---

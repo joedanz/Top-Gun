@@ -111,6 +111,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `Sound` constructor: `new Sound(name, url, scene, readyCallback, options)` — readyCallback can be null
 - Track firing events via count comparison (`prevShotsFired` vs current) rather than callback hooks
 - MockSound in Game.test.ts needs `setPlaybackRate` method for AudioManager integration
+- VfxSystem uses `Map<entity, ParticleSystem>` to track active effects — prevents duplicates and enables per-entity cleanup
+- Transient VFX (muzzle flash): use `targetStopDuration` + `disposeOnStop = true` for auto-cleanup
+- Continuous VFX (smoke, exhaust): set `emitter = entity.mesh` so particles follow the entity automatically
 
 ---
 
@@ -535,4 +538,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Combat intensity formula: `1 - (dist - 300) / 300` clamped to [0,1] — linear ramp from 300 (full combat) to 600 (peaceful)
   - MusicManager plays both tracks simultaneously at all times — crossfade is just volume adjustment, avoiding load latency
   - Babylon Sound constructor with placeholder MP3 doesn't error — graceful degradation for missing audio
+---
+
+## 2026-02-01 - US-036
+- What was implemented: VfxSystem with smoke trails on damaged aircraft (emit rate scales with damage), muzzle flash burst on gun fire (auto-disposing particles), missile exhaust trails (attached to missile mesh, cleaned up on death), Game.ts integration in render loop
+- Files changed: src/VfxSystem.ts, src/VfxSystem.test.ts, src/Game.ts
+- **Tests added:** 15 new tests (7 smoke trail + 4 muzzle flash + 4 missile exhaust), total now 507
+- **Learnings for future iterations:**
+  - `Map<target, ParticleSystem>` pattern prevents duplicate effects per entity and enables cleanup
+  - Smoke emit rate scales linearly with damage ratio: `10 + damageRatio * 40` for visual severity
+  - Muzzle flash uses `targetStopDuration=0.08` + `disposeOnStop=true` for zero-maintenance transient burst
+  - VFX muzzle flash reuses the same `prevShotsFired` counter as audio — avoid declaring duplicate `const` in same scope
+  - Missile exhaust uses `emitter = missile.mesh` so particles follow the missile without manual position updates
+  - `vi.hoisted()` is required for mock classes used inside `vi.mock()` factory — consistent pattern across the codebase
 ---

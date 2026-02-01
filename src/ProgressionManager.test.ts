@@ -242,5 +242,48 @@ describe("ProgressionManager", () => {
         "fa-18",
       );
     });
+
+    it("loads automatically on construction without manual load call", () => {
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 2, timeSeconds: 30 };
+      pm.completeMission("pacific-01", result);
+
+      // New instance should auto-load — no explicit load() call needed
+      const pm2 = new ProgressionManager();
+      expect(pm2.isMissionCompleted("pacific-01")).toBe(true);
+      expect(pm2.getMissionScore("pacific-01")).toBeGreaterThan(0);
+    });
+
+    it("persists theater unlock state across sessions via completed missions", () => {
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
+      // Complete all pacific missions
+      for (let i = 1; i <= 5; i++) {
+        pm.completeMission(`pacific-${String(i).padStart(2, "0")}`, result);
+      }
+      expect(pm.isTheaterUnlocked("europe")).toBe(true);
+
+      // New instance should still show europe as unlocked
+      const pm2 = new ProgressionManager();
+      expect(pm2.isTheaterUnlocked("europe")).toBe(true);
+    });
+
+    it("persists scores across sessions", () => {
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 5, timeSeconds: 20 };
+      pm.completeMission("pacific-01", result);
+      const score = pm.getMissionScore("pacific-01");
+
+      const pm2 = new ProgressionManager();
+      expect(pm2.getMissionScore("pacific-01")).toBe(score);
+    });
+
+    it("handles corrupt save data by starting fresh", () => {
+      // Manually corrupt the storage
+      const storage = createMockStorage();
+      storage.setItem("topgun_save_v1", "corrupted{{{");
+      SaveManager.setStorage(storage);
+
+      const fresh = new ProgressionManager();
+      expect(fresh.isMissionCompleted("pacific-01")).toBe(false);
+      expect(fresh.getLockedAircraftIds(["f-14", "fa-18"])).toContain("fa-18");
+    });
   });
 });

@@ -60,6 +60,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - FormationSystem manages wing/diamond formations; `FormationSpawn` in MissionData maps enemy indices to formation roles
 - Formation engagement uses hysteresis: engage at 500 units, disengage at 800 units to prevent flapping
 - Wingman offsets are rotated by leader heading for world-space positioning
+- AISystem constructor takes optional `difficulty` (1-3); maneuver repertoire scales with difficulty
+- `MissionData.aiDifficulty` configures AI difficulty per mission (defaults to 1)
 
 ---
 
@@ -302,4 +304,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Wingman offset rotation: rotate local offsets by leader heading using cos/sin for world-space positioning
   - FormationSystem.updateAll() runs before AISystem — when disengaged, formation overrides wingman input; when engaged, AISystem takes over
   - `FormationSpawn.members` indices reference the `enemies` array in MissionData — first index is leader
+---
+
+## 2026-02-01 - US-021
+- What was implemented: AISystem evasive maneuvers (break turn, barrel roll, split-S) with difficulty scaling (1-3), maneuver duration/continuation across frames, low-altitude split-S avoidance, `aiDifficulty` field in MissionData, Game passes difficulty to AISystem
+- Files changed: src/AISystem.ts, src/AISystem.test.ts, src/MissionData.ts, src/Game.ts, public/missions/pacific-01.json
+- **Tests added:** 8 new tests (7 evasive maneuvers + 1 difficulty config) in src/AISystem.test.ts, total now 244
+- **Learnings for future iterations:**
+  - Maneuver state machine: `activeManeuver` + `maneuverTimer` keeps the AI committed to a maneuver for its duration instead of re-rolling every frame
+  - Split-S must be altitude-gated (MIN_SPLIT_S_ALTITUDE = 40) to prevent AI from diving into the ground
+  - MANEUVERS_BY_DIFFICULTY lookup table cleanly maps difficulty levels to available maneuver repertoires
+  - `maneuverDirection` (+1/-1) randomized at maneuver start gives variety without frame-to-frame randomness
+  - Break turn uses yaw (not roll) for a hard heading change — distinct from barrel roll which uses roll
 ---

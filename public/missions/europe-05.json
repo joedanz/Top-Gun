@@ -39,6 +39,9 @@
     { "type": "radar", "position": { "x": 0, "y": 0, "z": 350 } }
   ],
   "aiDifficulty": 3,
+  "bossIndex": 0,
+  "bossName": "Iron Eagle",
+  "bossHealth": 400,
   "objectives": [
     {
       "type": "destroy_all",

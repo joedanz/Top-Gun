@@ -277,4 +277,28 @@ describe("Game", () => {
     const game = createGame();
     expect(game.groundTargets).toHaveLength(0);
   });
+
+  it("creates BossHealthBar", () => {
+    const game = createGame();
+    expect(game.bossHealthBar).toBeDefined();
+  });
+
+  it("initializes BossSystem for boss missions", () => {
+    const bossMission: MissionData = {
+      ...sampleMission,
+      bossIndex: 0,
+      bossName: "Typhoon",
+      bossHealth: 300,
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, bossMission, vi.fn());
+    expect(game.bossSystem).not.toBeNull();
+    expect(game.bossHealthBar.isVisible()).toBe(true);
+    expect(game.bossHealthBar.getBossName()).toBe("Typhoon");
+  });
+
+  it("does not create BossSystem for non-boss missions", () => {
+    const game = createGame();
+    expect(game.bossSystem).toBeNull();
+  });
 });

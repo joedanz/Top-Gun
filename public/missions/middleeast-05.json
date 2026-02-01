@@ -37,6 +37,9 @@
     { "type": "vehicle", "position": { "x": -150, "y": 0, "z": 400 } }
   ],
   "aiDifficulty": 3,
+  "bossIndex": 0,
+  "bossName": "Scorpion",
+  "bossHealth": 350,
   "objectives": [
     {
       "type": "destroy_all",

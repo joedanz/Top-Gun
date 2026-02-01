@@ -8,6 +8,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Use `await import("@babylonjs/core")` (not `require`) to access mocked modules in test assertions
 - Port 5173+ may be occupied by other Vite apps; check output for actual port assigned
 - Game class pattern: constructor takes canvas, initializes Engine → Scene → Camera → Light → meshes
+- FlightInput interface decouples input from entities — Aircraft reads from FlightInput, not keyboard
+- Mock Scene constructor needs cast: `new (Scene as unknown as new () => Scene)()` for typecheck
+- Default GitHub PR base may not be `master` — always use `--base master` with `gh pr create`
 
 ---
 
@@ -20,4 +23,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Vitest 4 requires class-based mocks for anything used with `new`
   - `Vector3.Zero()` is a static method — mocks need `Object.assign` or class statics
   - jsdom environment works for unit testing game logic but can't test WebGL rendering
+---
+
+## 2026-02-01 - US-002
+- What was implemented: InputManager (keyboard → semantic axes) and Aircraft entity (cylinder mesh driven by FlightInput)
+- Files changed: src/InputManager.ts, src/InputManager.test.ts, src/Aircraft.ts, src/Aircraft.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 18 new tests (12 InputManager + 6 Aircraft), Game tests updated to 5 (total 23)
+- **Learnings for future iterations:**
+  - FlightInput interface allows swapping input sources (keyboard, AI, network) without changing Aircraft
+  - MeshBuilder.CreateCylinder with diameterTop=0 makes a cone shape (good aircraft placeholder)
+  - GitHub default branch may differ from master — always specify `--base master` in `gh pr create`
+  - Aircraft rotation.x = PI/2 points the cone forward (Babylon cylinders are Y-up by default)
 ---

@@ -17,12 +17,14 @@ vi.mock("@babylonjs/gui", () => {
   class MockSlider { minimum = 0; maximum = 100; value = 0; height = ""; width = ""; color = ""; background = ""; onValueChangedObservable = { add: vi.fn() }; }
   class MockTextBlock { text = ""; height = ""; color = ""; fontSize = 0; textHorizontalAlignment = 0; }
   class MockControl { static HORIZONTAL_ALIGNMENT_LEFT = 0; static VERTICAL_ALIGNMENT_TOP = 0; }
+  class MockRectangle { width = ""; height = ""; color = ""; background = ""; alpha = 0; thickness = 0; isPointerBlocker = false; isHitTestVisible = false; }
   return {
     AdvancedDynamicTexture: { CreateFullscreenUI: vi.fn(() => ({ addControl: vi.fn(), dispose: vi.fn() })) },
     StackPanel: MockStackPanel,
     Slider: MockSlider,
     TextBlock: MockTextBlock,
     Control: MockControl,
+    Rectangle: MockRectangle,
   };
 });
 
@@ -199,5 +201,17 @@ describe("Game", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
     expect(game.collisionSystem).toBeDefined();
+  });
+
+  it("creates a ScreenShake system", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.screenShake).toBeDefined();
+  });
+
+  it("creates a HitFlash system", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.hitFlash).toBeDefined();
   });
 });

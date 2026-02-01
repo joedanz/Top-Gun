@@ -16,6 +16,7 @@ interface OwnerPair {
 
 export class CollisionSystem {
   missionFailed = false;
+  playerHitThisFrame = false;
   private player: Aircraft | null = null;
 
   constructor(private scene: Scene) {}
@@ -29,6 +30,7 @@ export class CollisionSystem {
     weaponSystems: WeaponSystem[],
     owners: OwnerPair[],
   ): void {
+    this.playerHitThisFrame = false;
     for (const ws of weaponSystems) {
       // Find which aircraft owns this weapon system
       const owner = owners.find((o) => o.weaponSystem === ws);
@@ -51,6 +53,10 @@ export class CollisionSystem {
             target.health -= BULLET_DAMAGE;
             projectile.alive = false;
             projectile.mesh.dispose();
+
+            if (target === this.player) {
+              this.playerHitThisFrame = true;
+            }
 
             if (target.health <= 0) {
               this.destroyAircraft(target);

@@ -13,6 +13,8 @@ import { WeaponSystem } from "./WeaponSystem";
 import { AIInput } from "./AIInput";
 import { AISystem } from "./AISystem";
 import { CollisionSystem } from "./CollisionSystem";
+import { ScreenShake } from "./ScreenShake";
+import { HitFlash } from "./HitFlash";
 
 export class Game {
   engine: Engine;
@@ -29,6 +31,8 @@ export class Game {
   enemyWeaponSystem: WeaponSystem;
   aiSystem: AISystem;
   collisionSystem: CollisionSystem;
+  screenShake: ScreenShake;
+  hitFlash: HitFlash;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -61,6 +65,8 @@ export class Game {
     this.aiSystem = new AISystem();
     this.collisionSystem = new CollisionSystem(this.scene);
     this.collisionSystem.setPlayer(this.aircraft);
+    this.screenShake = new ScreenShake();
+    this.hitFlash = new HitFlash(this.scene);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
@@ -92,7 +98,22 @@ export class Game {
       this.collisionSystem.checkGroundCollision(this.aircraft);
       this.collisionSystem.checkGroundCollision(this.enemy);
 
+      // Hit feedback
+      if (this.collisionSystem.playerHitThisFrame) {
+        this.screenShake.trigger(0.5);
+        this.hitFlash.trigger(0.8);
+      }
+      this.screenShake.update(dt);
+      this.hitFlash.update(dt);
+
       this.cameraSystem.update(this.aircraft, dt);
+
+      // Apply screen shake offset to camera
+      const shakeOffset = this.screenShake.getOffset();
+      camera.position.x += shakeOffset.x;
+      camera.position.y += shakeOffset.y;
+      camera.position.z += shakeOffset.z;
+
       this.scene.render();
     });
 

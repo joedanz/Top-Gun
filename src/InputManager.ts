@@ -6,6 +6,7 @@ export interface FlightInput {
   readonly roll: number;
   readonly yaw: number;
   readonly throttle: number;
+  readonly fire: boolean;
 }
 
 export class InputManager implements FlightInput {
@@ -35,6 +36,10 @@ export class InputManager implements FlightInput {
 
   get throttle(): number {
     return this.axis("Shift", "Control");
+  }
+
+  get fire(): boolean {
+    return this.keys.has(" ");
   }
 
   dispose(): void {

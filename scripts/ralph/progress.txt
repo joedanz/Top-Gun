@@ -32,6 +32,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Camera shake: apply additive offset AFTER CameraSystem.update() positions the camera
 - `Rectangle` with `cornerRadius` makes circular radar background; use `addControl` to nest blips inside
 - Heading-up radar: rotate relative positions by `cos(heading)/sin(heading)` (positive heading, not negated)
+- Adding a field to FlightInput requires updating mock input objects in ALL test files (Aircraft, Camera, Collision, Flight, Weapon, Targeting)
+- `Ellipse.addControl` needed in GUI mocks when nesting TextBlock inside an Ellipse (lock indicator pattern)
+- Edge-triggered fire for missiles: track `prevFire` to detect press vs hold
+- Lock cone check: `Math.acos(dot / dist)` gives angle between player forward and target direction
 
 ---
 
@@ -180,4 +184,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Blip pool pattern: grow pool lazily, hide excess blips — avoids creating/destroying GUI elements each frame
   - `rgba(0, 0, 0, 0.5)` background on Rectangle gives a nice semi-transparent radar overlay
   - Game.test.ts MockRectangle needed `cornerRadius`, `paddingRight`, `paddingTop`, `addControl` for Radar
+---
+
+## 2026-02-01 - US-013
+- What was implemented: MissileLockSystem with state machine (Idle → Locking → Locked), Missile homing entity with limited turn rate, lock-on HUD indicator with progress %, R key for lock, missile ammo on HUD (MSL: 4), FlightInput lockOn field added
+- Files changed: src/Missile.ts, src/Missile.test.ts, src/MissileLockSystem.ts, src/MissileLockSystem.test.ts, src/InputManager.ts, src/InputManager.test.ts, src/AIInput.ts, src/Hud.ts, src/Game.ts, src/Game.test.ts, + 6 test files updated for lockOn field
+- **Tests added:** 18 new tests (6 Missile + 10 MissileLockSystem + 1 InputManager + 1 Game), total now 154
+- **Learnings for future iterations:**
+  - Adding a field to FlightInput requires updating ALL mock input objects across ALL test files — tedious but necessary
+  - State machine pattern (enum + switch) is cleaner than boolean flags for multi-state systems like lock-on
+  - Edge-triggered fire (`firePressed && !prevFire`) prevents continuous missile spam
+  - Missile turn rate of 2.0 rad/s gives good gameplay — fast enough to track, slow enough to dodge
+  - `Ellipse.addControl` must be in GUI mock when nesting TextBlock inside Ellipse
+  - Lock cone of PI/6 (30°) half-angle feels right — not too generous, not too strict
 ---

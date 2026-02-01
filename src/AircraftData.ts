@@ -6,6 +6,9 @@ import type { FlightParams } from "./FlightSystem";
 export interface WeaponLoadout {
   gunAmmo: number;
   missiles: number;
+  radarMissiles?: number;
+  rockets?: number;
+  bombs?: number;
 }
 
 export interface AircraftStats {

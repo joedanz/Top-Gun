@@ -190,9 +190,9 @@ describe("Game", () => {
     expect(game.cameraSystem).toBeDefined();
   });
 
-  it("creates a WeaponSystem", () => {
+  it("creates a WeaponManager", () => {
     const game = createGame();
-    expect(game.weaponSystem).toBeDefined();
+    expect(game.weaponManager).toBeDefined();
   });
 
   it("creates an enemy aircraft with AI", () => {
@@ -205,7 +205,6 @@ describe("Game", () => {
   it("creates a separate WeaponSystem for the enemy", () => {
     const game = createGame();
     expect(game.enemyWeaponSystem).toBeDefined();
-    expect(game.enemyWeaponSystem).not.toBe(game.weaponSystem);
   });
 
   it("creates a CollisionSystem", () => {
@@ -238,9 +237,9 @@ describe("Game", () => {
     expect(game.radar).toBeDefined();
   });
 
-  it("creates a MissileLockSystem", () => {
+  it("creates a WeaponManager with MissileLockSystem", () => {
     const game = createGame();
-    expect(game.missileLockSystem).toBeDefined();
+    expect(game.weaponManager.missileLockSystem).toBeDefined();
   });
 
   it("creates an ObjectiveManager", () => {

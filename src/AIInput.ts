@@ -11,4 +11,5 @@ export class AIInput implements FlightInput {
   fire = false;
   cycleTarget = false;
   lockOn = false;
+  cycleWeapon = false;
 }

@@ -1,11 +1,20 @@
 // ABOUTME: Heads-up display showing flight instruments and combat information.
-// ABOUTME: Renders speed, altitude, heading, ammo, and health using Babylon GUI text blocks.
+// ABOUTME: Renders speed, altitude, heading, active weapon, ammo, and health using Babylon GUI.
 
 import { AdvancedDynamicTexture, TextBlock, StackPanel, Control } from "@babylonjs/gui";
 import type { Aircraft } from "./Aircraft";
+import { WeaponType, type WeaponManager } from "./WeaponManager";
 
 const FONT_SIZE = 16;
 const TEXT_COLOR = "#00ff88";
+
+const WEAPON_LABELS: Record<WeaponType, string> = {
+  [WeaponType.Guns]: "GUN",
+  [WeaponType.HeatSeeking]: "AIM-9",
+  [WeaponType.RadarGuided]: "AIM-120",
+  [WeaponType.Rockets]: "RKT",
+  [WeaponType.Bombs]: "BOMB",
+};
 
 function createLabel(text: string): TextBlock {
   const tb = new TextBlock();
@@ -21,8 +30,8 @@ export class Hud {
   speedText: TextBlock;
   altitudeText: TextBlock;
   headingText: TextBlock;
+  weaponText: TextBlock;
   ammoText: TextBlock;
-  missileText: TextBlock;
   healthText: TextBlock;
 
   constructor() {
@@ -40,19 +49,19 @@ export class Hud {
     this.speedText = createLabel("SPD: 0");
     this.altitudeText = createLabel("ALT: 0");
     this.headingText = createLabel("HDG: 0°");
+    this.weaponText = createLabel("WPN: GUN");
     this.ammoText = createLabel("AMMO: 0");
-    this.missileText = createLabel("MSL: 0");
     this.healthText = createLabel("HP: 100");
 
     panel.addControl(this.speedText);
     panel.addControl(this.altitudeText);
     panel.addControl(this.headingText);
+    panel.addControl(this.weaponText);
     panel.addControl(this.ammoText);
-    panel.addControl(this.missileText);
     panel.addControl(this.healthText);
   }
 
-  update(aircraft: Aircraft, ammo: number, missileAmmo = 0): void {
+  update(aircraft: Aircraft, weapons: WeaponManager): void {
     const speed = Math.round(aircraft.speed);
     const altitude = Math.round(aircraft.mesh.position.y);
 
@@ -60,11 +69,14 @@ export class Hud {
     let headingDeg = Math.round((aircraft.mesh.rotation.y * 180) / Math.PI) % 360;
     if (headingDeg < 0) headingDeg += 360;
 
+    const activeWeapon = weapons.activeWeapon;
+    const ammo = weapons.getAmmo(activeWeapon);
+
     this.speedText.text = `SPD: ${speed}`;
     this.altitudeText.text = `ALT: ${altitude}`;
     this.headingText.text = `HDG: ${headingDeg}°`;
+    this.weaponText.text = `WPN: ${WEAPON_LABELS[activeWeapon]}`;
     this.ammoText.text = `AMMO: ${ammo}`;
-    this.missileText.text = `MSL: ${missileAmmo}`;
     this.healthText.text = `HP: ${aircraft.health}`;
   }
 }

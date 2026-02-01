@@ -6,8 +6,13 @@ import type { Aircraft } from "./Aircraft";
 import type { WeaponSystem } from "./WeaponSystem";
 
 const HIT_RADIUS = 3;
-const BULLET_DAMAGE = 10;
 const GROUND_LEVEL = 2;
+
+export interface Hittable {
+  mesh: { position: { x: number; y: number; z: number }; dispose: () => void };
+  alive: boolean;
+  damage: number;
+}
 
 interface OwnerPair {
   aircraft: Aircraft;
@@ -50,7 +55,7 @@ export class CollisionSystem {
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
           if (dist < HIT_RADIUS) {
-            target.health -= BULLET_DAMAGE;
+            target.health -= projectile.damage ?? 10;
             projectile.alive = false;
             projectile.mesh.dispose();
 
@@ -62,6 +67,41 @@ export class CollisionSystem {
               this.destroyAircraft(target);
             }
           }
+        }
+      }
+    }
+  }
+
+  /** Check additional hittable entities (rockets, bombs, missiles) against aircraft targets */
+  checkHittables(
+    hittables: Hittable[],
+    targets: Aircraft[],
+    ownerAircraft?: Aircraft,
+  ): void {
+    for (const h of hittables) {
+      if (!h.alive) continue;
+      for (const target of targets) {
+        if (!target.alive) continue;
+        if (ownerAircraft && ownerAircraft === target) continue;
+
+        const dx = h.mesh.position.x - target.mesh.position.x;
+        const dy = h.mesh.position.y - target.mesh.position.y;
+        const dz = h.mesh.position.z - target.mesh.position.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist < HIT_RADIUS) {
+          target.health -= h.damage;
+          h.alive = false;
+          h.mesh.dispose();
+
+          if (target === this.player) {
+            this.playerHitThisFrame = true;
+          }
+
+          if (target.health <= 0) {
+            this.destroyAircraft(target);
+          }
+          break;
         }
       }
     }

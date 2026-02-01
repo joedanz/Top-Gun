@@ -1,11 +1,18 @@
 // ABOUTME: Post-mission debrief overlay showing kills, time, and pass/fail result.
 // ABOUTME: Offers "Next Mission" and "Return to Menu" navigation buttons.
 
+import type { Medal } from "./Scoring";
+
 export interface MissionResult {
   missionTitle: string;
   outcome: "success" | "failure";
   kills: number;
   timeSeconds: number;
+  score: number;
+  medal: Medal;
+  shotsFired: number;
+  shotsHit: number;
+  damageTaken: number;
 }
 
 export class DebriefScene {
@@ -48,6 +55,20 @@ export class DebriefScene {
     timeStat.textContent = `Time: ${result.timeSeconds.toFixed(1)}s`;
     timeStat.style.cssText = "font-size:20px;margin-bottom:8px;";
     stats.appendChild(timeStat);
+
+    const scoreStat = document.createElement("p");
+    scoreStat.textContent = `Score: ${result.score}`;
+    scoreStat.style.cssText = "font-size:20px;margin-bottom:8px;font-weight:bold;";
+    stats.appendChild(scoreStat);
+
+    if (result.medal !== "none") {
+      const medalColors: Record<string, string> = { bronze: "#cd7f32", silver: "#c0c0c0", gold: "#ffd700" };
+      const medalEl = document.createElement("p");
+      medalEl.textContent = `${result.medal.toUpperCase()} MEDAL`;
+      medalEl.setAttribute("data-medal", result.medal);
+      medalEl.style.cssText = `font-size:24px;font-weight:bold;color:${medalColors[result.medal]};`;
+      stats.appendChild(medalEl);
+    }
 
     panel.appendChild(stats);
 

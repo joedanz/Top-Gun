@@ -5,10 +5,8 @@ import { SaveManager } from "./SaveManager";
 import type { SaveData } from "./SaveManager";
 import type { MissionResult } from "./DebriefScene";
 import type { Theater } from "./MissionData";
-
-const KILL_SCORE = 500;
-const TIME_BONUS_BASE = 1000;
-const TIME_BONUS_DECAY = 10;
+import { calculateScore, getMedal } from "./Scoring";
+import type { Medal } from "./Scoring";
 
 const THEATER_MISSIONS: Record<string, string[]> = {
   pacific: ["pacific-01", "pacific-02", "pacific-03", "pacific-04", "pacific-05"],
@@ -54,9 +52,7 @@ export class ProgressionManager {
 
   calculateScore(result: MissionResult): number {
     if (result.outcome === "failure") return 0;
-    const killScore = result.kills * KILL_SCORE;
-    const timeBonus = Math.max(0, TIME_BONUS_BASE - result.timeSeconds * TIME_BONUS_DECAY);
-    return killScore + timeBonus;
+    return result.score;
   }
 
   completeMission(missionId: string, result: MissionResult): void {
@@ -64,12 +60,16 @@ export class ProgressionManager {
     if (!this.data.completedMissions.includes(missionId)) {
       this.data.completedMissions.push(missionId);
     }
-    const score = this.calculateScore(result);
+    const score = result.score;
     const existing = this.data.missionScores[missionId] ?? 0;
     if (score > existing) {
       this.data.missionScores[missionId] = score;
     }
     SaveManager.save(this.data);
+  }
+
+  getMissionMedal(missionId: string): Medal {
+    return getMedal(this.getMissionScore(missionId));
   }
 
   completeTheater(theater: Theater): void {

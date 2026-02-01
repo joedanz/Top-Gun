@@ -23,6 +23,7 @@ interface OwnerPair {
 export class CollisionSystem {
   missionFailed = false;
   playerHitThisFrame = false;
+  playerHitsDealt = 0;
   private player: Aircraft | null = null;
 
   constructor(private scene: Scene) {}
@@ -62,6 +63,8 @@ export class CollisionSystem {
 
             if (target === this.player) {
               this.playerHitThisFrame = true;
+            } else if (owner && owner.aircraft === this.player) {
+              this.playerHitsDealt++;
             }
 
             if (target.health <= 0) {

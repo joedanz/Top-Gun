@@ -11,6 +11,7 @@ const DEFAULT_AMMO = 200;
 export class WeaponSystem {
   projectiles: Projectile[] = [];
   ammo: number;
+  shotsFired = 0;
   private cooldown = 0;
 
   constructor(private scene: Scene, ammo = DEFAULT_AMMO) {
@@ -32,6 +33,7 @@ export class WeaponSystem {
       );
       this.cooldown = FIRE_COOLDOWN;
       this.ammo--;
+      this.shotsFired++;
     }
 
     for (const p of this.projectiles) {

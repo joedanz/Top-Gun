@@ -12,8 +12,8 @@ function makeTheaters(): TheaterInfo[] {
       name: "Pacific",
       unlocked: true,
       missions: [
-        { id: "pacific-01", title: "First Sortie", completed: false, unlocked: true },
-        { id: "pacific-02", title: "Carrier Quals", completed: false, unlocked: false },
+        { id: "pacific-01", title: "First Sortie", completed: false, unlocked: true, medal: "none" as const },
+        { id: "pacific-02", title: "Carrier Quals", completed: false, unlocked: false, medal: "none" as const },
       ],
       completedCount: 0,
       totalCount: 2,
@@ -23,7 +23,7 @@ function makeTheaters(): TheaterInfo[] {
       name: "Middle East",
       unlocked: true,
       missions: [
-        { id: "middleeast-01", title: "Desert Strike", completed: true, unlocked: true },
+        { id: "middleeast-01", title: "Desert Strike", completed: true, unlocked: true, medal: "gold" as const },
       ],
       completedCount: 1,
       totalCount: 1,
@@ -137,6 +137,17 @@ describe("TheaterSelectScene", () => {
     const backBtn = container.querySelector("[data-action='back']") as HTMLElement;
     backBtn.click();
     expect(onBack).toHaveBeenCalled();
+    scene.dispose();
+  });
+
+  it("shows medal badge for completed mission with medal", () => {
+    const scene = new TheaterSelectScene(makeTheaters(), container, vi.fn(), vi.fn());
+    const meCard = container.querySelector('[data-theater-id="middleeast"]') as HTMLElement;
+    meCard.click();
+    const missionRow = container.querySelector('[data-mission-id="middleeast-01"]') as HTMLElement;
+    const medalBadge = missionRow.querySelector("[data-medal='gold']");
+    expect(medalBadge).toBeTruthy();
+    expect(medalBadge!.textContent).toBe("★");
     scene.dispose();
   });
 

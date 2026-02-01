@@ -18,6 +18,7 @@ import { HitFlash } from "./HitFlash";
 import { Hud } from "./Hud";
 import { TargetingSystem } from "./TargetingSystem";
 import { Radar } from "./Radar";
+import { SweepRadar } from "./SweepRadar";
 import { WeaponManager } from "./WeaponManager";
 import type { MissionData } from "./MissionData";
 import { FormationSystem } from "./FormationSystem";
@@ -58,7 +59,7 @@ export class Game {
   hitFlash: HitFlash;
   hud: Hud;
   targetingSystem: TargetingSystem;
-  radar: Radar;
+  radar: Radar | SweepRadar;
   objectiveManager: ObjectiveManager;
   formationSystem: FormationSystem;
   countermeasureSystem: CountermeasureSystem;
@@ -98,8 +99,8 @@ export class Game {
     applyPerformanceConfig(this.scene);
     this.projectilePool = new ProjectilePool(this.scene, 50);
 
-    this.terrain = new Terrain(this.scene);
-    this.skybox = new Skybox(this.scene);
+    this.terrain = new Terrain(this.scene, mission.theater);
+    this.skybox = new Skybox(this.scene, mission.theater);
 
     this.input = new InputManager();
     this.aircraft = new Aircraft(this.scene, this.input);
@@ -124,7 +125,7 @@ export class Game {
     this.hitFlash = new HitFlash(this.scene);
     this.hud = new Hud();
     this.targetingSystem = new TargetingSystem();
-    this.radar = new Radar();
+    this.radar = aircraftId === "x-02" ? new SweepRadar() : new Radar();
     this.formationSystem = new FormationSystem();
     this.countermeasureSystem = new CountermeasureSystem(this.scene);
     this.bossHealthBar = new BossHealthBar();
@@ -342,7 +343,11 @@ export class Game {
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
       const guidance = this.carrierOps?.getGuidance(this.aircraft) ?? null;
       this.hud.update(this.aircraft, this.weaponManager, this.countermeasureSystem, guidance);
-      this.radar.update(this.aircraft, [this.enemy], []);
+      if (this.radar instanceof SweepRadar) {
+        this.radar.update(this.aircraft, [this.enemy], [], dt);
+      } else {
+        this.radar.update(this.aircraft, [this.enemy], []);
+      }
 
       // Track kills and mission time
       if (!this.enemy.alive && this.kills === 0) {

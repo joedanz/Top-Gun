@@ -65,6 +65,28 @@
         "rockets": 6,
         "bombs": 4
       }
+    },
+    {
+      "id": "x-02",
+      "name": "X-02 Wyvern",
+      "modelPath": "models/x-02.glb",
+      "flightParams": {
+        "maxSpeed": 300,
+        "acceleration": 60,
+        "deceleration": 40,
+        "turnRate": 2.0,
+        "stallThreshold": 30,
+        "stallNoseDrop": 0.6,
+        "stallSpeedRecovery": 20,
+        "altitudeFloor": 2
+      },
+      "weaponLoadout": {
+        "gunAmmo": 180,
+        "missiles": 8,
+        "radarMissiles": 6,
+        "rockets": 4,
+        "bombs": 2
+      }
     }
   ]
 }

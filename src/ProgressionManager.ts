@@ -18,6 +18,7 @@ const THEATER_MISSIONS: Record<string, string[]> = {
 const THEATER_AIRCRAFT_UNLOCKS: Record<string, string> = {
   pacific: "fa-18",
   middleeast: "p-51",
+  arctic: "x-02",
 };
 
 const MISSION_ORDER = [

@@ -1,0 +1,37 @@
+{
+  "id": "arctic-03",
+  "title": "Aurora Borealis",
+  "description": "A drone swarm has been detected massing under the northern lights. Engage the coordinated drone formations before they can organize a strike on allied positions.",
+  "theater": "arctic",
+  "playerStart": {
+    "position": { "x": 0, "y": 90, "z": -700 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 0, "y": 80, "z": 300 } },
+    { "position": { "x": 80, "y": 75, "z": 350 } },
+    { "position": { "x": -80, "y": 75, "z": 350 } },
+    { "position": { "x": 40, "y": 70, "z": 400 } },
+    { "position": { "x": -40, "y": 70, "z": 400 } },
+    { "position": { "x": 160, "y": 85, "z": 500 } },
+    { "position": { "x": -160, "y": 85, "z": 500 } }
+  ],
+  "formations": [
+    {
+      "type": "diamond",
+      "members": [0, 1, 2]
+    },
+    {
+      "type": "diamond",
+      "members": [3, 4, 5, 6]
+    }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "destroy_enemies",
+      "count": 5,
+      "description": "Destroy at least 5 drones from the swarm"
+    }
+  ]
+}

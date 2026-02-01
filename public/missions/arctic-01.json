@@ -1,0 +1,28 @@
+{
+  "id": "arctic-01",
+  "title": "Cold Front",
+  "description": "Drone activity detected along the northern ice shelf. Intercept the initial wave of autonomous aircraft and eliminate them before they reach allied airspace.",
+  "theater": "arctic",
+  "playerStart": {
+    "position": { "x": 0, "y": 80, "z": -500 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 50, "y": 70, "z": 300 } },
+    { "position": { "x": -50, "y": 70, "z": 350 } },
+    { "position": { "x": 0, "y": 75, "z": 400 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy all drone aircraft"
+    }
+  ]
+}

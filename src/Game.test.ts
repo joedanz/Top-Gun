@@ -34,8 +34,10 @@ vi.mock("@babylonjs/gui", () => {
 vi.mock("@babylonjs/core", () => {
   class MockEngine {
     runRenderLoop = vi.fn();
+    stopRenderLoop = vi.fn();
     resize = vi.fn();
     getDeltaTime = vi.fn(() => 16);
+    dispose = vi.fn();
   }
 
   class MockScene {
@@ -125,119 +127,130 @@ vi.mock("@babylonjs/core", () => {
 });
 
 import { Game } from "./Game";
+import type { MissionData } from "./MissionData";
+
+const sampleMission: MissionData = {
+  id: "pacific-01",
+  title: "First Sortie",
+  description: "Intercept enemy fighters.",
+  theater: "pacific",
+  playerStart: { position: { x: 0, y: 50, z: 0 }, heading: 0 },
+  enemies: [{ position: { x: 100, y: 50, z: 200 } }],
+  objectives: [
+    { type: "destroy_all", description: "Destroy all enemy aircraft" },
+  ],
+};
+
+function createGame(onMissionEnd = vi.fn()) {
+  const canvas = document.createElement("canvas");
+  return new Game(canvas, sampleMission, onMissionEnd);
+}
 
 describe("Game", () => {
   it("creates an engine and scene", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.engine).toBeDefined();
     expect(game.scene).toBeDefined();
   });
 
   it("creates a Terrain", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.terrain).toBeDefined();
   });
 
   it("creates a Skybox", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.skybox).toBeDefined();
   });
 
   it("creates an Aircraft entity", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.aircraft).toBeDefined();
     expect(game.aircraft.mesh).toBeDefined();
   });
 
   it("creates an InputManager", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.input).toBeDefined();
   });
 
   it("aircraft reads from InputManager (not directly from keyboard)", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.aircraft).toBeDefined();
     expect(game.input).toBeDefined();
   });
 
   it("creates a FlightSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.flightSystem).toBeDefined();
   });
 
   it("creates a CameraSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.cameraSystem).toBeDefined();
   });
 
   it("creates a WeaponSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.weaponSystem).toBeDefined();
   });
 
   it("creates an enemy aircraft with AI", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.enemy).toBeDefined();
     expect(game.enemy.mesh).toBeDefined();
     expect(game.aiSystem).toBeDefined();
   });
 
   it("creates a separate WeaponSystem for the enemy", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.enemyWeaponSystem).toBeDefined();
     expect(game.enemyWeaponSystem).not.toBe(game.weaponSystem);
   });
 
   it("creates a CollisionSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.collisionSystem).toBeDefined();
   });
 
   it("creates a ScreenShake system", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.screenShake).toBeDefined();
   });
 
   it("creates a HitFlash system", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.hitFlash).toBeDefined();
   });
 
   it("creates a HUD", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.hud).toBeDefined();
   });
 
   it("creates a TargetingSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.targetingSystem).toBeDefined();
   });
 
   it("creates a Radar", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.radar).toBeDefined();
   });
 
   it("creates a MissileLockSystem", () => {
-    const canvas = document.createElement("canvas");
-    const game = new Game(canvas);
+    const game = createGame();
     expect(game.missileLockSystem).toBeDefined();
+  });
+
+  it("creates an ObjectiveManager", () => {
+    const game = createGame();
+    expect(game.objectiveManager).toBeDefined();
+  });
+
+  it("has a dispose method that stops the engine", () => {
+    const game = createGame();
+    expect(typeof game.dispose).toBe("function");
+    game.dispose();
   });
 });

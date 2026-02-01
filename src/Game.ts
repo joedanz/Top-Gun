@@ -19,6 +19,9 @@ import { Hud } from "./Hud";
 import { TargetingSystem } from "./TargetingSystem";
 import { Radar } from "./Radar";
 import { MissileLockSystem } from "./MissileLockSystem";
+import type { MissionData } from "./MissionData";
+import type { MissionResult } from "./DebriefScene";
+import { ObjectiveManager } from "./ObjectiveManager";
 
 export class Game {
   engine: Engine;
@@ -41,8 +44,16 @@ export class Game {
   targetingSystem: TargetingSystem;
   radar: Radar;
   missileLockSystem: MissileLockSystem;
+  objectiveManager: ObjectiveManager;
+  private missionEnded = false;
+  private kills = 0;
+  private elapsedTime = 0;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    mission: MissionData,
+    private onMissionEnd: (result: MissionResult) => void,
+  ) {
     this.engine = new Engine(canvas, true);
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.5, 0.7, 0.9, 1);
@@ -79,6 +90,7 @@ export class Game {
     this.targetingSystem = new TargetingSystem();
     this.radar = new Radar();
     this.missileLockSystem = new MissileLockSystem(this.scene);
+    this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
@@ -131,9 +143,38 @@ export class Game {
       this.hud.update(this.aircraft, this.weaponSystem.ammo, this.missileLockSystem.ammo);
       this.radar.update(this.aircraft, [this.enemy], []);
 
+      // Track kills and mission time
+      if (!this.enemy.alive && this.kills === 0) {
+        this.kills = 1;
+        this.objectiveManager.recordKill();
+      }
+      this.elapsedTime += dt;
+      this.objectiveManager.update(dt);
+
+      // Check mission end
+      if (!this.missionEnded) {
+        const outcome = this.objectiveManager.outcome;
+        if (outcome === "success" || this.collisionSystem.missionFailed) {
+          this.missionEnded = true;
+          const result: MissionResult = {
+            missionTitle: mission.title,
+            outcome: this.collisionSystem.missionFailed ? "failure" : "success",
+            kills: this.kills,
+            timeSeconds: Math.round(this.elapsedTime * 10) / 10,
+          };
+          this.onMissionEnd(result);
+        }
+      }
+
       this.scene.render();
     });
 
     window.addEventListener("resize", () => this.engine.resize());
+  }
+
+  dispose(): void {
+    this.engine.stopRenderLoop();
+    this.engine.dispose();
+    this.input.dispose();
   }
 }

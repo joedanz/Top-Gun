@@ -17,8 +17,8 @@ vi.mock("@babylonjs/gui", () => {
   class MockSlider { minimum = 0; maximum = 100; value = 0; height = ""; width = ""; color = ""; background = ""; onValueChangedObservable = { add: vi.fn() }; }
   class MockTextBlock { text = ""; height = ""; color = ""; fontSize = 0; textHorizontalAlignment = 0; }
   class MockControl { static HORIZONTAL_ALIGNMENT_LEFT = 0; static VERTICAL_ALIGNMENT_TOP = 0; }
-  class MockRectangle { width = ""; height = ""; color = ""; background = ""; alpha = 0; thickness = 0; isPointerBlocker = false; isHitTestVisible = false; }
-  class MockEllipse { width = ""; height = ""; color = ""; thickness = 0; top = ""; left = ""; isVisible = true; isPointerBlocker = false; isHitTestVisible = false; addControl = vi.fn(); }
+  class MockRectangle { width = ""; height = ""; color = ""; background = ""; alpha = 0; thickness = 0; isPointerBlocker = false; isHitTestVisible = false; cornerRadius = 0; paddingRight = ""; paddingTop = ""; horizontalAlignment = 0; verticalAlignment = 0; left = ""; top = ""; addControl = vi.fn(); }
+  class MockEllipse { width = ""; height = ""; color = ""; background = ""; thickness = 0; top = ""; left = ""; isVisible = true; isPointerBlocker = false; isHitTestVisible = false; addControl = vi.fn(); }
   return {
     AdvancedDynamicTexture: { CreateFullscreenUI: vi.fn(() => ({ addControl: vi.fn(), dispose: vi.fn() })) },
     StackPanel: MockStackPanel,
@@ -227,5 +227,11 @@ describe("Game", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
     expect(game.targetingSystem).toBeDefined();
+  });
+
+  it("creates a Radar", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.radar).toBeDefined();
   });
 });

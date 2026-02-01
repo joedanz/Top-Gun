@@ -32,6 +32,7 @@ import { BossSystem } from "./BossSystem";
 import { BossHealthBar } from "./BossHealthBar";
 import { AssetLoader } from "./AssetLoader";
 import { AudioManager } from "./AudioManager";
+import { MusicManager } from "./MusicManager";
 
 export class Game {
   engine: Engine;
@@ -60,6 +61,7 @@ export class Game {
   bossSystem: BossSystem | null = null;
   bossHealthBar: BossHealthBar;
   audioManager: AudioManager;
+  musicManager: MusicManager;
   private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
@@ -117,6 +119,8 @@ export class Game {
     this.audioManager = new AudioManager(this.scene);
     this.audioManager.startEngine();
     this.audioManager.addEnemyEngine(this.enemy.mesh);
+    this.musicManager = new MusicManager(this.scene);
+    this.musicManager.startTheater(mission.theater);
 
     // Initialize boss system if this is a boss mission
     if (mission.bossIndex !== undefined && mission.bossIndex === 0) {
@@ -344,6 +348,15 @@ export class Game {
       }
       this.prevEnemyAlive = this.enemy.alive;
 
+      // Music: crossfade based on enemy proximity
+      const dx = this.enemy.mesh.position.x - this.aircraft.mesh.position.x;
+      const dz = this.enemy.mesh.position.z - this.aircraft.mesh.position.z;
+      const enemyDist = Math.sqrt(dx * dx + dz * dz);
+      const combatIntensity = this.enemy.alive
+        ? Math.max(0, Math.min(1, 1 - (enemyDist - 300) / 300))
+        : 0;
+      this.musicManager.update(dt, combatIntensity);
+
       this.scene.render();
     });
 
@@ -363,6 +376,7 @@ export class Game {
   dispose(): void {
     this.engine.stopRenderLoop();
     this.audioManager.dispose();
+    this.musicManager.dispose();
     this.engine.dispose();
     this.input.dispose();
   }

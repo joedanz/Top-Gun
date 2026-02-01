@@ -1,0 +1,36 @@
+{
+  "id": "pacific-03",
+  "title": "Island Defense",
+  "description": "Enemy aircraft are inbound on our island position. Hold the line and survive the assault wave until reinforcements arrive.",
+  "theater": "pacific",
+  "playerStart": {
+    "position": { "x": 0, "y": 50, "z": 0 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 250, "y": 60, "z": 600 } },
+    { "position": { "x": -180, "y": 55, "z": 700 } },
+    { "position": { "x": 350, "y": 70, "z": 500 } },
+    { "position": { "x": -300, "y": 65, "z": 800 } },
+    { "position": { "x": 100, "y": 50, "z": 900 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "survive_time",
+      "description": "Survive for 90 seconds",
+      "timeSeconds": 90
+    },
+    {
+      "type": "destroy_enemies",
+      "description": "Destroy at least 2 attackers",
+      "count": 2
+    }
+  ]
+}

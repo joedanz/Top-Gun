@@ -1,0 +1,40 @@
+{
+  "id": "pacific-05",
+  "title": "Storm Warning",
+  "description": "The enemy ace 'Typhoon' commands an elite squadron guarding the strait. Take down the ace and his wingmen to secure Pacific air superiority.",
+  "theater": "pacific",
+  "playerStart": {
+    "position": { "x": 0, "y": 70, "z": 0 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 0, "y": 80, "z": 600 }, "color": { "r": 1, "g": 0.2, "b": 0 } },
+    { "position": { "x": 150, "y": 75, "z": 550 } },
+    { "position": { "x": -150, "y": 75, "z": 550 } },
+    { "position": { "x": 300, "y": 65, "z": 800 } },
+    { "position": { "x": -300, "y": 65, "z": 800 } },
+    { "position": { "x": 100, "y": 60, "z": 1000 } },
+    { "position": { "x": -100, "y": 60, "z": 1000 } }
+  ],
+  "formations": [
+    {
+      "type": "diamond",
+      "members": [0, 1, 2]
+    },
+    {
+      "type": "wing",
+      "members": [3, 4]
+    },
+    {
+      "type": "wing",
+      "members": [5, 6]
+    }
+  ],
+  "aiDifficulty": 3,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy the ace and all escorts"
+    }
+  ]
+}

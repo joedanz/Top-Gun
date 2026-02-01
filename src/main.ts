@@ -5,11 +5,13 @@ import { Game } from "./Game";
 import { BriefingScene } from "./BriefingScene";
 import { DebriefScene } from "./DebriefScene";
 import { HangarScene } from "./HangarScene";
+import { ProgressionManager } from "./ProgressionManager";
 import { loadAircraftCatalog, getAircraftCatalog } from "./AircraftData";
 import type { MissionData } from "./MissionData";
 import type { MissionResult } from "./DebriefScene";
 
 const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+const progression = new ProgressionManager();
 
 function showBriefing(mission: MissionData): void {
   let briefing: BriefingScene | null = null;
@@ -21,8 +23,10 @@ function showBriefing(mission: MissionData): void {
 
 function showHangar(mission: MissionData): void {
   const catalog = getAircraftCatalog();
+  const allIds = catalog.aircraft.map((a) => a.id);
+  const lockedIds = progression.getLockedAircraftIds(allIds);
   let hangar: HangarScene | null = null;
-  hangar = new HangarScene(catalog.aircraft, [], document.body, (aircraftId: string) => {
+  hangar = new HangarScene(catalog.aircraft, lockedIds, document.body, (aircraftId: string) => {
     hangar?.dispose();
     startMission(mission, aircraftId);
   });
@@ -33,6 +37,7 @@ function startMission(mission: MissionData, aircraftId: string): void {
   game = new Game(canvas, mission, (result: MissionResult) => {
     game?.dispose();
     game = null;
+    progression.completeMission(mission.id, result);
     showDebrief(result, mission);
   }, aircraftId);
 }

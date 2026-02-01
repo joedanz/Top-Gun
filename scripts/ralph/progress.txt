@@ -128,6 +128,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - SweepRadar is polymorphic with Radar — Game.ts uses `instanceof SweepRadar` to call correct update signature
 - `THEATER_AIRCRAFT_UNLOCKS` in ProgressionManager maps theater completion to aircraft unlock (arctic → x-02)
 - Trap tolerance: speed ≤ 80, pitch deviation ≤ 0.35 rad — otherwise bolter or crash
+- `MissionData.tutorial?: boolean` — when true, Game creates TutorialSystem and hides enemies until combat step
+- TutorialSystem uses HTML overlay pattern with `data-tutorial` attribute — same dispose pattern as BriefingScene
 
 ---
 
@@ -618,4 +620,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - THEATER_AIRCRAFT_UNLOCKS extended: arctic → x-02 (futuristic aircraft unlocked by completing Arctic theater)
   - X-02 Wyvern has highest maxSpeed (300) and most radar missiles (6) — clearly superior endgame aircraft
   - Arctic missions use coordinated drone swarms via multiple diamond/wing formations (6-9 enemies per mission)
+---
+
+## 2026-02-01 - US-041
+- What was implemented: TutorialSystem with step-by-step HTML overlay prompts (throttle → turn → shoot → lock-on), pacific-01 converted to tutorial mission "Flight School", enemies hidden until combat step, skip via button or Escape key, Game.ts integration with enemiesActive gating
+- Files changed: src/TutorialSystem.ts, src/TutorialSystem.test.ts, src/Game.ts, src/Game.test.ts, src/MissionData.ts, src/MissionManifest.ts, src/PacificMissions.test.ts, public/missions/pacific-01.json
+- **Tests added:** 17 new tests (14 TutorialSystem + 2 Game + 1 PacificMissions), total now 602
+- **Learnings for future iterations:**
+  - TutorialSystem follows same HTML overlay pattern as BriefingScene/DebriefScene — dispose() removes overlay
+  - `MissionData.tutorial` boolean flag keeps schema backward-compatible
+  - Enemy mesh `setEnabled(false)` hides them without destroying — re-enable when tutorial reaches combat step
+  - Heading change detection needs two-phase approach: capture initial heading on step entry, then detect delta on subsequent updates
+  - Aircraft gains speed from stall recovery even without player input — throttle tutorial step may auto-advance quickly
 ---

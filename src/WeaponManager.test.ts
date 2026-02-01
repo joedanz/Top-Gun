@@ -60,6 +60,7 @@ function makeInput(overrides: Partial<FlightInput> = {}): FlightInput {
     pitch: 0, roll: 0, yaw: 0, throttle: 0,
     fire: false, cycleTarget: false, lockOn: false,
     cycleWeapon: false,
+    deployCountermeasure: false,
     ...overrides,
   };
 }
@@ -89,7 +90,7 @@ describe("WeaponManager", () => {
 
   it("cycles through weapon types on cycleWeapon press", () => {
     const wm = new WeaponManager(scene);
-    const input = makeInput({ cycleWeapon: true });
+    const input = makeInput({ cycleWeapon: true, deployCountermeasure: false });
     const aircraft = makeAircraft(input);
 
     wm.update(aircraft, null, 0.016);
@@ -101,11 +102,11 @@ describe("WeaponManager", () => {
 
     // Cycle through all types
     for (let i = 0; i < 5; i++) {
-      const input = makeInput({ cycleWeapon: true });
+      const input = makeInput({ cycleWeapon: true, deployCountermeasure: false });
       const aircraft = makeAircraft(input);
       wm.update(aircraft, null, 0.016);
       // Release between presses
-      const releaseInput = makeInput({ cycleWeapon: false });
+      const releaseInput = makeInput({ cycleWeapon: false, deployCountermeasure: false });
       const releaseAircraft = makeAircraft(releaseInput);
       wm.update(releaseAircraft, null, 0.016);
     }
@@ -127,7 +128,7 @@ describe("WeaponManager", () => {
     const wm = new WeaponManager(scene, { rockets: 10 });
     // Switch to rockets (cycle: guns -> heat -> radar -> rockets)
     for (let i = 0; i < 3; i++) {
-      const input = makeInput({ cycleWeapon: true });
+      const input = makeInput({ cycleWeapon: true, deployCountermeasure: false });
       wm.update(makeAircraft(input), null, 0.016);
       wm.update(makeAircraft(makeInput()), null, 0.016); // release
     }
@@ -142,7 +143,7 @@ describe("WeaponManager", () => {
     const wm = new WeaponManager(scene, { bombs: 4 });
     // Switch to bombs (cycle: guns -> heat -> radar -> rockets -> bombs)
     for (let i = 0; i < 4; i++) {
-      const input = makeInput({ cycleWeapon: true });
+      const input = makeInput({ cycleWeapon: true, deployCountermeasure: false });
       wm.update(makeAircraft(input), null, 0.016);
       wm.update(makeAircraft(makeInput()), null, 0.016); // release
     }
@@ -174,7 +175,7 @@ describe("WeaponManager", () => {
     const wm = new WeaponManager(scene, { rockets: 0 });
     // Switch to rockets
     for (let i = 0; i < 3; i++) {
-      wm.update(makeAircraft(makeInput({ cycleWeapon: true })), null, 0.016);
+      wm.update(makeAircraft(makeInput({ cycleWeapon: true, deployCountermeasure: false })), null, 0.016);
       wm.update(makeAircraft(makeInput()), null, 0.016);
     }
     wm.update(makeAircraft(makeInput({ fire: true })), null, 0.016);
@@ -185,7 +186,7 @@ describe("WeaponManager", () => {
     const wm = new WeaponManager(scene, { rockets: 5 });
     // Switch to rockets
     for (let i = 0; i < 3; i++) {
-      wm.update(makeAircraft(makeInput({ cycleWeapon: true })), null, 0.016);
+      wm.update(makeAircraft(makeInput({ cycleWeapon: true, deployCountermeasure: false })), null, 0.016);
       wm.update(makeAircraft(makeInput()), null, 0.016);
     }
     wm.update(makeAircraft(makeInput({ fire: true })), null, 0.016);

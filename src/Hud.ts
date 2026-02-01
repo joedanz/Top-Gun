@@ -4,6 +4,7 @@
 import { AdvancedDynamicTexture, TextBlock, StackPanel, Control } from "@babylonjs/gui";
 import type { Aircraft } from "./Aircraft";
 import { WeaponType, type WeaponManager } from "./WeaponManager";
+import type { CountermeasureSystem } from "./CountermeasureSystem";
 
 const FONT_SIZE = 16;
 const TEXT_COLOR = "#00ff88";
@@ -33,6 +34,7 @@ export class Hud {
   weaponText: TextBlock;
   ammoText: TextBlock;
   healthText: TextBlock;
+  cmText: TextBlock;
 
   constructor() {
     const ui = AdvancedDynamicTexture.CreateFullscreenUI("hudUI");
@@ -52,6 +54,7 @@ export class Hud {
     this.weaponText = createLabel("WPN: GUN");
     this.ammoText = createLabel("AMMO: 0");
     this.healthText = createLabel("HP: 100");
+    this.cmText = createLabel("FLR: 30 CHF: 30");
 
     panel.addControl(this.speedText);
     panel.addControl(this.altitudeText);
@@ -59,9 +62,10 @@ export class Hud {
     panel.addControl(this.weaponText);
     panel.addControl(this.ammoText);
     panel.addControl(this.healthText);
+    panel.addControl(this.cmText);
   }
 
-  update(aircraft: Aircraft, weapons: WeaponManager): void {
+  update(aircraft: Aircraft, weapons: WeaponManager, countermeasures?: CountermeasureSystem): void {
     const speed = Math.round(aircraft.speed);
     const altitude = Math.round(aircraft.mesh.position.y);
 
@@ -78,5 +82,9 @@ export class Hud {
     this.weaponText.text = `WPN: ${WEAPON_LABELS[activeWeapon]}`;
     this.ammoText.text = `AMMO: ${ammo}`;
     this.healthText.text = `HP: ${aircraft.health}`;
+
+    if (countermeasures) {
+      this.cmText.text = `FLR: ${countermeasures.flareAmmo} CHF: ${countermeasures.chaffAmmo}`;
+    }
   }
 }

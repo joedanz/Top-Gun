@@ -36,7 +36,7 @@ import { Scene } from "@babylonjs/core";
 
 describe("MissileLockSystem", () => {
   let scene: Scene;
-  let player: { mesh: { position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number } }; input: { lockOn: boolean; fire: boolean; cycleTarget: boolean; cycleWeapon: boolean } };
+  let player: { mesh: { position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number } }; input: { lockOn: boolean; fire: boolean; cycleTarget: boolean; cycleWeapon: boolean; deployCountermeasure: boolean } };
   let enemy: { mesh: { position: { x: number; y: number; z: number } }; alive: boolean };
 
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe("MissileLockSystem", () => {
         position: { x: 0, y: 10, z: 0 },
         rotation: { x: Math.PI / 2, y: 0, z: 0 },
       },
-      input: { lockOn: false, fire: false, cycleTarget: false, cycleWeapon: false },
+      input: { lockOn: false, fire: false, cycleTarget: false, cycleWeapon: false, deployCountermeasure: false },
     };
     enemy = {
       mesh: { position: { x: 0, y: 10, z: 50 } },

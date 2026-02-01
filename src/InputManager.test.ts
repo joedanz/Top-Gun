@@ -108,6 +108,14 @@ describe("InputManager", () => {
     expect(input.cycleWeapon).toBe(false);
   });
 
+  it("reports deployCountermeasure when F is pressed", () => {
+    expect(input.deployCountermeasure).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "f" }));
+    expect(input.deployCountermeasure).toBe(true);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "f" }));
+    expect(input.deployCountermeasure).toBe(false);
+  });
+
   it("stops listening after dispose", () => {
     input.dispose();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));

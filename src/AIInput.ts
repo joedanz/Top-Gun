@@ -12,4 +12,5 @@ export class AIInput implements FlightInput {
   cycleTarget = false;
   lockOn = false;
   cycleWeapon = false;
+  deployCountermeasure = false;
 }

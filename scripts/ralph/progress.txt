@@ -103,6 +103,11 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - GLTF meshes are scene-bound — AssetLoader must use the Game's scene, not a temporary one
 - `AircraftStats.modelPath` is optional — aircraft without models gracefully use placeholder cone mesh
 - `vi.hoisted()` required for mock functions referenced inside `vi.mock()` factory (used in AssetLoader.test.ts)
+- Babylon.js `Sound` uses `setPlaybackRate()` method (not a `playbackRate` property) for pitch modulation
+- Audio files live in `public/audio/` — served as static assets, referenced by relative path in Sound constructor
+- `Sound` constructor: `new Sound(name, url, scene, readyCallback, options)` — readyCallback can be null
+- Track firing events via count comparison (`prevShotsFired` vs current) rather than callback hooks
+- MockSound in Game.test.ts needs `setPlaybackRate` method for AudioManager integration
 
 ---
 
@@ -503,4 +508,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - applyModel pattern: save old position, dispose old mesh, assign new, restore position
   - Generated GLB files with raw binary approach (no extra dependencies) for placeholder geometry
   - `vi.hoisted()` is essential for mock functions used inside `vi.mock()` factory callbacks
+---
+
+## 2026-02-01 - US-034
+- What was implemented: AudioManager with engine loop (throttle-based pitch modulation via setPlaybackRate), weapon SFX (gun fire, missile launch, explosion), spatial audio for enemy engines (attachToMesh with distance attenuation), master volume control, Game integration tracking shotsFired/missile counts for SFX triggers
+- Files changed: src/AudioManager.ts, src/AudioManager.test.ts, src/Game.ts, src/Game.test.ts, public/audio/engine-loop.mp3, public/audio/gunfire.mp3, public/audio/missile-launch.mp3, public/audio/explosion.mp3
+- **Tests added:** 14 new tests (12 AudioManager + 2 Game), total now 480
+- **Learnings for future iterations:**
+  - Babylon.js `Sound` uses `setPlaybackRate()` not a `playbackRate` property — check API before assuming
+  - Detect firing events by comparing prev/current counters (shotsFired, missile array length) — no callback needed
+  - Spatial audio: `spatialSound: true` + `attachToMesh()` handles distance attenuation automatically
+  - Placeholder MP3 files (minimal binary) don't crash Babylon — graceful degradation
+  - Engine pitch formula: `0.6 + throttle * 1.2` maps 0-1 throttle to 0.6-1.8 playback rate
+  - MockSound needs `setPlaybackRate` method in Game.test.ts mock
 ---

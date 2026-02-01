@@ -50,6 +50,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Kill tracking: check `!enemy.alive` in render loop; use a counter to avoid double-counting
 - Mission end: check ObjectiveManager.outcome + CollisionSystem.missionFailed each frame, fire callback once via `missionEnded` flag
 - MissionResult interface lives in DebriefScene.ts — exported for Game.ts to use
+- Game constructor signature: `(canvas, MissionData, onMissionEnd, aircraftId?)` — aircraftId applies per-aircraft stats
+- Scene flow in main.ts: briefing → hangar → fly → debrief (hangar inserted between briefing and game)
 
 ---
 
@@ -256,4 +258,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `aircraft.flightParams ?? this.params` pattern lets FlightSystem gracefully handle aircraft with or without custom params
   - Static JSON in `public/data/` is served by Vite and fetchable at runtime — same pattern as mission JSON
   - WeaponLoadout in aircraft data includes gunAmmo and missiles — ready for HangarScene to use
+---
+
+## 2026-02-01 - US-018
+- What was implemented: HangarScene (HTML/CSS overlay displaying aircraft cards with stats, select buttons, locked aircraft support), Game accepts optional aircraftId to apply per-aircraft flight params and weapon loadout, main.ts flow updated to briefing → hangar → fly → debrief
+- Files changed: src/HangarScene.ts, src/HangarScene.test.ts, src/Game.ts, src/main.ts
+- **Tests added:** 7 new tests in src/HangarScene.test.ts, total now 207
+- **Learnings for future iterations:**
+  - HangarScene follows same HTML/CSS overlay pattern as BriefingScene — dispose() removes overlay from DOM
+  - Game constructor takes optional `aircraftId` as 4th param — applies stats via `getAircraftStats()` after all systems are initialized
+  - `data-aircraft-id` attribute on cards enables querying specific aircraft cards in tests
+  - Locked aircraft: pass `lockedIds` array, cards render with LOCKED label and no Select button
+  - Aircraft catalog must be loaded before showing HangarScene — `loadAircraftCatalog()` in start()
+  - Border highlight on selection: set `borderColor` to `rgb(0, 170, 0)` (green) and reset others
 ---

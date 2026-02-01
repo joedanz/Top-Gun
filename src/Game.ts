@@ -22,6 +22,7 @@ import { MissileLockSystem } from "./MissileLockSystem";
 import type { MissionData } from "./MissionData";
 import type { MissionResult } from "./DebriefScene";
 import { ObjectiveManager } from "./ObjectiveManager";
+import { getAircraftStats } from "./AircraftData";
 
 export class Game {
   engine: Engine;
@@ -53,6 +54,7 @@ export class Game {
     canvas: HTMLCanvasElement,
     mission: MissionData,
     private onMissionEnd: (result: MissionResult) => void,
+    aircraftId?: string,
   ) {
     this.engine = new Engine(canvas, true);
     this.scene = new Scene(this.engine);
@@ -91,6 +93,13 @@ export class Game {
     this.radar = new Radar();
     this.missileLockSystem = new MissileLockSystem(this.scene);
     this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
+
+    if (aircraftId) {
+      const stats = getAircraftStats(aircraftId);
+      this.aircraft.flightParams = stats.flightParams;
+      this.weaponSystem.ammo = stats.weaponLoadout.gunAmmo;
+      this.missileLockSystem.ammo = stats.weaponLoadout.missiles;
+    }
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;

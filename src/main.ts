@@ -1,9 +1,11 @@
-// ABOUTME: Entry point orchestrating the mission loop: briefing → fly → debrief → menu/next.
-// ABOUTME: Fetches mission JSON and manages scene transitions.
+// ABOUTME: Entry point orchestrating the mission loop: briefing → hangar → fly → debrief.
+// ABOUTME: Fetches mission JSON, loads aircraft catalog, and manages scene transitions.
 
 import { Game } from "./Game";
 import { BriefingScene } from "./BriefingScene";
 import { DebriefScene } from "./DebriefScene";
+import { HangarScene } from "./HangarScene";
+import { loadAircraftCatalog, getAircraftCatalog } from "./AircraftData";
 import type { MissionData } from "./MissionData";
 import type { MissionResult } from "./DebriefScene";
 
@@ -13,17 +15,26 @@ function showBriefing(mission: MissionData): void {
   let briefing: BriefingScene | null = null;
   briefing = new BriefingScene(mission, document.body, () => {
     briefing?.dispose();
-    startMission(mission);
+    showHangar(mission);
   });
 }
 
-function startMission(mission: MissionData): void {
+function showHangar(mission: MissionData): void {
+  const catalog = getAircraftCatalog();
+  let hangar: HangarScene | null = null;
+  hangar = new HangarScene(catalog.aircraft, [], document.body, (aircraftId: string) => {
+    hangar?.dispose();
+    startMission(mission, aircraftId);
+  });
+}
+
+function startMission(mission: MissionData, aircraftId: string): void {
   let game: Game | null = null;
   game = new Game(canvas, mission, (result: MissionResult) => {
     game?.dispose();
     game = null;
     showDebrief(result, mission);
-  });
+  }, aircraftId);
 }
 
 function showDebrief(result: MissionResult, mission: MissionData): void {
@@ -32,12 +43,10 @@ function showDebrief(result: MissionResult, mission: MissionData): void {
     result,
     document.body,
     () => {
-      // Next mission — for now, replay the same mission
       debrief?.dispose();
       showBriefing(mission);
     },
     () => {
-      // Return to menu — for now, restart briefing
       debrief?.dispose();
       showBriefing(mission);
     },
@@ -45,6 +54,7 @@ function showDebrief(result: MissionResult, mission: MissionData): void {
 }
 
 async function start(): Promise<void> {
+  await loadAircraftCatalog("/data/aircraft.json");
   const response = await fetch("/missions/pacific-01.json");
   const mission: MissionData = await response.json();
   showBriefing(mission);

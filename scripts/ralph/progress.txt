@@ -42,6 +42,11 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Mock `CreateCylinder` must return a NEW object per call (not spread of shared template) to avoid shared position refs
 - HTML/CSS overlays (BriefingScene pattern): create div with `position:absolute;inset:0;z-index:100`, dispose removes from DOM
 - Scene transition flow: main.ts fetches mission JSON → BriefingScene overlay → onLaunch callback disposes overlay and creates Game
+- Game constructor takes `(canvas, MissionData, onMissionEnd)` — mission data drives ObjectiveManager and enemy spawns
+- Game.dispose() stops render loop, disposes engine and InputManager — required for clean scene transitions
+- Kill tracking: check `!enemy.alive` in render loop; use a counter to avoid double-counting
+- Mission end: check ObjectiveManager.outcome + CollisionSystem.missionFailed each frame, fire callback once via `missionEnded` flag
+- MissionResult interface lives in DebriefScene.ts — exported for Game.ts to use
 
 ---
 
@@ -225,4 +230,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - BriefingScene takes a container element + onLaunch callback — clean separation from game lifecycle
   - `dispose()` pattern with `this.overlay.remove()` ensures clean DOM teardown on scene transition
   - Many Vite dev servers may be running; check output for actual port assignment (can go up to 5189+)
+---
+
+## 2026-02-01 - US-016
+- What was implemented: DebriefScene (HTML/CSS overlay showing kills, time, pass/fail, with Next Mission and Return to Menu buttons), Game integration with ObjectiveManager for kill tracking and mission end detection, Game.dispose() for clean teardown, main.ts full mission loop (briefing → fly → debrief → menu/next)
+- Files changed: src/DebriefScene.ts, src/DebriefScene.test.ts, src/Game.ts, src/Game.test.ts, src/main.ts
+- **Tests added:** 12 new tests (10 DebriefScene + 2 Game), total now 190
+- **Learnings for future iterations:**
+  - Game needs dispose() to clean up engine/input before transitioning scenes — otherwise render loop keeps running
+  - Kill tracking via alive-flag check in render loop works but needs a counter to avoid double-counting
+  - MissionResult interface exported from DebriefScene.ts — shared between Game and DebriefScene
+  - main.ts orchestrates scene lifecycle via function calls (showBriefing, startMission, showDebrief) — no state machine needed yet
+  - "Next Mission" and "Return to Menu" both go back to briefing for now — menu/campaign selection comes in later stories
 ---

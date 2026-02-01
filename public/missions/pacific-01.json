@@ -1,22 +1,15 @@
 {
   "id": "pacific-01",
-  "title": "First Sortie",
-  "description": "Intercept enemy fighters approaching the carrier group. Destroy all hostiles to secure the airspace.",
+  "title": "Flight School",
+  "description": "Learn the basics of flight and combat. Follow the on-screen prompts to master throttle, maneuvering, guns, and missile lock-on.",
   "theater": "pacific",
+  "tutorial": true,
   "playerStart": {
     "position": { "x": 0, "y": 50, "z": 0 },
     "heading": 0
   },
   "enemies": [
-    { "position": { "x": 200, "y": 60, "z": 400 } },
-    { "position": { "x": -150, "y": 55, "z": 500 } },
-    { "position": { "x": 100, "y": 70, "z": 600 } }
-  ],
-  "formations": [
-    {
-      "type": "wing",
-      "members": [0, 1]
-    }
+    { "position": { "x": 200, "y": 60, "z": 400 } }
   ],
   "aiDifficulty": 1,
   "carrier": {

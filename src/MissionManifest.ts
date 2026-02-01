@@ -20,7 +20,7 @@ export const CAMPAIGN_THEATERS: TheaterManifest[] = [
     id: "pacific",
     name: "Pacific",
     missions: [
-      { id: "pacific-01", title: "First Sortie", jsonPath: "/missions/pacific-01.json" },
+      { id: "pacific-01", title: "Flight School", jsonPath: "/missions/pacific-01.json" },
       { id: "pacific-02", title: "Carrier Quals", jsonPath: "/missions/pacific-02.json" },
       { id: "pacific-03", title: "Island Defense", jsonPath: "/missions/pacific-03.json" },
       { id: "pacific-04", title: "Fleet Escort", jsonPath: "/missions/pacific-04.json" },

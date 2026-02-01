@@ -386,4 +386,21 @@ describe("Game", () => {
     game.dispose();
     expect(disposeSpy).toHaveBeenCalled();
   });
+
+  it("creates TutorialSystem for tutorial missions", () => {
+    const tutorialMission: MissionData = {
+      ...sampleMission,
+      tutorial: true,
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, tutorialMission, vi.fn());
+    expect(game.tutorialSystem).not.toBeNull();
+    game.dispose();
+  });
+
+  it("does not create TutorialSystem for non-tutorial missions", () => {
+    const game = createGame();
+    expect(game.tutorialSystem).toBeNull();
+    game.dispose();
+  });
 });

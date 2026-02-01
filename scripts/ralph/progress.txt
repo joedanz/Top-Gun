@@ -137,4 +137,18 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - `Rectangle` from `@babylonjs/gui` needs class-style mock in Game.test.ts (like other GUI components)
   - `playerHitThisFrame` flag pattern keeps CollisionSystem decoupled from feedback systems
   - `isPointerBlocker = false` and `isHitTestVisible = false` on GUI overlays prevents them from eating input
+- HUD uses `AdvancedDynamicTexture.CreateFullscreenUI` with a StackPanel for layout — same pattern as DebugPanel
+- WeaponSystem has `ammo` field (default 200) — decrements on fire, stops firing at 0
+---
+
+## 2026-02-01 - US-010
+- What was implemented: HUD class with speed, altitude, heading, ammo, and health text indicators using Babylon GUI; WeaponSystem ammo tracking (200 rounds, stops firing at 0); Game integration updating HUD each frame
+- Files changed: src/Hud.ts, src/Hud.test.ts, src/WeaponSystem.ts, src/WeaponSystem.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 11 new tests (8 Hud + 2 WeaponSystem + 1 Game), total now 116
+- **Learnings for future iterations:**
+  - HUD StackPanel at bottom-left with `VERTICAL_ALIGNMENT_BOTTOM` keeps it out of gameplay view
+  - Green text (#00ff88) on dark background is readable without being distracting
+  - Heading normalization: convert radians to degrees, mod 360, add 360 if negative
+  - WeaponSystem ammo field is public for HUD to read — pass ammo count to `hud.update()`
+  - Multiple AdvancedDynamicTexture fullscreen UIs can coexist (DebugPanel, HitFlash, HUD)
 ---

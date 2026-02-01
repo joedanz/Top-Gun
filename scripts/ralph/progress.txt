@@ -3,6 +3,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 ---
 
 ## Codebase Patterns
+- Aircraft data lives in `public/data/aircraft.json` — served as static asset, fetched at runtime via `loadAircraftCatalog()`
+- `Aircraft.flightParams` is optional — when set, FlightSystem uses it instead of system-wide defaults
+- `AircraftData.ts` has module-level state (`catalog`); tests must call `resetCatalog()` in `beforeEach`
 - Use `npm run check` to run typecheck + tests together
 - Babylon.js mocks in tests need `class` syntax (not arrow functions) for Vitest 4 constructors
 - Use `await import("@babylonjs/core")` (not `require`) to access mocked modules in test assertions
@@ -242,4 +245,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - MissionResult interface exported from DebriefScene.ts — shared between Game and DebriefScene
   - main.ts orchestrates scene lifecycle via function calls (showBriefing, startMission, showDebrief) — no state machine needed yet
   - "Next Mission" and "Return to Menu" both go back to briefing for now — menu/campaign selection comes in later stories
+---
+
+## 2026-02-01 - US-017
+- What was implemented: AircraftData module (types, catalog loader, registry), aircraft.json with 3 aircraft (F-14, P-51, F/A-18) with distinct stats, Aircraft.flightParams field, FlightSystem reads per-aircraft params
+- Files changed: src/AircraftData.ts, src/AircraftData.test.ts, src/Aircraft.ts, src/FlightSystem.ts, src/FlightSystem.test.ts, public/data/aircraft.json
+- **Tests added:** 10 new tests (8 AircraftData + 2 FlightSystem), total now 200
+- **Learnings for future iterations:**
+  - Module-level state in AircraftData needs `resetCatalog()` for test isolation
+  - `aircraft.flightParams ?? this.params` pattern lets FlightSystem gracefully handle aircraft with or without custom params
+  - Static JSON in `public/data/` is served by Vite and fetchable at runtime — same pattern as mission JSON
+  - WeaponLoadout in aircraft data includes gunAmmo and missiles — ready for HangarScene to use
 ---

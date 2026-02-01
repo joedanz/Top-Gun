@@ -132,6 +132,28 @@ describe("ObjectiveManager", () => {
     });
   });
 
+  describe("carrier_landing objective", () => {
+    it("completes when carrier landing is recorded", () => {
+      const objectives: ObjectiveData[] = [
+        { type: "carrier_landing", description: "Land on the carrier" },
+      ];
+      manager = new ObjectiveManager(objectives);
+      expect(manager.outcome).toBe("in_progress");
+      manager.recordCarrierLanding();
+      expect(manager.outcome).toBe("success");
+    });
+
+    it("reports landing progress", () => {
+      const objectives: ObjectiveData[] = [
+        { type: "carrier_landing", description: "Land on the carrier" },
+      ];
+      manager = new ObjectiveManager(objectives);
+      expect(manager.getStatuses()[0].progress).toBe("Pending");
+      manager.recordCarrierLanding();
+      expect(manager.getStatuses()[0].progress).toBe("Landed");
+    });
+  });
+
   describe("mission outcome", () => {
     it("reports success when all objectives complete", () => {
       const objectives: ObjectiveData[] = [

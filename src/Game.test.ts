@@ -340,6 +340,28 @@ describe("Game", () => {
     expect(game.bossSystem).toBeNull();
   });
 
+  it("creates CarrierOps when mission has carrier data", () => {
+    const carrierMission: MissionData = {
+      ...sampleMission,
+      carrier: { position: { x: 0, y: 0, z: -200 }, heading: 0 },
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, carrierMission, vi.fn());
+    expect(game.carrierOps).not.toBeNull();
+  });
+
+  it("starts aircraft on deck when startOnDeck is true", () => {
+    const carrierMission: MissionData = {
+      ...sampleMission,
+      carrier: { position: { x: 0, y: 0, z: -200 }, heading: 0 },
+      startOnDeck: true,
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, carrierMission, vi.fn());
+    expect(game.carrierOps).not.toBeNull();
+    expect(game.aircraft.speed).toBe(0);
+  });
+
   it("creates an AudioManager with engine sound", () => {
     const game = createGame();
     expect(game.audioManager).toBeDefined();

@@ -182,6 +182,49 @@ describe("ProgressionManager", () => {
     });
   });
 
+  describe("theater unlocking", () => {
+    it("pacific and middleeast are unlocked from the start", () => {
+      expect(pm.isTheaterUnlocked("pacific")).toBe(true);
+      expect(pm.isTheaterUnlocked("middleeast")).toBe(true);
+    });
+
+    it("europe is locked until pacific or middleeast is complete", () => {
+      expect(pm.isTheaterUnlocked("europe")).toBe(false);
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
+      // Complete all pacific missions
+      for (let i = 1; i <= 5; i++) {
+        const id = `pacific-${String(i).padStart(2, "0")}`;
+        pm.completeMission(id, result);
+      }
+      expect(pm.isTheaterUnlocked("europe")).toBe(true);
+    });
+
+    it("arctic is locked until europe is complete", () => {
+      expect(pm.isTheaterUnlocked("arctic")).toBe(false);
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
+      for (let i = 1; i <= 5; i++) {
+        pm.completeMission(`europe-${String(i).padStart(2, "0")}`, result);
+      }
+      expect(pm.isTheaterUnlocked("arctic")).toBe(true);
+    });
+  });
+
+  describe("theater progress", () => {
+    it("returns 0 completed out of total for a fresh theater", () => {
+      const progress = pm.getTheaterProgress("pacific");
+      expect(progress.completed).toBe(0);
+      expect(progress.total).toBe(5);
+    });
+
+    it("tracks completed missions within a theater", () => {
+      const result: MissionResult = { missionTitle: "T", outcome: "success", kills: 1, timeSeconds: 30 };
+      pm.completeMission("pacific-01", result);
+      pm.completeMission("pacific-02", result);
+      const progress = pm.getTheaterProgress("pacific");
+      expect(progress.completed).toBe(2);
+    });
+  });
+
   describe("persistence", () => {
     it("saves and restores state across instances", () => {
       const result: MissionResult = {

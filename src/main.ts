@@ -1,4 +1,4 @@
-// ABOUTME: Entry point orchestrating the game flow: menu → briefing → hangar → fly → debrief.
+// ABOUTME: Entry point orchestrating the game flow: menu → theater select → briefing → hangar → fly → debrief.
 // ABOUTME: Fetches mission JSON, loads aircraft catalog, and manages scene transitions.
 
 import { Game } from "./Game";
@@ -6,11 +6,14 @@ import { BriefingScene } from "./BriefingScene";
 import { DebriefScene } from "./DebriefScene";
 import { HangarScene } from "./HangarScene";
 import { MenuScene } from "./MenuScene";
+import { TheaterSelectScene } from "./TheaterSelectScene";
 import { SettingsScene, loadSettings, saveSettings } from "./SettingsScene";
 import { ProgressionManager } from "./ProgressionManager";
 import { loadAircraftCatalog, getAircraftCatalog } from "./AircraftData";
+import { CAMPAIGN_THEATERS } from "./MissionManifest";
 import type { MissionData } from "./MissionData";
 import type { MissionResult } from "./DebriefScene";
+import type { TheaterInfo } from "./TheaterSelectScene";
 
 const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
 const progression = new ProgressionManager();
@@ -20,11 +23,11 @@ function showMenu(): void {
   menu = new MenuScene(document.body, {
     onNewGame: () => {
       menu?.dispose();
-      loadMissionAndBrief("/missions/pacific-01.json");
+      showTheaterSelect();
     },
     onContinue: () => {
       menu?.dispose();
-      loadMissionAndBrief("/missions/pacific-01.json");
+      showTheaterSelect();
     },
     onSettings: () => {
       menu?.dispose();
@@ -43,6 +46,55 @@ function showSettings(): void {
     scene?.dispose();
     showMenu();
   }, settings);
+}
+
+function buildTheaterInfos(): TheaterInfo[] {
+  return CAMPAIGN_THEATERS.map((t) => {
+    const unlocked = progression.isTheaterUnlocked(t.id);
+    const progress = progression.getTheaterProgress(t.id);
+    return {
+      id: t.id,
+      name: t.name,
+      unlocked,
+      missions: unlocked
+        ? t.missions.map((m) => ({
+            id: m.id,
+            title: m.title,
+            completed: progression.isMissionCompleted(m.id),
+            unlocked: progression.isMissionUnlocked(m.id),
+          }))
+        : [],
+      completedCount: progress.completed,
+      totalCount: progress.total,
+    };
+  });
+}
+
+function showTheaterSelect(): void {
+  const theaters = buildTheaterInfos();
+  let scene: TheaterSelectScene | null = null;
+
+  const missionLookup = new Map<string, string>();
+  for (const t of CAMPAIGN_THEATERS) {
+    for (const m of t.missions) {
+      missionLookup.set(m.id, m.jsonPath);
+    }
+  }
+
+  scene = new TheaterSelectScene(
+    theaters,
+    document.body,
+    (missionId: string) => {
+      const jsonPath = missionLookup.get(missionId);
+      if (!jsonPath) return;
+      scene?.dispose();
+      loadMissionAndBrief(jsonPath);
+    },
+    () => {
+      scene?.dispose();
+      showMenu();
+    },
+  );
 }
 
 async function loadMissionAndBrief(missionUrl: string): Promise<void> {
@@ -87,7 +139,7 @@ function showDebrief(result: MissionResult, mission: MissionData): void {
     document.body,
     () => {
       debrief?.dispose();
-      showBriefing(mission);
+      showTheaterSelect();
     },
     () => {
       debrief?.dispose();

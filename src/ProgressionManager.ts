@@ -10,6 +10,13 @@ const KILL_SCORE = 500;
 const TIME_BONUS_BASE = 1000;
 const TIME_BONUS_DECAY = 10;
 
+const THEATER_MISSIONS: Record<string, string[]> = {
+  pacific: ["pacific-01", "pacific-02", "pacific-03", "pacific-04", "pacific-05"],
+  middleeast: ["middleeast-01", "middleeast-02", "middleeast-03", "middleeast-04", "middleeast-05"],
+  europe: ["europe-01", "europe-02", "europe-03", "europe-04", "europe-05"],
+  arctic: ["arctic-01", "arctic-02", "arctic-03", "arctic-04", "arctic-05"],
+};
+
 const THEATER_AIRCRAFT_UNLOCKS: Record<string, string> = {
   pacific: "fa-18",
   middleeast: "p-51",
@@ -90,5 +97,27 @@ export class ProgressionManager {
 
   getLockedAircraftIds(allIds: string[]): string[] {
     return allIds.filter((id) => !this.data.unlockedAircraft.includes(id));
+  }
+
+  isTheaterUnlocked(theater: string): boolean {
+    if (theater === "pacific" || theater === "middleeast") return true;
+    if (theater === "europe") {
+      return this.isTheaterComplete("pacific") || this.isTheaterComplete("middleeast");
+    }
+    if (theater === "arctic") {
+      return this.isTheaterComplete("europe");
+    }
+    return false;
+  }
+
+  isTheaterComplete(theater: string): boolean {
+    const missions = THEATER_MISSIONS[theater] ?? [];
+    return missions.length > 0 && missions.every((id) => this.data.completedMissions.includes(id));
+  }
+
+  getTheaterProgress(theater: string): { completed: number; total: number } {
+    const missions = THEATER_MISSIONS[theater] ?? [];
+    const completed = missions.filter((id) => this.data.completedMissions.includes(id)).length;
+    return { completed, total: missions.length };
   }
 }

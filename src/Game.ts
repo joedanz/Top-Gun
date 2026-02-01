@@ -10,6 +10,8 @@ import { DebugPanel } from "./DebugPanel";
 import { Terrain } from "./Terrain";
 import { Skybox } from "./Skybox";
 import { WeaponSystem } from "./WeaponSystem";
+import { AIInput } from "./AIInput";
+import { AISystem } from "./AISystem";
 
 export class Game {
   engine: Engine;
@@ -22,6 +24,9 @@ export class Game {
   terrain: Terrain;
   skybox: Skybox;
   weaponSystem: WeaponSystem;
+  enemy: Aircraft;
+  enemyWeaponSystem: WeaponSystem;
+  aiSystem: AISystem;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -44,10 +49,25 @@ export class Game {
     this.weaponSystem = new WeaponSystem(this.scene);
     this.debugPanel = new DebugPanel(this.flightSystem);
 
+    // Enemy aircraft with AI
+    const aiInput = new AIInput();
+    this.enemy = new Aircraft(this.scene, aiInput, "enemy", { color: { r: 1, g: 0, b: 0 } });
+    this.enemy.mesh.position.x = 100;
+    this.enemy.mesh.position.z = 200;
+    this.enemy.mesh.position.y = 50;
+    this.enemyWeaponSystem = new WeaponSystem(this.scene);
+    this.aiSystem = new AISystem();
+
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
       this.weaponSystem.update(this.aircraft, dt);
+
+      // AI update — pass underFire=false for now (collision system will refine this)
+      this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, false);
+      this.flightSystem.update(this.enemy, dt);
+      this.enemyWeaponSystem.update(this.enemy, dt);
+
       this.cameraSystem.update(this.aircraft, dt);
       this.scene.render();
     });

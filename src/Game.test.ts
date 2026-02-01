@@ -169,4 +169,19 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.weaponSystem).toBeDefined();
   });
+
+  it("creates an enemy aircraft with AI", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.enemy).toBeDefined();
+    expect(game.enemy.mesh).toBeDefined();
+    expect(game.aiSystem).toBeDefined();
+  });
+
+  it("creates a separate WeaponSystem for the enemy", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.enemyWeaponSystem).toBeDefined();
+    expect(game.enemyWeaponSystem).not.toBe(game.weaponSystem);
+  });
 });

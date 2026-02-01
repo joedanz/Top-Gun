@@ -494,7 +494,7 @@
       ],
       "epic": "Phase 7: Campaign Structure",
       "priority": 30,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

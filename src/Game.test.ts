@@ -1,4 +1,4 @@
-// ABOUTME: Tests for the Game class — verifies scene setup, ground plane, and aircraft integration.
+// ABOUTME: Tests for the Game class — verifies scene setup, terrain, skybox, and aircraft integration.
 // ABOUTME: Uses mocked Babylon.js engine since jsdom has no WebGL.
 
 import { describe, it, expect, vi } from "vitest";
@@ -9,6 +9,7 @@ const createMockMesh = (name: string) => ({
   rotation: { x: 0, y: 0, z: 0 },
   scaling: { x: 1, y: 1, z: 1 },
   receiveShadows: false,
+  material: null as unknown,
 });
 
 vi.mock("@babylonjs/gui", () => {
@@ -62,6 +63,10 @@ vi.mock("@babylonjs/core", () => {
     }
   }
 
+  class MockColor3 {
+    constructor(public r: number, public g: number, public b: number) {}
+  }
+
   class MockColor4 {
     constructor(
       public r: number,
@@ -71,16 +76,36 @@ vi.mock("@babylonjs/core", () => {
     ) {}
   }
 
+  class MockStandardMaterial {
+    diffuseColor: unknown = null;
+    diffuseTexture: unknown = null;
+    specularColor: unknown = null;
+    emissiveColor: unknown = null;
+    backFaceCulling = true;
+    disableLighting = false;
+    constructor(public name: string) {}
+  }
+
+  class MockTexture {
+    uScale = 1;
+    vScale = 1;
+    constructor(public url: string) {}
+  }
+
   return {
     Engine: MockEngine,
     Scene: MockScene,
     FreeCamera: MockFreeCamera,
     HemisphericLight: MockHemisphericLight,
     Vector3: MockVector3,
+    Color3: MockColor3,
     Color4: MockColor4,
+    StandardMaterial: MockStandardMaterial,
+    Texture: MockTexture,
     MeshBuilder: {
-      CreateGround: vi.fn((_name: string) => createMockMesh("ground")),
+      CreateGround: vi.fn((_name: string) => createMockMesh("terrain")),
       CreateCylinder: vi.fn((_name: string) => createMockMesh("aircraft")),
+      CreateBox: vi.fn((_name: string) => ({ ...createMockMesh("skybox"), infiniteDistance: false })),
     },
   };
 });
@@ -95,15 +120,16 @@ describe("Game", () => {
     expect(game.scene).toBeDefined();
   });
 
-  it("creates a ground plane", async () => {
-    const { MeshBuilder } = await import("@babylonjs/core");
+  it("creates a Terrain", () => {
     const canvas = document.createElement("canvas");
-    new Game(canvas);
-    expect(MeshBuilder.CreateGround).toHaveBeenCalledWith(
-      "ground",
-      expect.objectContaining({ width: expect.any(Number), height: expect.any(Number) }),
-      expect.anything()
-    );
+    const game = new Game(canvas);
+    expect(game.terrain).toBeDefined();
+  });
+
+  it("creates a Skybox", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.skybox).toBeDefined();
   });
 
   it("creates an Aircraft entity", () => {

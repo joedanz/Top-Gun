@@ -26,6 +26,8 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - Aircraft has `health` (number) and `alive` (boolean) — systems should check `alive` before operating
 - CollisionSystem uses owner-pair pattern to prevent self-hits from own weapon system
 - ParticleSystem mock needs class syntax with all fields (emitter, sizes, colors, etc.)
+- `Rectangle` from `@babylonjs/gui` needs class-style mock (used by HitFlash in Game.test.ts)
+- Camera shake: apply additive offset AFTER CameraSystem.update() positions the camera
 
 ---
 
@@ -123,4 +125,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - FlightSystem should check `aircraft.alive` before updating — dead aircraft shouldn't fly
   - Ground collision at altitude floor (y=2) means aircraft at terrain level are destroyed
   - `underFire` detection: check if any enemy projectile is within 100 units of the aircraft
+---
+
+## 2026-02-01 - US-009
+- What was implemented: ScreenShake (decaying random camera offsets on damage), HitFlash (red GUI rectangle overlay that fades), CollisionSystem `playerHitThisFrame` flag, Game integration applying shake offsets to camera and triggering flash on player hits
+- Files changed: src/ScreenShake.ts, src/ScreenShake.test.ts, src/HitFlash.ts, src/HitFlash.test.ts, src/CollisionSystem.ts, src/CollisionSystem.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 14 new tests (5 ScreenShake + 5 HitFlash + 2 CollisionSystem + 2 Game), total now 105
+- **Learnings for future iterations:**
+  - Exponential decay (`intensity *= Math.exp(-rate * dt)`) gives smooth, natural fade-out for screen effects
+  - Camera shake is best applied as additive offset AFTER CameraSystem positions the camera
+  - `Rectangle` from `@babylonjs/gui` needs class-style mock in Game.test.ts (like other GUI components)
+  - `playerHitThisFrame` flag pattern keeps CollisionSystem decoupled from feedback systems
+  - `isPointerBlocker = false` and `isHitTestVisible = false` on GUI overlays prevents them from eating input
 ---

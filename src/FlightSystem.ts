@@ -33,6 +33,8 @@ export class FlightSystem {
   }
 
   update(aircraft: Aircraft, dt: number): void {
+    if (!aircraft.alive) return;
+
     const { input } = aircraft;
     const p = this.params;
 

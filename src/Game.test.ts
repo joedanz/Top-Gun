@@ -92,6 +92,15 @@ vi.mock("@babylonjs/core", () => {
     constructor(public url: string) {}
   }
 
+  class MockParticleSystem {
+    emitter: unknown = null;
+    minSize = 0; maxSize = 0; minLifeTime = 0; maxLifeTime = 0;
+    emitRate = 0; color1 = null; color2 = null; colorDead = null;
+    minEmitPower = 0; maxEmitPower = 0; direction1 = null; direction2 = null;
+    targetStopDuration = 0; disposeOnStop = false;
+    start = vi.fn(); createSphereEmitter = vi.fn();
+  }
+
   return {
     Engine: MockEngine,
     Scene: MockScene,
@@ -102,6 +111,7 @@ vi.mock("@babylonjs/core", () => {
     Color4: MockColor4,
     StandardMaterial: MockStandardMaterial,
     Texture: MockTexture,
+    ParticleSystem: MockParticleSystem,
     MeshBuilder: {
       CreateGround: vi.fn((_name: string) => createMockMesh("terrain")),
       CreateCylinder: vi.fn((_name: string) => createMockMesh("aircraft")),
@@ -183,5 +193,11 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.enemyWeaponSystem).toBeDefined();
     expect(game.enemyWeaponSystem).not.toBe(game.weaponSystem);
+  });
+
+  it("creates a CollisionSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.collisionSystem).toBeDefined();
   });
 });

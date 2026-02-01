@@ -633,3 +633,14 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Heading change detection needs two-phase approach: capture initial heading on step entry, then detect delta on subsequent updates
   - Aircraft gains speed from stall recovery even without player input — throttle tutorial step may auto-advance quickly
 ---
+
+## 2026-02-01 - US-042
+- What was implemented: CreditsScene (scrolling credits overlay with project attribution, CSS keyframe scroll animation, Main Menu button), main.ts integration routing to credits after completing arctic-05 (final mission) with success
+- Files changed: src/CreditsScene.ts, src/CreditsScene.test.ts, src/main.ts
+- **Tests added:** 8 new tests in src/CreditsScene.test.ts, total now 610
+- **Learnings for future iterations:**
+  - CreditsScene follows same HTML/CSS overlay + dispose pattern as BriefingScene/DebriefScene/MenuScene
+  - CSS `@keyframes` injected via `<style>` element inside the overlay — self-contained, removed on dispose
+  - Campaign completion check: compare `mission.id === FINAL_MISSION_ID && result.outcome === "success"` in showDebrief
+  - `data-credits` and `data-scroll` attributes enable testable DOM queries without relying on text content
+---

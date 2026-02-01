@@ -9,4 +9,5 @@ export class AIInput implements FlightInput {
   yaw = 0;
   throttle = 0;
   fire = false;
+  cycleTarget = false;
 }

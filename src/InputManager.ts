@@ -7,6 +7,7 @@ export interface FlightInput {
   readonly yaw: number;
   readonly throttle: number;
   readonly fire: boolean;
+  readonly cycleTarget: boolean;
 }
 
 export class InputManager implements FlightInput {
@@ -40,6 +41,10 @@ export class InputManager implements FlightInput {
 
   get fire(): boolean {
     return this.keys.has(" ");
+  }
+
+  get cycleTarget(): boolean {
+    return this.keys.has("Tab");
   }
 
   dispose(): void {

@@ -84,6 +84,14 @@ describe("InputManager", () => {
     expect(input.fire).toBe(false);
   });
 
+  it("reports cycleTarget when Tab is pressed", () => {
+    expect(input.cycleTarget).toBe(false);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+    expect(input.cycleTarget).toBe(true);
+    window.dispatchEvent(new KeyboardEvent("keyup", { key: "Tab" }));
+    expect(input.cycleTarget).toBe(false);
+  });
+
   it("stops listening after dispose", () => {
     input.dispose();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));

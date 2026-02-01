@@ -18,6 +18,7 @@ vi.mock("@babylonjs/gui", () => {
   class MockTextBlock { text = ""; height = ""; color = ""; fontSize = 0; textHorizontalAlignment = 0; }
   class MockControl { static HORIZONTAL_ALIGNMENT_LEFT = 0; static VERTICAL_ALIGNMENT_TOP = 0; }
   class MockRectangle { width = ""; height = ""; color = ""; background = ""; alpha = 0; thickness = 0; isPointerBlocker = false; isHitTestVisible = false; }
+  class MockEllipse { width = ""; height = ""; color = ""; thickness = 0; top = ""; left = ""; isVisible = true; isPointerBlocker = false; isHitTestVisible = false; addControl = vi.fn(); }
   return {
     AdvancedDynamicTexture: { CreateFullscreenUI: vi.fn(() => ({ addControl: vi.fn(), dispose: vi.fn() })) },
     StackPanel: MockStackPanel,
@@ -25,6 +26,7 @@ vi.mock("@babylonjs/gui", () => {
     TextBlock: MockTextBlock,
     Control: MockControl,
     Rectangle: MockRectangle,
+    Ellipse: MockEllipse,
   };
 });
 
@@ -219,5 +221,11 @@ describe("Game", () => {
     const canvas = document.createElement("canvas");
     const game = new Game(canvas);
     expect(game.hud).toBeDefined();
+  });
+
+  it("creates a TargetingSystem", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.targetingSystem).toBeDefined();
   });
 });

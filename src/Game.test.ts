@@ -214,4 +214,10 @@ describe("Game", () => {
     const game = new Game(canvas);
     expect(game.hitFlash).toBeDefined();
   });
+
+  it("creates a HUD", () => {
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas);
+    expect(game.hud).toBeDefined();
+  });
 });

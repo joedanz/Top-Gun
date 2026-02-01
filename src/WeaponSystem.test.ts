@@ -83,6 +83,23 @@ describe("WeaponSystem", () => {
     expect(p.mesh.position.z).not.toBe(initialZ);
   });
 
+  it("decrements ammo on each shot", () => {
+    const ws = new WeaponSystem(scene);
+    const initialAmmo = ws.ammo;
+    mockAircraft.input.fire = true;
+    ws.update(mockAircraft as never, 0.016);
+    expect(ws.ammo).toBe(initialAmmo - 1);
+  });
+
+  it("does not fire when ammo is depleted", () => {
+    const ws = new WeaponSystem(scene, 1);
+    mockAircraft.input.fire = true;
+    ws.update(mockAircraft as never, 0.016); // uses last round
+    expect(ws.ammo).toBe(0);
+    ws.update(mockAircraft as never, 0.2); // cooldown passed but no ammo
+    expect(ws.projectiles.length).toBe(1); // no new projectile
+  });
+
   it("removes dead projectiles from the list", () => {
     const ws = new WeaponSystem(scene);
     mockAircraft.input.fire = true;

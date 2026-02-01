@@ -6,17 +6,21 @@ import type { Aircraft } from "./Aircraft";
 import { Projectile } from "./Projectile";
 
 const FIRE_COOLDOWN = 0.15; // seconds between shots
+const DEFAULT_AMMO = 200;
 
 export class WeaponSystem {
   projectiles: Projectile[] = [];
+  ammo: number;
   private cooldown = 0;
 
-  constructor(private scene: Scene) {}
+  constructor(private scene: Scene, ammo = DEFAULT_AMMO) {
+    this.ammo = ammo;
+  }
 
   update(aircraft: Aircraft, dt: number): void {
     this.cooldown = Math.max(0, this.cooldown - dt);
 
-    if (aircraft.input.fire && this.cooldown <= 0) {
+    if (aircraft.input.fire && this.cooldown <= 0 && this.ammo > 0) {
       const pos = aircraft.mesh.position;
       const rot = aircraft.mesh.rotation;
       this.projectiles.push(
@@ -27,6 +31,7 @@ export class WeaponSystem {
         ),
       );
       this.cooldown = FIRE_COOLDOWN;
+      this.ammo--;
     }
 
     for (const p of this.projectiles) {

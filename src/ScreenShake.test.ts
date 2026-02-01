@@ -1,14 +1,25 @@
 // ABOUTME: Tests for ScreenShake — validates camera offset application and decay.
 // ABOUTME: Ensures shake intensity scales with damage and decays over time.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { ScreenShake } from "./ScreenShake";
 
 describe("ScreenShake", () => {
   let shake: ScreenShake;
+  let randomSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    // Deterministic random to prevent flaky magnitude comparisons
+    let callCount = 0;
+    randomSpy = vi.spyOn(Math, "random").mockImplementation(() => {
+      callCount++;
+      return (callCount % 7) / 7;
+    });
     shake = new ScreenShake();
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
   });
 
   it("starts with zero offset", () => {

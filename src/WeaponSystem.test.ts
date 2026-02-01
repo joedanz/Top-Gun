@@ -29,7 +29,7 @@ import { Scene } from "@babylonjs/core";
 
 describe("WeaponSystem", () => {
   let scene: Scene;
-  let mockAircraft: { mesh: { position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number } }; input: { fire: boolean } };
+  let mockAircraft: { mesh: { position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number } }; input: { fire: boolean; cycleTarget: boolean } };
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -39,7 +39,7 @@ describe("WeaponSystem", () => {
         position: { x: 0, y: 10, z: 0 },
         rotation: { x: Math.PI / 2, y: 0, z: 0 },
       },
-      input: { fire: false },
+      input: { fire: false, cycleTarget: false },
     };
   });
 

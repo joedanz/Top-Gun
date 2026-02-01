@@ -573,7 +573,7 @@
       ],
       "epic": "Phase 8: Polish & Assets",
       "priority": 35,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

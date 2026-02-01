@@ -104,6 +104,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - `AircraftStats.modelPath` is optional — aircraft without models gracefully use placeholder cone mesh
 - `vi.hoisted()` required for mock functions referenced inside `vi.mock()` factory (used in AssetLoader.test.ts)
 - Babylon.js `Sound` uses `setPlaybackRate()` method (not a `playbackRate` property) for pitch modulation
+- Music files live in `public/audio/music/{theater}-{ambient|combat}.mp3` — one pair per theater
+- MusicManager crossfade: linear interpolation at 2 vol/s between ambient (peaceful) and combat (enemy nearby) tracks
+- Combat intensity in Game.ts: based on enemy distance — full combat at ≤300 units, zero at ≥600 units
 - Audio files live in `public/audio/` — served as static assets, referenced by relative path in Sound constructor
 - `Sound` constructor: `new Sound(name, url, scene, readyCallback, options)` — readyCallback can be null
 - Track firing events via count comparison (`prevShotsFired` vs current) rather than callback hooks
@@ -521,4 +524,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Placeholder MP3 files (minimal binary) don't crash Babylon — graceful degradation
   - Engine pitch formula: `0.6 + throttle * 1.2` maps 0-1 throttle to 0.6-1.8 playback rate
   - MockSound needs `setPlaybackRate` method in Game.test.ts mock
+---
+
+## 2026-02-01 - US-035
+- What was implemented: MusicManager with per-theater ambient/combat music tracks, smooth crossfade based on enemy proximity, master volume control, Game integration with combat intensity derived from enemy distance
+- Files changed: src/MusicManager.ts, src/MusicManager.test.ts, src/Game.ts, src/Game.test.ts, public/audio/music/ (8 placeholder MP3 files)
+- **Tests added:** 12 new tests (10 MusicManager + 2 Game integration), total now 492
+- **Learnings for future iterations:**
+  - `vi.hoisted()` class pattern: define class inside `vi.hoisted()` callback with static `instances` array for tracking — cleaner than `vi.fn().mockImplementation()`
+  - Combat intensity formula: `1 - (dist - 300) / 300` clamped to [0,1] — linear ramp from 300 (full combat) to 600 (peaceful)
+  - MusicManager plays both tracks simultaneously at all times — crossfade is just volume adjustment, avoiding load latency
+  - Babylon Sound constructor with placeholder MP3 doesn't error — graceful degradation for missing audio
 ---

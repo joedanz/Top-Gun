@@ -152,4 +152,19 @@ describe("MissionLoader", () => {
     expect(result.groundTargets[0].mesh.position.x).toBe(50);
     expect(result.groundTargets[1].type).toBe("bunker");
   });
+
+  it("returns null carrier when mission has no carrier", () => {
+    const result = MissionLoader.load(testMission, scene);
+    expect(result.carrier).toBeNull();
+  });
+
+  it("spawns carrier from mission data", () => {
+    const mission: MissionData = {
+      ...testMission,
+      carrier: { position: { x: 0, y: 0, z: 500 }, heading: Math.PI / 4 },
+    };
+    const result = MissionLoader.load(mission, scene);
+    expect(result.carrier).not.toBeNull();
+    expect(result.carrier!.hull.position.z).toBe(500);
+  });
 });

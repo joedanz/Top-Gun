@@ -36,6 +36,7 @@ import { MusicManager } from "./MusicManager";
 import { VfxSystem } from "./VfxSystem";
 import { ProjectilePool } from "./ProjectilePool";
 import { applyPerformanceConfig } from "./PerformanceConfig";
+import { Carrier } from "./Carrier";
 
 export class Game {
   engine: Engine;
@@ -61,6 +62,7 @@ export class Game {
   formationSystem: FormationSystem;
   countermeasureSystem: CountermeasureSystem;
   groundTargets: GroundTarget[];
+  carrier: Carrier | null = null;
   bossSystem: BossSystem | null = null;
   bossHealthBar: BossHealthBar;
   audioManager: AudioManager;
@@ -149,6 +151,11 @@ export class Game {
       for (const gtSpawn of mission.groundTargets) {
         this.groundTargets.push(new GroundTarget(this.scene, gtSpawn.type, gtSpawn.position));
       }
+    }
+
+    // Spawn carrier if mission includes one
+    if (mission.carrier) {
+      this.carrier = new Carrier(this.scene, mission.carrier.position, mission.carrier.heading);
     }
 
     this.objectiveManager = new ObjectiveManager(

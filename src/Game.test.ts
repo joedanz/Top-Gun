@@ -301,6 +301,21 @@ describe("Game", () => {
     expect(game.groundTargets).toHaveLength(0);
   });
 
+  it("spawns carrier when mission has carrier data", () => {
+    const carrierMission: MissionData = {
+      ...sampleMission,
+      carrier: { position: { x: 0, y: 0, z: 500 }, heading: Math.PI / 2 },
+    };
+    const canvas = document.createElement("canvas");
+    const game = new Game(canvas, carrierMission, vi.fn());
+    expect(game.carrier).not.toBeNull();
+  });
+
+  it("has null carrier when mission has no carrier", () => {
+    const game = createGame();
+    expect(game.carrier).toBeNull();
+  });
+
   it("creates BossHealthBar", () => {
     const game = createGame();
     expect(game.bossHealthBar).toBeDefined();

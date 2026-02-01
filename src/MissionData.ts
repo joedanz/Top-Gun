@@ -53,4 +53,11 @@ export interface MissionData {
   bossName?: string;
   /** Boss health override (higher than standard enemies). */
   bossHealth?: number;
+  /** Carrier placement for carrier operations missions. */
+  carrier?: CarrierSpawn;
+}
+
+export interface CarrierSpawn {
+  position: { x: number; y: number; z: number };
+  heading?: number;
 }

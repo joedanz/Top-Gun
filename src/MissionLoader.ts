@@ -8,6 +8,7 @@ import { AIInput } from "./AIInput";
 import { InputManager } from "./InputManager";
 import { ObjectiveManager } from "./ObjectiveManager";
 import { GroundTarget } from "./GroundTarget";
+import { Carrier } from "./Carrier";
 
 export interface MissionEntities {
   player: Aircraft;
@@ -15,6 +16,7 @@ export interface MissionEntities {
   enemies: Aircraft[];
   aiInputs: AIInput[];
   groundTargets: GroundTarget[];
+  carrier: Carrier | null;
   objectiveManager: ObjectiveManager;
 }
 
@@ -50,12 +52,17 @@ export class MissionLoader {
       }
     }
 
+    let carrier: Carrier | null = null;
+    if (mission.carrier) {
+      carrier = new Carrier(scene, mission.carrier.position, mission.carrier.heading);
+    }
+
     const objectiveManager = new ObjectiveManager(
       mission.objectives,
       mission.enemies.length,
       groundTargets.length,
     );
 
-    return { player, inputManager, enemies, aiInputs, groundTargets, objectiveManager };
+    return { player, inputManager, enemies, aiInputs, groundTargets, carrier, objectiveManager };
   }
 }

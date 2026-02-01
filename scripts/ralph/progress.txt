@@ -114,6 +114,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - VfxSystem uses `Map<entity, ParticleSystem>` to track active effects — prevents duplicates and enables per-entity cleanup
 - Transient VFX (muzzle flash): use `targetStopDuration` + `disposeOnStop = true` for auto-cleanup
 - Continuous VFX (smoke, exhaust): set `emitter = entity.mesh` so particles follow the entity automatically
+- ProjectilePool: `acquire()` returns enabled mesh, `release()` disables and returns to pool — WeaponSystem manages lifecycle
+- Pooled Projectile: pass `existingMesh` to constructor, skip `mesh.dispose()` on death (pool handles it)
+- `applyPerformanceConfig(scene)` sets scene-level optimizations — call after Scene creation in Game constructor
 
 ---
 
@@ -551,4 +554,18 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - VFX muzzle flash reuses the same `prevShotsFired` counter as audio — avoid declaring duplicate `const` in same scope
   - Missile exhaust uses `emitter = missile.mesh` so particles follow the missile without manual position updates
   - `vi.hoisted()` is required for mock classes used inside `vi.mock()` factory — consistent pattern across the codebase
+---
+
+## 2026-02-01 - US-037
+- What was implemented: ProjectilePool (object pooling for projectile meshes with preallocate/acquire/release), PerformanceConfig (scene-level optimizations: autoClear off, blockMaterialDirtyMechanism, skipPointerMovePicking), WeaponSystem/WeaponManager pool integration, Projectile accepts pooled mesh
+- Files changed: src/ProjectilePool.ts, src/ProjectilePool.test.ts, src/PerformanceConfig.ts, src/PerformanceConfig.test.ts, src/Projectile.ts, src/WeaponSystem.ts, src/WeaponManager.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 10 new tests (7 ProjectilePool + 3 PerformanceConfig), total now 517
+- **Learnings for future iterations:**
+  - ProjectilePool preallocates 50 cylinder meshes — `setEnabled(false)` hides them, `setEnabled(true)` on acquire
+  - Pooled projectiles skip `mesh.dispose()` on death — pool handles lifecycle via `release()`
+  - Babylon.js frustum culling is enabled by default on all meshes — no explicit setup needed
+  - `scene.autoClear = false` is safe when a skybox covers the entire background
+  - `scene.blockMaterialDirtyMechanism = true` skips material change tracking — safe for static materials
+  - `scene.skipPointerMovePicking = true` avoids per-frame raycasting for pointer hover (not needed in flight game)
+  - `createMockMesh` in Game.test.ts needed `setEnabled` and `dispose` methods for ProjectilePool integration
 ---

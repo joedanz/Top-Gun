@@ -14,6 +14,7 @@ export interface WeaponLoadout {
 export interface AircraftStats {
   id: string;
   name: string;
+  modelPath?: string;
   flightParams: FlightParams;
   weaponLoadout: WeaponLoadout;
 }

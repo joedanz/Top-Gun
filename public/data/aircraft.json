@@ -3,6 +3,7 @@
     {
       "id": "f-14",
       "name": "F-14 Tomcat",
+      "modelPath": "models/f-14.glb",
       "flightParams": {
         "maxSpeed": 260,
         "acceleration": 50,
@@ -24,6 +25,7 @@
     {
       "id": "p-51",
       "name": "P-51 Mustang",
+      "modelPath": "models/p-51.glb",
       "flightParams": {
         "maxSpeed": 140,
         "acceleration": 25,
@@ -45,6 +47,7 @@
     {
       "id": "fa-18",
       "name": "F/A-18 Super Hornet",
+      "modelPath": "models/fa-18.glb",
       "flightParams": {
         "maxSpeed": 220,
         "acceleration": 45,

@@ -90,6 +90,10 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - CAMPAIGN_THEATERS array in MissionManifest and THEATER_MISSIONS in ProgressionManager must stay in sync
 - TheaterSelectScene takes `TheaterInfo[]` — build via `buildTheaterInfos()` in main.ts using ProgressionManager
 - Scene flow: menu → theater select → briefing → hangar → fly → debrief → theater select (or menu)
+- `Scoring.ts` has standalone `calculateScore()` and `getMedal()` — used by both Game.ts and ProgressionManager
+- `MissionResult` has score, medal, shotsFired, shotsHit, damageTaken — all test MissionResult objects must include these fields
+- `WeaponSystem.shotsFired` tracks gun rounds fired; `CollisionSystem.playerHitsDealt` tracks hits on enemies
+- `MissionInfo.medal` field required in TheaterSelectScene — pass via `progression.getMissionMedal(id)` in buildTheaterInfos()
 
 ---
 
@@ -452,4 +456,18 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Boss ace "Iron Eagle" uses blue-ish color ({r:0.3, g:0.3, b:1}) to distinguish from red enemies and Middle East orange boss
   - Same test pattern from Pacific/Middle East works directly — import JSON, validate structure/progression/variety
   - Europe-04 (Air Superiority) combines air + ground objectives for tactical variety before the boss mission
+---
+
+## 2026-02-01 - US-031
+- What was implemented: Scoring module (kill/time/accuracy/damage formula), Medal system (Bronze/Silver/Gold thresholds), DebriefScene shows score and medal, TheaterSelectScene shows medal badges per mission, WeaponSystem tracks shotsFired, CollisionSystem tracks playerHitsDealt, Game computes full ScoreBreakdown at mission end, ProgressionManager delegates scoring to Scoring module and adds getMissionMedal()
+- Files changed: src/Scoring.ts, src/Scoring.test.ts, src/DebriefScene.ts, src/DebriefScene.test.ts, src/ProgressionManager.ts, src/ProgressionManager.test.ts, src/TheaterSelectScene.ts, src/TheaterSelectScene.test.ts, src/Game.ts, src/WeaponSystem.ts, src/CollisionSystem.ts, src/main.ts
+- **Tests added:** 22 new tests (13 Scoring + 4 ProgressionManager medals + 3 DebriefScene score/medal + 1 TheaterSelectScene medal badge + 1 ProgressionManager medal persistence), total now 409
+- **Learnings for future iterations:**
+  - Scoring extracted to standalone `Scoring.ts` module — keeps formula testable independently from ProgressionManager
+  - `MissionResult` extended with score, medal, shotsFired, shotsHit, damageTaken — all callers must provide full object
+  - `WeaponSystem.shotsFired` counter tracks gun rounds fired — used for accuracy calculation
+  - `CollisionSystem.playerHitsDealt` tracks player projectile hits on enemies — used for accuracy calculation
+  - Medal is derived from score at query time via `getMedal(score)` — no need to store medals separately
+  - `MissionInfo.medal` field added to TheaterSelectScene — medals shown as symbols (★ gold, ☆ silver, ● bronze)
+  - `makeResult()` test helper in ProgressionManager.test.ts auto-computes score/medal from parameters — reduces boilerplate
 ---

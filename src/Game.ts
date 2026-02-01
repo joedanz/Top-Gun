@@ -30,6 +30,7 @@ import type { Missile } from "./Missile";
 import { calculateScore, getMedal } from "./Scoring";
 import { BossSystem } from "./BossSystem";
 import { BossHealthBar } from "./BossHealthBar";
+import { AssetLoader } from "./AssetLoader";
 
 export class Game {
   engine: Engine;
@@ -313,6 +314,16 @@ export class Game {
     });
 
     window.addEventListener("resize", () => this.engine.resize());
+  }
+
+  async loadModels(aircraftId?: string): Promise<void> {
+    const loader = new AssetLoader(this.scene);
+    if (aircraftId) {
+      const stats = getAircraftStats(aircraftId);
+      if (stats.modelPath) {
+        await loader.applyModel(this.aircraft, stats.modelPath);
+      }
+    }
   }
 
   dispose(): void {

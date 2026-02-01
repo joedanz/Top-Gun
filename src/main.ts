@@ -123,7 +123,7 @@ function showHangar(mission: MissionData): void {
   });
 }
 
-function startMission(mission: MissionData, aircraftId: string): void {
+async function startMission(mission: MissionData, aircraftId: string): Promise<void> {
   let game: Game | null = null;
   game = new Game(canvas, mission, (result: MissionResult) => {
     game?.dispose();
@@ -131,6 +131,8 @@ function startMission(mission: MissionData, aircraftId: string): void {
     progression.completeMission(mission.id, result);
     showDebrief(result, mission);
   }, aircraftId);
+
+  await game.loadModels(aircraftId);
 }
 
 function showDebrief(result: MissionResult, mission: MissionData): void {

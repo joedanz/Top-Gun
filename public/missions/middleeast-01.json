@@ -1,7 +1,7 @@
 {
   "id": "middleeast-01",
-  "title": "SAM Suppression",
-  "description": "Enemy SAM sites are threatening our operations in the area. Destroy all ground targets to clear the airspace. Watch out for surface-to-air missiles!",
+  "title": "Desert Strike",
+  "description": "Your first sortie in the Middle East theater. Enemy ground positions are lightly defended. Destroy all targets to establish a foothold in the region.",
   "theater": "middleeast",
   "playerStart": {
     "position": { "x": 0, "y": 80, "z": -200 },

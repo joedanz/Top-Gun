@@ -1,0 +1,39 @@
+{
+  "id": "middleeast-04",
+  "title": "Radar Knockout",
+  "description": "A heavily defended enemy radar complex is coordinating air defenses across the region. Knock out the radar installations while fighting off interceptors.",
+  "theater": "middleeast",
+  "playerStart": {
+    "position": { "x": 0, "y": 90, "z": -400 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 100, "y": 80, "z": 200 } },
+    { "position": { "x": -100, "y": 80, "z": 200 } },
+    { "position": { "x": 0, "y": 85, "z": 500 } },
+    { "position": { "x": 200, "y": 70, "z": 600 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    }
+  ],
+  "groundTargets": [
+    { "type": "radar", "position": { "x": 0, "y": 0, "z": 300 } },
+    { "type": "radar", "position": { "x": 150, "y": 0, "z": 350 } },
+    { "type": "radar", "position": { "x": -150, "y": 0, "z": 350 } },
+    { "type": "sam", "position": { "x": 80, "y": 0, "z": 250 } },
+    { "type": "sam", "position": { "x": -80, "y": 0, "z": 250 } },
+    { "type": "sam", "position": { "x": 0, "y": 0, "z": 400 } },
+    { "type": "bunker", "position": { "x": 50, "y": 0, "z": 320 } },
+    { "type": "bunker", "position": { "x": -50, "y": 0, "z": 320 } }
+  ],
+  "aiDifficulty": 2,
+  "objectives": [
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy all radar installations and defenses"
+    }
+  ]
+}

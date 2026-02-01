@@ -1,0 +1,52 @@
+{
+  "id": "europe-05",
+  "title": "Fortress Strike",
+  "description": "The enemy ace 'Iron Eagle' commands the elite European air wing from a fortified mountain base. Penetrate the defenses, destroy the fortress, and take down the ace to liberate European skies.",
+  "theater": "europe",
+  "playerStart": {
+    "position": { "x": 0, "y": 100, "z": -600 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 0, "y": 110, "z": 500 }, "color": { "r": 0.3, "g": 0.3, "b": 1 } },
+    { "position": { "x": 150, "y": 95, "z": 450 } },
+    { "position": { "x": -150, "y": 95, "z": 450 } },
+    { "position": { "x": 300, "y": 85, "z": 700 } },
+    { "position": { "x": -300, "y": 85, "z": 700 } },
+    { "position": { "x": 100, "y": 80, "z": 1000 } },
+    { "position": { "x": -100, "y": 80, "z": 1000 } }
+  ],
+  "formations": [
+    {
+      "type": "diamond",
+      "members": [0, 1, 2]
+    },
+    {
+      "type": "wing",
+      "members": [3, 4]
+    },
+    {
+      "type": "wing",
+      "members": [5, 6]
+    }
+  ],
+  "groundTargets": [
+    { "type": "sam", "position": { "x": 100, "y": 0, "z": 300 } },
+    { "type": "sam", "position": { "x": -100, "y": 0, "z": 300 } },
+    { "type": "bunker", "position": { "x": 0, "y": 0, "z": 400 } },
+    { "type": "bunker", "position": { "x": 50, "y": 0, "z": 500 } },
+    { "type": "bunker", "position": { "x": -50, "y": 0, "z": 500 } },
+    { "type": "radar", "position": { "x": 0, "y": 0, "z": 350 } }
+  ],
+  "aiDifficulty": 3,
+  "objectives": [
+    {
+      "type": "destroy_all",
+      "description": "Destroy the ace and all escorts"
+    },
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy the mountain fortress defenses"
+    }
+  ]
+}

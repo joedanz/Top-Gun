@@ -1,0 +1,29 @@
+{
+  "id": "europe-01",
+  "title": "High Altitude Intercept",
+  "description": "Unidentified aircraft have been detected at high altitude over allied airspace. Scramble and intercept the intruders before they reach the border.",
+  "theater": "europe",
+  "playerStart": {
+    "position": { "x": 0, "y": 100, "z": 0 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 100, "y": 120, "z": 800 } },
+    { "position": { "x": -100, "y": 120, "z": 850 } },
+    { "position": { "x": 0, "y": 130, "z": 1000 } }
+  ],
+  "formations": [
+    {
+      "type": "wing",
+      "members": [0, 1]
+    }
+  ],
+  "aiDifficulty": 1,
+  "objectives": [
+    {
+      "type": "destroy_enemies",
+      "count": 3,
+      "description": "Intercept all hostile aircraft"
+    }
+  ]
+}

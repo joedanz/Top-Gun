@@ -314,7 +314,7 @@
       ],
       "epic": "Phase 5: Aircraft Variety",
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

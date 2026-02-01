@@ -52,6 +52,11 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - MissionResult interface lives in DebriefScene.ts — exported for Game.ts to use
 - Game constructor signature: `(canvas, MissionData, onMissionEnd, aircraftId?)` — aircraftId applies per-aircraft stats
 - Scene flow in main.ts: briefing → hangar → fly → debrief (hangar inserted between briefing and game)
+- Node.js 22+ built-in `localStorage` lacks `getItem`/`setItem`/`clear` — SaveManager uses injectable `Storage` interface for testability
+- SaveManager uses versioned key `topgun_save_v1` — bump version number for breaking schema changes
+- ProgressionManager reads/writes via SaveManager — constructor loads state, mutations auto-save
+- Theater-based aircraft unlocks: pacific → fa-18, middleeast → p-51
+- Sequential mission unlock: completing `pacific-01` unlocks `pacific-02` (MISSION_ORDER array in ProgressionManager)
 
 ---
 
@@ -271,4 +276,16 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Locked aircraft: pass `lockedIds` array, cards render with LOCKED label and no Select button
   - Aircraft catalog must be loaded before showing HangarScene — `loadAircraftCatalog()` in start()
   - Border highlight on selection: set `borderColor` to `rgb(0, 170, 0)` (green) and reset others
+---
+
+## 2026-02-01 - US-019
+- What was implemented: SaveManager (localStorage persistence with versioned keys, corruption handling), ProgressionManager (score calculation, mission completion tracking, sequential mission unlocking, theater-based aircraft unlocking), main.ts integration passing locked aircraft IDs to HangarScene and recording mission completions
+- Files changed: src/SaveManager.ts, src/SaveManager.test.ts, src/ProgressionManager.ts, src/ProgressionManager.test.ts, src/main.ts
+- **Tests added:** 19 new tests (5 SaveManager + 14 ProgressionManager), total now 226
+- **Learnings for future iterations:**
+  - Node.js 22+ has a built-in `localStorage` that lacks Web Storage API methods (`getItem`, `setItem`, `clear`) — need injectable Storage interface for tests
+  - `vi.mock` doesn't help with Node's built-in localStorage proxy; mock storage objects are the clean solution
+  - Score formula: kills * 500 + max(0, 1000 - time * 10) gives reasonable differentiation
+  - MISSION_ORDER array defines sequential unlock — adding new missions requires updating this array
+  - ProgressionManager auto-saves on every mutation via SaveManager.save()
 ---

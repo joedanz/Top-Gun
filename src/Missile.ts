@@ -20,6 +20,8 @@ export class Missile {
   private age = 0;
   private yaw: number;
   private pitchAngle: number;
+  private diverted = false;
+  private divertPosition: { x: number; y: number; z: number } | null = null;
 
   constructor(
     scene: Scene,
@@ -47,6 +49,13 @@ export class Missile {
     this.pitchAngle = rotation.x;
   }
 
+  /** Redirect this missile toward a flare/chaff position instead of its target */
+  divertToFlare(position: { x: number; y: number; z: number }): void {
+    this.diverted = true;
+    this.divertPosition = position;
+    this.target = null;
+  }
+
   update(dt: number): void {
     if (!this.alive) return;
 
@@ -57,9 +66,16 @@ export class Missile {
       return;
     }
 
-    // Track target if alive
-    if (this.target && this.target.alive) {
-      const tp = this.target.mesh.position;
+    // Track divert position (flare/chaff) or target
+    let trackPos: { x: number; y: number; z: number } | null = null;
+    if (this.diverted && this.divertPosition) {
+      trackPos = this.divertPosition;
+    } else if (this.target && this.target.alive) {
+      trackPos = this.target.mesh.position;
+    }
+
+    if (trackPos) {
+      const tp = trackPos;
       const mp = this.mesh.position;
       const dx = tp.x - mp.x;
       const dz = tp.z - mp.z;

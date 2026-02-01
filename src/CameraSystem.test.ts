@@ -66,7 +66,7 @@ function makeCamera(scene: Scene): FreeCamera {
 }
 
 function makeInput(): FlightInput {
-  return { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false };
+  return { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false, deployCountermeasure: false };
 }
 
 describe("CameraSystem", () => {

@@ -43,7 +43,7 @@ import { Scene } from "@babylonjs/core";
 import type { FlightInput } from "./InputManager";
 
 function makeInput(overrides: Partial<FlightInput> = {}): FlightInput {
-  return { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false, ...overrides };
+  return { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false, deployCountermeasure: false, ...overrides };
 }
 
 function makeScene(): Scene {
@@ -57,7 +57,7 @@ describe("FlightSystem", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false };
+    input = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false, deployCountermeasure: false };
     aircraft = new Aircraft(makeScene(), input);
     system = new FlightSystem();
   });

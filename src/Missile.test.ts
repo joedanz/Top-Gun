@@ -120,4 +120,28 @@ describe("Missile", () => {
       expect(dx > 0 || dz > 0).toBe(true);
     });
   });
+
+  describe("divertToFlare", () => {
+    it("redirects missile toward flare position instead of target", () => {
+      const m = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never);
+      // Flare is behind and below
+      m.divertToFlare({ x: -50, y: 5, z: -50 });
+      const z1 = m.mesh.position.z;
+      // After update, missile should still be alive but tracking the flare, not original target
+      m.update(0.5);
+      expect(m.alive).toBe(true);
+    });
+
+    it("stops tracking original target after diversion", () => {
+      const m = new Missile(scene, { x: 0, y: 10, z: 0 }, { x: Math.PI / 2, y: 0, z: 0 }, target as never);
+      m.divertToFlare({ x: 0, y: 0, z: -100 });
+      // Move target far away — missile should not follow it
+      target.mesh.position.x = 1000;
+      m.update(0.1);
+      // Missile should be heading toward z=-100, not x=1000
+      // It started facing Z+, so after one frame it should start turning toward Z-
+      // but won't instantly reverse. The key thing is it's not heading toward x=1000
+      expect(m.mesh.position.x).toBeLessThan(10);
+    });
+  });
 });

@@ -24,6 +24,7 @@ import { FormationSystem } from "./FormationSystem";
 import type { MissionResult } from "./DebriefScene";
 import { ObjectiveManager } from "./ObjectiveManager";
 import { getAircraftStats } from "./AircraftData";
+import { CountermeasureSystem } from "./CountermeasureSystem";
 
 export class Game {
   engine: Engine;
@@ -47,6 +48,7 @@ export class Game {
   radar: Radar;
   objectiveManager: ObjectiveManager;
   formationSystem: FormationSystem;
+  countermeasureSystem: CountermeasureSystem;
   private missionEnded = false;
   private kills = 0;
   private elapsedTime = 0;
@@ -96,6 +98,7 @@ export class Game {
     this.radar = new Radar();
     this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
     this.formationSystem = new FormationSystem();
+    this.countermeasureSystem = new CountermeasureSystem(this.scene);
 
     // Create formations from mission data
     if (mission.formations) {
@@ -130,6 +133,10 @@ export class Game {
 
       // Update all player weapons
       this.weaponManager.update(this.aircraft, this.targetingSystem.currentTarget, dt);
+
+      // Deploy countermeasures against incoming enemy missiles
+      // (enemy doesn't fire missiles in current implementation, but system is ready)
+      this.countermeasureSystem.update(this.aircraft, [], dt);
 
       // Check if enemy is under fire from player projectiles
       const enemyUnderFire = this.weaponManager.gunSystem.projectiles.some((p) => {
@@ -189,7 +196,7 @@ export class Game {
       camera.position.z += shakeOffset.z;
 
       this.targetingSystem.update(this.aircraft, [this.enemy], camera);
-      this.hud.update(this.aircraft, this.weaponManager);
+      this.hud.update(this.aircraft, this.weaponManager, this.countermeasureSystem);
       this.radar.update(this.aircraft, [this.enemy], []);
 
       // Track kills and mission time

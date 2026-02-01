@@ -44,12 +44,12 @@ import { Scene } from "@babylonjs/core";
 
 describe("Aircraft", () => {
   let scene: Scene;
-  let mockInput: { pitch: number; roll: number; yaw: number; throttle: number; fire: boolean; cycleTarget: boolean; lockOn: boolean; cycleWeapon: boolean };
+  let mockInput: { pitch: number; roll: number; yaw: number; throttle: number; fire: boolean; cycleTarget: boolean; lockOn: boolean; cycleWeapon: boolean; deployCountermeasure: boolean };
 
   beforeEach(() => {
     vi.resetAllMocks();
     scene = new (Scene as unknown as new () => Scene)();
-    mockInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false };
+    mockInput = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false, cycleTarget: false, lockOn: false, cycleWeapon: false, deployCountermeasure: false };
   });
 
   it("creates a mesh in the scene", async () => {

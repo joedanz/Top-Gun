@@ -37,4 +37,6 @@ export interface MissionData {
   enemies: EnemySpawn[];
   formations?: FormationSpawn[];
   objectives: ObjectiveData[];
+  /** AI difficulty level (1=easy, 2=medium, 3=hard). Defaults to 1. */
+  aiDifficulty?: number;
 }

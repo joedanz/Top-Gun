@@ -11,6 +11,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - FlightInput interface decouples input from entities — Aircraft reads from FlightInput, not keyboard
 - Mock Scene constructor needs cast: `new (Scene as unknown as new () => Scene)()` for typecheck
 - Default GitHub PR base may not be `master` — always use `--base master` with `gh pr create`
+- ECS-like pattern: entities hold state, systems operate on entities (FlightSystem updates Aircraft)
+- `@babylonjs/gui` mocks also need class syntax for StackPanel, Slider, TextBlock (used with `new`)
+- FlightSystem.params is mutable — DebugPanel sliders write directly to it for real-time tuning
 
 ---
 
@@ -34,4 +37,17 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - MeshBuilder.CreateCylinder with diameterTop=0 makes a cone shape (good aircraft placeholder)
   - GitHub default branch may differ from master — always specify `--base master` in `gh pr create`
   - Aircraft rotation.x = PI/2 points the cone forward (Babylon cylinders are Y-up by default)
+---
+
+## 2026-02-01 - US-003
+- What was implemented: FlightSystem with velocity-based arcade movement, speed-dependent turning, stall/recovery, altitude floor, and DebugPanel with Babylon GUI sliders
+- Files changed: src/FlightSystem.ts, src/FlightSystem.test.ts, src/DebugPanel.ts, src/DebugPanel.test.ts, src/Aircraft.ts, src/Aircraft.test.ts, src/Game.ts, src/Game.test.ts
+- **Tests added:** 16 new tests (12 FlightSystem + 4 DebugPanel), Aircraft tests updated to 4, Game tests updated to 6 (total 38)
+- **Learnings for future iterations:**
+  - Aircraft.update() was removed — movement logic now lives in FlightSystem (ECS pattern)
+  - Aircraft.input changed from `private` to `readonly` so systems can read it
+  - Speed-dependent turn rate: `speedFactor = 1 - (speed/maxSpeed) * 0.7` gives a nice curve
+  - Stall recovery: nose drops (rotation.x increases) and speed recovers automatically
+  - DebugPanel uses AdvancedDynamicTexture.CreateFullscreenUI for screen-space GUI overlay
+  - Babylon GUI Slider.onValueChangedObservable.add() for reactive parameter binding
 ---

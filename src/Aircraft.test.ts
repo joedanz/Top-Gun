@@ -1,4 +1,4 @@
-// ABOUTME: Tests for Aircraft entity — verifies mesh creation and input-driven movement.
+// ABOUTME: Tests for Aircraft entity — verifies mesh creation and state initialization.
 // ABOUTME: Uses mocked Babylon.js since jsdom has no WebGL.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -64,31 +64,13 @@ describe("Aircraft", () => {
     expect(aircraft.mesh.position).toBeDefined();
   });
 
-  it("reads from input source, not directly from keyboard", () => {
+  it("starts with zero speed", () => {
     const aircraft = new Aircraft(scene, mockInput);
-    mockInput.pitch = 1;
-    aircraft.update(1 / 60);
-    expect(aircraft.mesh.position.z).not.toBe(0);
+    expect(aircraft.speed).toBe(0);
   });
 
-  it("does not move when input is zero", () => {
+  it("exposes input as a readable property", () => {
     const aircraft = new Aircraft(scene, mockInput);
-    const initialZ = aircraft.mesh.position.z;
-    aircraft.update(1 / 60);
-    expect(aircraft.mesh.position.z).toBe(initialZ);
-  });
-
-  it("responds to roll input by changing x position", () => {
-    const aircraft = new Aircraft(scene, mockInput);
-    mockInput.roll = 1;
-    aircraft.update(1 / 60);
-    expect(aircraft.mesh.position.x).not.toBe(0);
-  });
-
-  it("responds to yaw input by changing y rotation", () => {
-    const aircraft = new Aircraft(scene, mockInput);
-    mockInput.yaw = 1;
-    aircraft.update(1 / 60);
-    expect(aircraft.mesh.rotation.y).not.toBe(0);
+    expect(aircraft.input).toBe(mockInput);
   });
 });

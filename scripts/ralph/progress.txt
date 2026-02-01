@@ -57,6 +57,9 @@ Started: Sun Feb  1 00:05:22 EST 2026
 - ProgressionManager reads/writes via SaveManager — constructor loads state, mutations auto-save
 - Theater-based aircraft unlocks: pacific → fa-18, middleeast → p-51
 - Sequential mission unlock: completing `pacific-01` unlocks `pacific-02` (MISSION_ORDER array in ProgressionManager)
+- FormationSystem manages wing/diamond formations; `FormationSpawn` in MissionData maps enemy indices to formation roles
+- Formation engagement uses hysteresis: engage at 500 units, disengage at 800 units to prevent flapping
+- Wingman offsets are rotated by leader heading for world-space positioning
 
 ---
 
@@ -288,4 +291,15 @@ Started: Sun Feb  1 00:05:22 EST 2026
   - Score formula: kills * 500 + max(0, 1000 - time * 10) gives reasonable differentiation
   - MISSION_ORDER array defines sequential unlock — adding new missions requires updating this array
   - ProgressionManager auto-saves on every mutation via SaveManager.save()
+---
+
+## 2026-02-01 - US-020
+- What was implemented: FormationSystem supporting wing pair and diamond formations with engagement/disengagement logic, FormationSpawn added to MissionData schema, Game integration with FormationSystem, pacific-01 updated with wing pair formation
+- Files changed: src/FormationSystem.ts, src/FormationSystem.test.ts, src/Game.ts, src/Game.test.ts, src/MissionData.ts, public/missions/pacific-01.json
+- **Tests added:** 10 new tests (9 FormationSystem + 1 Game) in src/FormationSystem.test.ts and src/Game.test.ts, total now 236
+- **Learnings for future iterations:**
+  - Hysteresis pattern (different engage/disengage thresholds) prevents formation state flapping
+  - Wingman offset rotation: rotate local offsets by leader heading using cos/sin for world-space positioning
+  - FormationSystem.updateAll() runs before AISystem — when disengaged, formation overrides wingman input; when engaged, AISystem takes over
+  - `FormationSpawn.members` indices reference the `enemies` array in MissionData — first index is leader
 ---

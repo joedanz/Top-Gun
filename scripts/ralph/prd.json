@@ -329,7 +329,7 @@
       ],
       "epic": "Phase 6: Advanced Combat",
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

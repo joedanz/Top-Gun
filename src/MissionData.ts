@@ -3,7 +3,7 @@
 
 export type Theater = "pacific" | "middleeast" | "europe" | "arctic";
 
-export type ObjectiveType = "destroy_enemies" | "destroy_all" | "survive_time";
+export type ObjectiveType = "destroy_enemies" | "destroy_all" | "survive_time" | "destroy_ground_targets";
 
 export interface ObjectiveData {
   type: ObjectiveType;
@@ -28,6 +28,13 @@ export interface PlayerStart {
   heading: number;
 }
 
+export type GroundTargetType = "sam" | "bunker" | "vehicle" | "radar";
+
+export interface GroundTargetSpawn {
+  type: GroundTargetType;
+  position: { x: number; y: number; z: number };
+}
+
 export interface MissionData {
   id: string;
   title: string;
@@ -36,6 +43,7 @@ export interface MissionData {
   playerStart: PlayerStart;
   enemies: EnemySpawn[];
   formations?: FormationSpawn[];
+  groundTargets?: GroundTargetSpawn[];
   objectives: ObjectiveData[];
   /** AI difficulty level (1=easy, 2=medium, 3=hard). Defaults to 1. */
   aiDifficulty?: number;

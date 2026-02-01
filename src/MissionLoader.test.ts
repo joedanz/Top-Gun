@@ -12,6 +12,12 @@ vi.mock("@babylonjs/core", () => {
         material: null,
         dispose: vi.fn(),
       })),
+      CreateBox: vi.fn(() => ({
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        material: null,
+        dispose: vi.fn(),
+      })),
     },
     StandardMaterial: class {
       diffuseColor = { r: 0, g: 0, b: 0 };
@@ -125,5 +131,25 @@ describe("MissionLoader", () => {
   it("provides input manager for player", () => {
     const result = MissionLoader.load(testMission, scene);
     expect(result.inputManager).toBeDefined();
+  });
+
+  it("returns empty groundTargets when mission has none", () => {
+    const result = MissionLoader.load(testMission, scene);
+    expect(result.groundTargets).toHaveLength(0);
+  });
+
+  it("spawns ground targets from mission data", () => {
+    const mission: MissionData = {
+      ...testMission,
+      groundTargets: [
+        { type: "sam", position: { x: 50, y: 0, z: 100 } },
+        { type: "bunker", position: { x: -50, y: 0, z: 200 } },
+      ],
+    };
+    const result = MissionLoader.load(mission, scene);
+    expect(result.groundTargets).toHaveLength(2);
+    expect(result.groundTargets[0].type).toBe("sam");
+    expect(result.groundTargets[0].mesh.position.x).toBe(50);
+    expect(result.groundTargets[1].type).toBe("bunker");
   });
 });

@@ -1,0 +1,27 @@
+{
+  "id": "middleeast-01",
+  "title": "SAM Suppression",
+  "description": "Enemy SAM sites are threatening our operations in the area. Destroy all ground targets to clear the airspace. Watch out for surface-to-air missiles!",
+  "theater": "middleeast",
+  "playerStart": {
+    "position": { "x": 0, "y": 80, "z": -200 },
+    "heading": 0
+  },
+  "enemies": [
+    { "position": { "x": 150, "y": 60, "z": 300 } }
+  ],
+  "groundTargets": [
+    { "type": "sam", "position": { "x": 100, "y": 0, "z": 200 } },
+    { "type": "sam", "position": { "x": -80, "y": 0, "z": 350 } },
+    { "type": "radar", "position": { "x": 0, "y": 0, "z": 280 } },
+    { "type": "bunker", "position": { "x": 50, "y": 0, "z": 400 } },
+    { "type": "vehicle", "position": { "x": -30, "y": 0, "z": 250 } }
+  ],
+  "aiDifficulty": 1,
+  "objectives": [
+    {
+      "type": "destroy_ground_targets",
+      "description": "Destroy all ground targets"
+    }
+  ]
+}

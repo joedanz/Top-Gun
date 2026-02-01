@@ -1,8 +1,9 @@
-// ABOUTME: Detects collisions between projectiles and aircraft using bounding spheres.
+// ABOUTME: Detects collisions between projectiles and aircraft/ground targets using bounding spheres.
 // ABOUTME: Applies damage, triggers explosions, and tracks mission-failed state.
 
 import { ParticleSystem, Vector3, Color4, Texture, type Scene } from "@babylonjs/core";
 import type { Aircraft } from "./Aircraft";
+import type { GroundTarget } from "./GroundTarget";
 import type { WeaponSystem } from "./WeaponSystem";
 
 const HIT_RADIUS = 3;
@@ -107,6 +108,67 @@ export class CollisionSystem {
     }
   }
 
+  /** Check projectiles and hittables against ground targets, returns indices of newly destroyed targets */
+  checkGroundTargets(
+    groundTargets: GroundTarget[],
+    weaponSystems: WeaponSystem[],
+    hittables: Hittable[],
+  ): number[] {
+    const destroyed: number[] = [];
+
+    // Check gun projectiles against ground targets
+    for (const ws of weaponSystems) {
+      for (const projectile of ws.projectiles) {
+        if (!projectile.alive) continue;
+        for (let i = 0; i < groundTargets.length; i++) {
+          const gt = groundTargets[i];
+          if (!gt.alive) continue;
+          const dx = projectile.mesh.position.x - gt.mesh.position.x;
+          const dy = projectile.mesh.position.y - gt.mesh.position.y;
+          const dz = projectile.mesh.position.z - gt.mesh.position.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist < HIT_RADIUS) {
+            gt.health -= projectile.damage ?? 10;
+            projectile.alive = false;
+            projectile.mesh.dispose();
+            if (gt.health <= 0) {
+              gt.alive = false;
+              this.spawnExplosionAt(gt.mesh.position);
+              destroyed.push(i);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Check hittables (rockets, bombs, missiles) against ground targets
+    for (const h of hittables) {
+      if (!h.alive) continue;
+      for (let i = 0; i < groundTargets.length; i++) {
+        const gt = groundTargets[i];
+        if (!gt.alive) continue;
+        const dx = h.mesh.position.x - gt.mesh.position.x;
+        const dy = h.mesh.position.y - gt.mesh.position.y;
+        const dz = h.mesh.position.z - gt.mesh.position.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < HIT_RADIUS) {
+          gt.health -= h.damage;
+          h.alive = false;
+          h.mesh.dispose();
+          if (gt.health <= 0) {
+            gt.alive = false;
+            this.spawnExplosionAt(gt.mesh.position);
+            destroyed.push(i);
+          }
+          break;
+        }
+      }
+    }
+
+    return destroyed;
+  }
+
   checkGroundCollision(aircraft: Aircraft): void {
     if (!aircraft.alive) return;
     if (aircraft.mesh.position.y <= GROUND_LEVEL) {
@@ -118,20 +180,16 @@ export class CollisionSystem {
   private destroyAircraft(aircraft: Aircraft): void {
     aircraft.alive = false;
     aircraft.health = Math.min(aircraft.health, 0);
-    this.spawnExplosion(aircraft);
+    this.spawnExplosionAt(aircraft.mesh.position);
 
     if (aircraft === this.player) {
       this.missionFailed = true;
     }
   }
 
-  private spawnExplosion(aircraft: Aircraft): void {
+  private spawnExplosionAt(position: { x: number; y: number; z: number }): void {
     const ps = new ParticleSystem("explosion", 200, this.scene);
-    ps.emitter = new Vector3(
-      aircraft.mesh.position.x,
-      aircraft.mesh.position.y,
-      aircraft.mesh.position.z,
-    );
+    ps.emitter = new Vector3(position.x, position.y, position.z);
     ps.minSize = 0.5;
     ps.maxSize = 2;
     ps.minLifeTime = 0.3;

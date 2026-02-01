@@ -25,6 +25,8 @@ import type { MissionResult } from "./DebriefScene";
 import { ObjectiveManager } from "./ObjectiveManager";
 import { getAircraftStats } from "./AircraftData";
 import { CountermeasureSystem } from "./CountermeasureSystem";
+import { GroundTarget } from "./GroundTarget";
+import type { Missile } from "./Missile";
 
 export class Game {
   engine: Engine;
@@ -49,6 +51,8 @@ export class Game {
   objectiveManager: ObjectiveManager;
   formationSystem: FormationSystem;
   countermeasureSystem: CountermeasureSystem;
+  groundTargets: GroundTarget[];
+  private samMissiles: Missile[] = [];
   private missionEnded = false;
   private kills = 0;
   private elapsedTime = 0;
@@ -96,9 +100,22 @@ export class Game {
     this.hud = new Hud();
     this.targetingSystem = new TargetingSystem();
     this.radar = new Radar();
-    this.objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
     this.formationSystem = new FormationSystem();
     this.countermeasureSystem = new CountermeasureSystem(this.scene);
+
+    // Spawn ground targets from mission data
+    this.groundTargets = [];
+    if (mission.groundTargets) {
+      for (const gtSpawn of mission.groundTargets) {
+        this.groundTargets.push(new GroundTarget(this.scene, gtSpawn.type, gtSpawn.position));
+      }
+    }
+
+    this.objectiveManager = new ObjectiveManager(
+      mission.objectives,
+      mission.enemies.length,
+      this.groundTargets.length,
+    );
 
     // Create formations from mission data
     if (mission.formations) {
@@ -134,9 +151,21 @@ export class Game {
       // Update all player weapons
       this.weaponManager.update(this.aircraft, this.targetingSystem.currentTarget, dt);
 
-      // Deploy countermeasures against incoming enemy missiles
-      // (enemy doesn't fire missiles in current implementation, but system is ready)
-      this.countermeasureSystem.update(this.aircraft, [], dt);
+      // SAM sites fire missiles at the player
+      const allSamMissiles: Missile[] = [];
+      for (const gt of this.groundTargets) {
+        const fired = gt.tryFire(this.scene, this.aircraft.mesh.position, dt);
+        allSamMissiles.push(...fired);
+      }
+      this.samMissiles.push(...allSamMissiles);
+
+      // Update SAM missiles
+      for (const m of this.samMissiles) {
+        m.update(dt);
+      }
+
+      // Deploy countermeasures against incoming SAM missiles
+      this.countermeasureSystem.update(this.aircraft, this.samMissiles, dt);
 
       // Check if enemy is under fire from player projectiles
       const enemyUnderFire = this.weaponManager.gunSystem.projectiles.some((p) => {
@@ -175,6 +204,27 @@ export class Game {
         [this.aircraft, this.enemy],
         this.aircraft,
       );
+
+      // Collision detection — SAM missiles against player
+      this.collisionSystem.checkHittables(
+        this.samMissiles.filter((m) => m.alive),
+        [this.aircraft],
+      );
+
+      // Collision detection — player weapons against ground targets
+      const destroyedGt = this.collisionSystem.checkGroundTargets(
+        this.groundTargets,
+        [this.weaponManager.gunSystem],
+        [
+          ...this.weaponManager.rockets,
+          ...this.weaponManager.bombs,
+          ...this.weaponManager.radarMissiles,
+          ...this.weaponManager.missileLockSystem.missiles,
+        ],
+      );
+      for (const _idx of destroyedGt) {
+        this.objectiveManager.recordGroundKill();
+      }
 
       this.collisionSystem.checkGroundCollision(this.aircraft);
       this.collisionSystem.checkGroundCollision(this.enemy);

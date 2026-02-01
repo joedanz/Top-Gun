@@ -1,4 +1,4 @@
-// ABOUTME: Parses mission JSON data and spawns player/enemy entities accordingly.
+// ABOUTME: Parses mission JSON data and spawns player/enemy/ground-target entities accordingly.
 // ABOUTME: Returns all spawned entities and an ObjectiveManager for the mission.
 
 import type { Scene } from "@babylonjs/core";
@@ -7,12 +7,14 @@ import { Aircraft } from "./Aircraft";
 import { AIInput } from "./AIInput";
 import { InputManager } from "./InputManager";
 import { ObjectiveManager } from "./ObjectiveManager";
+import { GroundTarget } from "./GroundTarget";
 
 export interface MissionEntities {
   player: Aircraft;
   inputManager: InputManager;
   enemies: Aircraft[];
   aiInputs: AIInput[];
+  groundTargets: GroundTarget[];
   objectiveManager: ObjectiveManager;
 }
 
@@ -40,8 +42,20 @@ export class MissionLoader {
       aiInputs.push(aiInput);
     }
 
-    const objectiveManager = new ObjectiveManager(mission.objectives, mission.enemies.length);
+    const groundTargets: GroundTarget[] = [];
+    if (mission.groundTargets) {
+      for (const gtSpawn of mission.groundTargets) {
+        const gt = new GroundTarget(scene, gtSpawn.type, gtSpawn.position);
+        groundTargets.push(gt);
+      }
+    }
 
-    return { player, inputManager, enemies, aiInputs, objectiveManager };
+    const objectiveManager = new ObjectiveManager(
+      mission.objectives,
+      mission.enemies.length,
+      groundTargets.length,
+    );
+
+    return { player, inputManager, enemies, aiInputs, groundTargets, objectiveManager };
   }
 }

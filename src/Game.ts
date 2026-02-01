@@ -12,6 +12,7 @@ import { Skybox } from "./Skybox";
 import { WeaponSystem } from "./WeaponSystem";
 import { AIInput } from "./AIInput";
 import { AISystem } from "./AISystem";
+import { CollisionSystem } from "./CollisionSystem";
 
 export class Game {
   engine: Engine;
@@ -27,6 +28,7 @@ export class Game {
   enemy: Aircraft;
   enemyWeaponSystem: WeaponSystem;
   aiSystem: AISystem;
+  collisionSystem: CollisionSystem;
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true);
@@ -57,16 +59,38 @@ export class Game {
     this.enemy.mesh.position.y = 50;
     this.enemyWeaponSystem = new WeaponSystem(this.scene);
     this.aiSystem = new AISystem();
+    this.collisionSystem = new CollisionSystem(this.scene);
+    this.collisionSystem.setPlayer(this.aircraft);
 
     this.engine.runRenderLoop(() => {
       const dt = this.engine.getDeltaTime() / 1000;
       this.flightSystem.update(this.aircraft, dt);
       this.weaponSystem.update(this.aircraft, dt);
 
-      // AI update — pass underFire=false for now (collision system will refine this)
-      this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, false);
+      // Check if enemy is under fire from player projectiles
+      const enemyUnderFire = this.weaponSystem.projectiles.some((p) => {
+        if (!p.alive) return false;
+        const dx = p.mesh.position.x - this.enemy.mesh.position.x;
+        const dy = p.mesh.position.y - this.enemy.mesh.position.y;
+        const dz = p.mesh.position.z - this.enemy.mesh.position.z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz) < 100;
+      });
+
+      this.aiSystem.update(this.enemy as Aircraft & { input: AIInput }, this.aircraft, dt, enemyUnderFire);
       this.flightSystem.update(this.enemy, dt);
       this.enemyWeaponSystem.update(this.enemy, dt);
+
+      // Collision detection
+      this.collisionSystem.update(
+        [this.aircraft, this.enemy],
+        [this.weaponSystem, this.enemyWeaponSystem],
+        [
+          { aircraft: this.aircraft, weaponSystem: this.weaponSystem },
+          { aircraft: this.enemy, weaponSystem: this.enemyWeaponSystem },
+        ],
+      );
+      this.collisionSystem.checkGroundCollision(this.aircraft);
+      this.collisionSystem.checkGroundCollision(this.enemy);
 
       this.cameraSystem.update(this.aircraft, dt);
       this.scene.render();

@@ -11,6 +11,8 @@ export interface AircraftOptions {
 export class Aircraft {
   mesh: Mesh;
   speed = 0;
+  health = 100;
+  alive = true;
 
   constructor(
     scene: Scene,

@@ -73,4 +73,14 @@ describe("Aircraft", () => {
     const aircraft = new Aircraft(scene, mockInput);
     expect(aircraft.input).toBe(mockInput);
   });
+
+  it("starts with 100 health", () => {
+    const aircraft = new Aircraft(scene, mockInput);
+    expect(aircraft.health).toBe(100);
+  });
+
+  it("starts alive", () => {
+    const aircraft = new Aircraft(scene, mockInput);
+    expect(aircraft.alive).toBe(true);
+  });
 });

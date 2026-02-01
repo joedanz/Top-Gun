@@ -85,7 +85,7 @@ export class Game {
     this.enemy.mesh.position.z = 200;
     this.enemy.mesh.position.y = 50;
     this.enemyWeaponSystem = new WeaponSystem(this.scene);
-    this.aiSystem = new AISystem();
+    this.aiSystem = new AISystem(mission.aiDifficulty);
     this.collisionSystem = new CollisionSystem(this.scene);
     this.collisionSystem.setPlayer(this.aircraft);
     this.screenShake = new ScreenShake();
